@@ -4,7 +4,7 @@ import { FuncType, VarType } from "./vartype";
 
 export class TypeDefinition {
   MetaMethods: {[id: string]: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]][]} = {}
-  Children: {[id: string]: [type: VarType, offset: number, initial: number]} = {}
+  Children: {[id: string]: [type: VarType, offset: number, initial: string]} = {}
   Size: number = 1;
 
   GetMetamethod(name: string, argTypes: VarType[]): [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]|null{

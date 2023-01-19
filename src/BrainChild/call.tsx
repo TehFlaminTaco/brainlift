@@ -43,7 +43,7 @@ export class Call extends Expression implements LeftDonor {
     }
     var functionTypes: FuncType[] = resolveTarget[0].filter(c=>c instanceof FuncType) as FuncType[];
     if(functionTypes.length === 0)throw new Error(`Attempted to call non-callable: ${resolveTarget[0]}`);
-    var functionMatchesTypes: FuncType[] = functionTypes.filter(c=>VarType.CanCoax(scope, c.ArgTypes, callArgumentTypes))
+    var functionMatchesTypes: FuncType[] = functionTypes.filter(c=>VarType.CanCoax(c.ArgTypes, callArgumentTypes))
     if(functionMatchesTypes.length === 0)throw new Error(`Cannot call, argument mismatch. Expected: ${functionTypes[0].ArgTypes} Got: ${callArgumentTypes}`);
     var funcType = functionMatchesTypes[0];
     o.push(...VarType.Coax(funcType.ArgTypes, callArgumentTypes))

@@ -156,7 +156,7 @@ export default function App() {
         clearInterval(asmRunTimer);
         asmRunTimer = undefined;
         asmRunning = false;
-        document.getElementById("asmRun").innerText = "ASM Run";
+        document.getElementById("asmRun")!.innerText = "ASM Run";
       }
       event.target.innerText = "Meta Running";
       runTimer = setInterval(() => {
@@ -209,7 +209,7 @@ export default function App() {
         clearInterval(runTimer);
         runTimer = undefined;
         running = false;
-        document.getElementById("metaRun").innerText = "Meta Run";
+        document.getElementById("metaRun")!.innerText = "Meta Run";
       }
       event.target.innerText = "ASM Running";
       asmRunTimer = setInterval(() => {

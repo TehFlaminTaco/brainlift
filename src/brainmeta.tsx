@@ -214,7 +214,6 @@ export function Transpile(code: string): string {
     out += `:("${s[0]}"\t${ParseInstruction[instruction](...args)
       .replace(/«/g, "<<<<<<<<<<<<")
       .replace(/»/g, ">>>>>>>>>>>>")} )\n`;
-    "\n";
   }
   return out;
 }

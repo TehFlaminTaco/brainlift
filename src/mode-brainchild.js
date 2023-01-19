@@ -1,3 +1,4 @@
+/*eslint-disable*/
 ace.define("ace/mode/brainchild", function (require, exports, module) {
   var oop = require("ace/lib/oop");
   var TextMode = require("ace/mode/text").Mode;

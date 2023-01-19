@@ -1940,11 +1940,11 @@ END
 
 export function ASMTranspile(code: string) {
   var commands = code.matchAll(
-    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
   );
 
   var heap: number[] = [];
-  var labels: any = {};
+  var labels: {[label: string]: number} = {};
   var waitingLabels: any = {};
   var ptr = 0;
   for (var c of commands) {
@@ -1970,13 +1970,14 @@ export function ASMTranspile(code: string) {
 
     if (dbArgs.length > 0) {
       var parsedArgs = dbArgs.matchAll(
-        /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')),?\s*)/gim
+        /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
       );
       for (var a of parsedArgs) {
         var stringBody = a[1] ?? "";
         var hexBody = a[2] ?? "";
         var numberBody = a[3] ?? "";
         var charBody = a[4] ?? "";
+        var labelBody = a[5] ?? "";
         if (numberBody.length > 0) {
           var v = +numberBody;
           heap[ptr++] = v & 255;
@@ -1994,6 +1995,16 @@ export function ASMTranspile(code: string) {
           }
           heap[ptr++] = v & 255;
           heap[ptr++] = (v >> 8) & 255;
+        } else if (labelBody.length > 0) {
+          if (labels[labelBody]) {
+            var v = labels[labelBody];
+            heap[ptr++] = v & 255;
+            heap[ptr++] = (v >> 8) & 255;
+          } else {
+            if (!waitingLabels[labelBody]) waitingLabels[labelBody] = [];
+            waitingLabels[labelBody].push(ptr);
+            ptr += 2;
+          }
         } else {
           for (var i = 0; i < stringBody.length; i++) {
             heap[ptr++] = stringBody.charCodeAt(i);
@@ -2014,10 +2025,10 @@ export function ASMTranspile(code: string) {
       if (argNumber.length > 0) argV = +argNumber;
       else if (argHex.length > 2) argV = +argHex;
       else if (argChar.length > 2) {
-        if (charBody === "'\"'") {
+        if (argChar === "'\"'") {
           argV = 32;
         } else {
-          argV = JSON.parse(charBody.replace(/'(\\?.)'/, '"$1"')).charCodeAt(0);
+          argV = JSON.parse(argChar.replace(/'(\\?.)'/, '"$1"')).charCodeAt(0);
         }
       } else if (argLabel.length > 0) {
         if (argLabel.toUpperCase() === "_IP")
@@ -2063,7 +2074,7 @@ export class ASMInterpreter {
   constructor(code: string) {
     this.Code = code;
     var commands = code.matchAll(
-      /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+      /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
     );
 
     var heap: number[] = [];
@@ -2092,13 +2103,14 @@ export class ASMInterpreter {
 
       if (dbArgs.length > 0) {
         var parsedArgs = dbArgs.matchAll(
-          /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')),?\s*)/gim
+          /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
         );
         for (var a of parsedArgs) {
           var stringBody = a[1] ?? "";
           var hexBody = a[2] ?? "";
           var numberBody = a[3] ?? "";
           var charBody = a[4] ?? "";
+          var labelBody = a[5] ?? "";
           if (numberBody.length > 0) {
             heap[ptr++] = +numberBody;
           } else if (hexBody.length > 2) {
@@ -2114,6 +2126,15 @@ export class ASMInterpreter {
               );
             }
             heap[ptr++] = v;
+          } else if (labelBody.length > 0) {
+            if (labels[labelBody] !== undefined) {
+              heap[ptr++] = labels[labelBody];
+            } else {
+              if (waitingLabels[labelBody] === undefined)
+                waitingLabels[labelBody] = [];
+              waitingLabels[labelBody].push(ptr);
+              ptr++;
+            }
           } else {
             for (var i = 0; i < stringBody.length; i++) {
               heap[ptr++] = stringBody.charCodeAt(i);
@@ -2132,10 +2153,10 @@ export class ASMInterpreter {
         if (argNumber.length > 0) argV = +argNumber;
         else if (argHex.length > 2) argV = +argHex;
         else if (argChar.length > 2) {
-          if (charBody === "'\"'") {
+          if (argChar === "'\"'") {
             argV = 32;
           } else {
-            argV = JSON.parse(charBody.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
+            argV = JSON.parse(argChar.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
               0
             );
           }

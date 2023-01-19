@@ -39,6 +39,16 @@ export class Class extends Statement {
       null;
     while (member !== null) {
       if (member instanceof FunctionDefinition) {
+        if(!member.IsMeta){
+          var falseClaimer = new Claimer("");
+          var falseFlag = falseClaimer.Flag();
+          var declareThis = new VariableDecleration(falseClaimer, falseFlag);
+          declareThis.Identifier = new Identifier(falseClaimer, falseFlag);
+          declareThis.Identifier.Name = "this";
+          declareThis.Type = new VarType(falseClaimer, falseFlag);
+          declareThis.Type.TypeName = className.Name;
+          member.Args.unshift(declareThis);
+        }
         if (!(member.Target instanceof Identifier)) {
           flg.Fail();
           return null;
@@ -76,7 +86,7 @@ export class Class extends Statement {
       for (var id in parent.MetaMethods) {
         typeDef.MetaMethods[id] = parent.MetaMethods[id].concat();
       }
-      for (var name in parent.Children) {
+      for (let name in parent.Children) {
         typeDef.Children[name] = parent.Children[name];
       }
       typeDef.Size = parent.Size;
@@ -104,13 +114,28 @@ export class Class extends Statement {
           continue;
         }
       }
+      let name: Identifier = member instanceof FunctionDefinition ? member.Target as Identifier : (member as VariableDecleration).Identifier!;
+      let type: VarType;
+      if(member instanceof FunctionDefinition) {
+        var ftype = new FuncType(member.Claimer, member.Claim);
+        ftype.RetTypes = member.RetTypes;
+        ftype.ArgTypes = member.Args.map((c) => c.Type!);
+        type = ftype;
+      } else {
+        type = member.Type!;
+      }
+      typeDef.Children[name.Name] = [type, typeDef.Size++, member instanceof FunctionDefinition ? member.Label : "0"];
     }
     return true;
   }
 
   Evaluate(scope: Scope): string[] {
     for (var i = 0; i < this.Members.length; i++) {
-      this.Members[i].Evaluate(scope);
+      var member = this.Members[i];
+      if (member instanceof FunctionDefinition) {
+        member.IsMeta = true;
+        member.Evaluate(scope);
+      }
     }
     return [];
   }
