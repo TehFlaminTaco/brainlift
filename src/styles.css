@@ -1,0 +1,79 @@
+.App {
+  font-family: sans-serif;
+}
+
+#bf {
+  display: flex;
+  flex-direction: row;
+}
+#code,
+#memory {
+  display: flex;
+  flex-direction: column;
+}
+
+#memory {
+  max-width: 50%;
+}
+
+#codeText {
+  overflow: auto;
+  max-height: 500px;
+  max-width: 500px;
+}
+
+#tabButtons {
+  display: flex;
+  flex-direction: row;
+}
+
+#tabButtons button {
+  border-radius: 4px 4px 0px 0px;
+  border: solid 1px darkgray;
+  width: max-content;
+  margin-bottom: -1px;
+  z-index: 2;
+}
+#tabButtons button.active {
+  background-color: white;
+  border-bottom: solid 1px white;
+}
+#tabButtons button:hover:not(.active) {
+  background-color: darkgray;
+}
+#tabBodies {
+  border: solid 1px darkgray;
+}
+
+.tab {
+  padding: 8px;
+}
+
+.pointer {
+  background-color: #8af;
+}
+
+.tab:not(.active) {
+  display: none;
+}
+
+.tape {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.memorycell {
+  border: solid 1px black;
+  margin-right: -1px;
+  font-family: monospace;
+  flex-direction: column;
+  justify-content: flex-end;
+  display: flex;
+  text-align: center;
+  width: 30px;
+  height: 30px;
+}
+.memorycell.selected {
+  background-color: #8af;
+}

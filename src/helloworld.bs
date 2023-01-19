@@ -1,0 +1,21 @@
+jmp Main
+
+Message:
+  db "Hello, World!", '\n', 0x00
+
+Print:
+  apopa
+  PrintLoop:
+    cpyab
+    ptrb
+    jnzb PrintWrite
+    ret
+  PrintWrite:
+    writeb
+    inca
+    jmp PrintLoop
+
+Main:
+  apush Message
+  call Print
+  halt
