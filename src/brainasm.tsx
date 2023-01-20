@@ -1179,6 +1179,42 @@ ${REG.Left()}
 ${REG.Left()}
 ${REG.Left()}`;
 }
+function NOTA() {
+  return `${REG.Right()}
+${REG.Right()}
+${REG.Right()}
+${REG.Right()}
+${REG.Right()}
+PUT ${STACK2} 1
+${IFSHORT(REG, `ZER ${STACK2}`)}
+${REG.ZerShort()}
+ADD ${STACK2} ${REG.LeftStack}
+${REG.Left()}
+${REG.Left()}
+${REG.Left()}
+${REG.Left()}
+${REG.Left()}
+`;
+}
+function NOTB() {
+  return `${REG.Right()}
+${REG.Right()}
+${REG.Right()}
+${REG.Right()}
+${REG.Right()}
+${REG.Right()}
+PUT ${STACK2} 1
+${IFSHORT(REG, `ZER ${STACK2}`)}
+${REG.ZerShort()}
+ADD ${STACK2} ${REG.LeftStack}
+${REG.Left()}
+${REG.Left()}
+${REG.Left()}
+${REG.Left()}
+${REG.Left()}
+${REG.Left()}
+`;
+}
 function READA() {
   return `${REG.Right()}
 ${REG.Right()}
@@ -1447,112 +1483,112 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     HALT(),
     (interp: ASMInterpreter, arg: number) => {
       interp.running = false;
-    }
+    },
   ],
   [
     "SETA",
     SETA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = arg;
-    }
+    },
   ],
   [
     "SETB",
     SETB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = arg;
-    }
+    },
   ],
   [
     "CPYAB",
     CPYAB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = interp.RegA;
-    }
+    },
   ],
   [
     "CPYBA",
     CPYBA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = interp.RegB;
-    }
+    },
   ],
   [
     "PTRA",
     PTRA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = interp.Heap[interp.RegA];
-    }
+    },
   ],
   [
     "PTRB",
     PTRB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = interp.Heap[interp.RegB];
-    }
+    },
   ],
   [
     "PUTBPTRA",
     PUTBPTRA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.Heap[interp.RegA] = interp.RegB;
-    }
+    },
   ],
   [
     "PUTAPTRB",
     PUTAPTRB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.Heap[interp.RegB] = interp.RegA;
-    }
+    },
   ],
   [
     "JMP",
     JMP(),
     (interp: ASMInterpreter, arg: number) => {
       interp.IP = arg;
-    }
+    },
   ],
   [
     "JMPA",
     JMPA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.IP = interp.RegA;
-    }
+    },
   ],
   [
     "JMPB",
     JMPB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.IP = interp.RegB;
-    }
+    },
   ],
   [
     "JNZA",
     JNZA(),
     (interp: ASMInterpreter, arg: number) => {
       if (interp.RegA !== 0) interp.IP = arg;
-    }
+    },
   ],
   [
     "JNZB",
     JNZB(),
     (interp: ASMInterpreter, arg: number) => {
       if (interp.RegB !== 0) interp.IP = arg;
-    }
+    },
   ],
   [
     "JBNZA",
     JBNZA(),
     (interp: ASMInterpreter, arg: number) => {
       if (interp.RegA === 0) interp.IP = interp.RegB;
-    }
+    },
   ],
   [
     "JANZB",
     JANZB(),
     (interp: ASMInterpreter, arg: number) => {
       if (interp.RegB === 0) interp.IP = interp.RegA;
-    }
+    },
   ],
   [
     "CALL",
@@ -1562,7 +1598,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.StackB.push(interp.RegB);
       interp.StackB.push(interp.RegA);
       interp.IP = arg;
-    }
+    },
   ],
   [
     "CALLA",
@@ -1572,7 +1608,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.StackB.push(interp.RegB);
       interp.StackB.push(interp.RegA);
       interp.IP = interp.RegA;
-    }
+    },
   ],
   [
     "CALLB",
@@ -1582,7 +1618,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.StackB.push(interp.RegB);
       interp.StackB.push(interp.RegA);
       interp.IP = interp.RegB;
-    }
+    },
   ],
   [
     "RET",
@@ -1591,7 +1627,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.RegA = interp.StackB.pop() ?? 0;
       interp.RegB = interp.StackB.pop() ?? 0;
       interp.IP = interp.StackB.pop() ?? 0;
-    }
+    },
   ],
   [
     "INCA",
@@ -1599,7 +1635,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA++;
       if (interp.RegA > 65535) interp.RegA = 0;
-    }
+    },
   ],
   [
     "INCB",
@@ -1607,7 +1643,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB++;
       if (interp.RegB > 65535) interp.RegB = 0;
-    }
+    },
   ],
   [
     "DECA",
@@ -1615,7 +1651,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA--;
       if (interp.RegA < 0) interp.RegA = 65535;
-    }
+    },
   ],
   [
     "DECB",
@@ -1623,7 +1659,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB--;
       if (interp.RegB < 0) interp.RegB = 65535;
-    }
+    },
   ],
   [
     "ADDA",
@@ -1631,7 +1667,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA += arg;
       interp.RegA &= 65535;
-    }
+    },
   ],
   [
     "ADDB",
@@ -1639,7 +1675,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB += arg;
       interp.RegB &= 65535;
-    }
+    },
   ],
   [
     "ADDAB",
@@ -1648,7 +1684,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.RegB += interp.RegA;
       interp.RegB &= 65535;
       interp.RegA = 0;
-    }
+    },
   ],
   [
     "ADDBA",
@@ -1657,7 +1693,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.RegA += interp.RegB;
       interp.RegA &= 65535;
       interp.RegB = 0;
-    }
+    },
   ],
   [
     "SUBA",
@@ -1665,7 +1701,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA -= arg;
       interp.RegA &= 65535;
-    }
+    },
   ],
   [
     "SUBB",
@@ -1673,7 +1709,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB -= arg;
       interp.RegB &= 65535;
-    }
+    },
   ],
   [
     "SUBAB",
@@ -1682,7 +1718,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.RegB -= interp.RegA;
       interp.RegB &= 65535;
       interp.RegA = 0;
-    }
+    },
   ],
   [
     "SUBBA",
@@ -1691,7 +1727,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.RegA -= interp.RegB;
       interp.RegA &= 65535;
       interp.RegB = 0;
-    }
+    },
   ],
   [
     "MULAB",
@@ -1700,7 +1736,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.RegB *= interp.RegA;
       interp.RegB &= 65535;
       interp.RegA = 0;
-    }
+    },
   ],
   [
     "MULBA",
@@ -1709,7 +1745,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
       interp.RegA *= interp.RegB;
       interp.RegA &= 65535;
       interp.RegB = 0;
-    }
+    },
   ],
   [
     "DIVAB",
@@ -1724,7 +1760,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
         interp.RegB = remainder;
         interp.RegA = quotient;
       }
-    }
+    },
   ],
   [
     "DIVBA",
@@ -1739,7 +1775,21 @@ export var INSTRUCTIONS: [string, string, Function][] = [
         interp.RegA = remainder;
         interp.RegB = quotient;
       }
-    }
+    },
+  ],
+  [
+    "NOTA",
+    NOTA(),
+    (interp: ASMInterpreter, arg: number) => {
+      interp.RegA = interp.RegA > 0 ? 1 : 0;
+    },
+  ],
+  [
+    "NOTB",
+    NOTB(),
+    (interp: ASMInterpreter, arg: number) => {
+      interp.RegB = interp.RegB > 0 ? 1 : 0;
+    },
   ],
   [
     "READA",
@@ -1747,7 +1797,7 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = interp.Input.charCodeAt(interp.InputPointer++);
       if (interp.InputPointer >= interp.Input.length) interp.InputPointer = 0;
-    }
+    },
   ],
   [
     "READB",
@@ -1755,21 +1805,21 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = interp.Input.charCodeAt(interp.InputPointer++);
       if (interp.InputPointer >= interp.Input.length) interp.InputPointer = 0;
-    }
+    },
   ],
   [
     "WRITEA",
     WRITEA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.Output += String.fromCharCode(interp.RegA);
-    }
+    },
   ],
   [
     "WRITEB",
     WRITEB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.Output += String.fromCharCode(interp.RegB);
-    }
+    },
   ],
   [
     "CMP",
@@ -1785,92 +1835,92 @@ export var INSTRUCTIONS: [string, string, Function][] = [
         interp.RegA = 0;
         interp.RegB = 0;
       }
-    }
+    },
   ],
   [
     "APUSH",
     APUSH(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackA.push(arg);
-    }
+    },
   ],
   [
     "BPUSH",
     BPUSH(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackB.push(arg);
-    }
+    },
   ],
   [
     "APUSHA",
     APUSHA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackA.push(interp.RegA);
-    }
+    },
   ],
   [
     "APUSHB",
     APUSHB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackA.push(interp.RegB);
-    }
+    },
   ],
   [
     "BPUSHA",
     BPUSHA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackB.push(interp.RegA);
-    }
+    },
   ],
   [
     "BPUSHB",
     BPUSHB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackB.push(interp.RegB);
-    }
+    },
   ],
   [
     "APOP",
     APOP(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackA.pop();
-    }
+    },
   ],
   [
     "BPOP",
     BPOP(),
     (interp: ASMInterpreter, arg: number) => {
       interp.StackB.pop();
-    }
+    },
   ],
   [
     "APOPA",
     APOPA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = interp.StackA.pop() ?? 0;
-    }
+    },
   ],
   [
     "APOPB",
     APOPB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = interp.StackA.pop() ?? 0;
-    }
+    },
   ],
   [
     "BPOPA",
     BPOPA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = interp.StackB.pop() ?? 0;
-    }
+    },
   ],
   [
     "BPOPB",
     BPOPB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = interp.StackB.pop() ?? 0;
-    }
-  ]
+    },
+  ],
 ];
 
 // Assumes instruction is in INSTRUCTION
@@ -1939,12 +1989,25 @@ END
 };
 
 export function ASMTranspile(code: string) {
+  var oldInstrs = INSTRUCTIONS;
   var commands = code.matchAll(
     /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
   );
+  var usedInstructions: string[] = [];
+  for (var c of commands) {
+    var command = c[4] ?? "";
+    if (command.length > 0 && !usedInstructions.includes(command)) {
+      usedInstructions.push(command);
+    }
+  }
+  INSTRUCTIONS = [];
+  for (var i = 0; i < oldInstrs.length; i++) {
+    var old = oldInstrs[i];
+    INSTRUCTIONS[i] = [old[0], "", old[2]];
+  }
 
   var heap: number[] = [];
-  var labels: {[label: string]: number} = {};
+  var labels: { [label: string]: number } = {};
   var waitingLabels: any = {};
   var ptr = 0;
   for (var c of commands) {
@@ -2055,7 +2118,9 @@ export function ASMTranspile(code: string) {
     if (i > 0) s += `PUT ${HEAP.RightStack} ${heap[i]}\n`;
     else s += `INC ${HEAP.LeftStack} ${heap[0]}`;
   }
-  return s + MAIN_LOOP();
+  s += MAIN_LOOP();
+  INSTRUCTIONS = oldInstrs;
+  return s;
 }
 
 export class ASMInterpreter {

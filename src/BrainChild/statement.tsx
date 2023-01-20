@@ -35,6 +35,8 @@ export abstract class Statement extends Token {
   }
 
   abstract Evaluate(scope: Scope): string[];
+
+  abstract DefinitelyReturns(): boolean;
 }
 
 Statement.RegisterTopLevel(Statement.Claim);

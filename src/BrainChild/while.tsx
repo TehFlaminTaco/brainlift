@@ -54,5 +54,8 @@ export class While extends Statement {
     o.push(`jmp ${condition}`, `${afterTrue}:`);
     return o;
   }
+  DefinitelyReturns(): boolean {
+    return false;
+  }
 }
 Statement.Register(While.Claim);

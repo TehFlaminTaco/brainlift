@@ -5,16 +5,14 @@ import { Statement } from "./statement";
 import { Scope } from "./Scope";
 import { VariableDecleration } from "./variabledefinition";
 import { VarType } from "./vartype";
-import { Assignable } from "./variable";
+import { Variable, Assignable } from "./variable";
 
 export class Assignment extends Statement {
   Targets: Assignable[] = [];
   Value: Expression | null = null;
-  DeferenceCount: number = 0;
   static Claim(claimer: Claimer): Assignment | null {
     var flag = claimer.Flag();
-    var target: Assignable | null =
-      VariableDecleration.Claim(claimer, true) ?? Identifier.Claim(claimer);
+    var target: Assignable | null = Variable.ClaimAssignable(claimer);
     if (target === null) {
       flag.Fail();
       return null;
@@ -23,10 +21,8 @@ export class Assignment extends Statement {
     while (target !== null) {
       targets.push(target);
       if (!claimer.Claim(/,/).Success) break;
-      target =
-        VariableDecleration.Claim(claimer, true) ?? Identifier.Claim(claimer);
+      target = Variable.ClaimAssignable(claimer);
     }
-    var deferences = claimer.Claim(/\**/)?.Body![0].length ?? 0;
     /* TODO: Add operator here */
     if (!claimer.Claim(/=/).Success) {
       flag.Fail();
@@ -40,7 +36,6 @@ export class Assignment extends Statement {
     var ass = new Assignment(claimer, flag);
     ass.Targets = targets;
     ass.Value = val;
-    ass.DeferenceCount = deferences;
     return ass;
   }
 
@@ -59,6 +54,10 @@ export class Assignment extends Statement {
     }
 
     return o;
+  }
+
+  DefinitelyReturns(): boolean {
+    return false;
   }
 }
 

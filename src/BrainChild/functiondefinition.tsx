@@ -146,6 +146,11 @@ export class FunctionDefinition extends Statement {
   }
 
   Evaluate(scope: Scope): string[] {
+    if (!this.Body!.DefinitelyReturns() && this.RetTypes.length > 0) {
+      throw new Error(
+        `Function ${this.Target} must return types ${this.RetTypes}`
+      );
+    }
     var falseClaimer = new Claimer("");
     var falseClaim = falseClaimer.Flag();
     var funcType = new FuncType(falseClaimer, falseClaim);
@@ -171,13 +176,16 @@ export class FunctionDefinition extends Statement {
       o.push(`  seta ${this.Args[i].Label}`, `  apopb`, `  putbptra`);
     }
     o.push(...this.Body!.Evaluate(bodyScope).map((c) => "  " + c));
-    for (let i = 0; i < this.RetTypes.length; i++) {
-      o.push(`  apush 0`);
+    if (!this.Body!.DefinitelyReturns()) {
+      if (this.RetTypes.length > 0) throw new Error("Impossible");
+      o.push(`  ret`);
     }
-    o.push(`  ret`);
     scope.Assembly.push(...o);
     if (this.IsMeta) return [];
     return [`apush ${label}`, ...this.Target!.Assign(scope, funcType)];
+  }
+  DefinitelyReturns(): boolean {
+    return false;
   }
 }
 

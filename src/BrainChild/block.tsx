@@ -33,5 +33,12 @@ export class Block extends Statement {
     }
     return o;
   }
+
+  DefinitelyReturns(): boolean {
+    for (let i = 0; i < this.Statements.length; i++) {
+      if (this.Statements[i].DefinitelyReturns()) return true;
+    }
+    return false;
+  }
 }
 Statement.Register(Block.Claim);

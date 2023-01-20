@@ -32,8 +32,9 @@ export var Keywords = [
   "label",
   "metamethod",
   "return",
+  "static",
   "void",
-  "while"
+  "while",
 ];
 
 export class Claim {
@@ -93,6 +94,7 @@ export class Claimer {
 
 export function Parse(code: string): Scope {
   var scope = new Scope();
+  Scope.CURRENT = scope;
   scope.Assembly.push(`jmp postdata`);
   var claimer = new Claimer(code);
   var statements = [];
@@ -117,6 +119,7 @@ export function Parse(code: string): Scope {
   }
   scope.Assembly.push("postdata:", ...o);
   scope.Assembly.push(`halt`);
+  if (scope.UsingAllocator()) scope.Assembly.push(`aftercode: db aftercode, 2`);
   console.dir(statements);
   console.dir(scope);
 
