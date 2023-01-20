@@ -65,5 +65,8 @@ export class If extends Statement {
     o.push(`${afterTrue}:`);
     return o;
   }
+  DefinitelyReturns(): boolean {
+    return this.Else!=null && this.Body!.DefinitelyReturns() && this.Else!.DefinitelyReturns();
+  }
 }
 Statement.Register(If.Claim);

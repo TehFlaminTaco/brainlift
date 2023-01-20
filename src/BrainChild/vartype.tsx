@@ -7,7 +7,7 @@ import {
   TypeInt,
   GeneratePointerType,
   TypeDefinition,
-  GenerateFuncType
+  GenerateFuncType,
 } from "./Types";
 
 /*
@@ -22,6 +22,7 @@ export class VarType extends Token {
   static IntPtr: VarType;
   static VoidPtr: VarType;
   static Any: VarType;
+  static Type: VarType;
 
   static Claim(claimer: Claimer): VarType | null {
     var ftype = FuncType.Claim(claimer);
@@ -63,18 +64,33 @@ export class VarType extends Token {
     );
   }
 
-  AssignableFrom(other: VarType): boolean {
+  AssignableFrom(other: VarType, directly: boolean = false): boolean {
     if (this.TypeName === "var") return true;
     if (this.TypeName === "void") {
       return this.PointerDepth <= other.PointerDepth;
     }
+    if (
+      !(other instanceof FuncType) &&
+      this.TypeName === other.TypeName &&
+      this.PointerDepth <= other.PointerDepth
+    )
+      return true;
+    if (!directly) {
+      var typeDef = this.GetDefinition();
+      var meta = typeDef.GetMetamethod("cast", [other], true, true);
+      var otherType = other.GetDefinition();
+      if (meta && meta[0].length > 0 && this.AssignableFrom(meta[0][0], true)) {
+        return true;
+      }
+      meta = otherType.GetMetamethod("cast", [other], true, true);
+      if (meta && meta[0].length > 0 && this.AssignableFrom(meta[0][0], true)) {
+        return true;
+      }
+    }
     if (other instanceof FuncType) {
       return false;
     }
-    return (
-      this.TypeName === other.TypeName &&
-      this.PointerDepth <= other.PointerDepth
-    );
+    return false;
   }
 
   ConvertFrom(other: VarType): string[] {
@@ -82,6 +98,30 @@ export class VarType extends Token {
       throw new Error(`Cannot convert from ${other} to ${this}!`);
     var o: string[] = [];
     if (this.TypeName === "void") {
+      return o;
+    }
+    var typeDef = this.GetDefinition();
+    var otherType = other.GetDefinition();
+    var meta = typeDef.GetMetamethod("cast", [other]);
+    if (
+      meta !== null &&
+      meta[0].length > 0 &&
+      this.AssignableFrom(meta[0][0], true)
+    ) {
+      o.push(...meta[2]);
+      for (var i = 1; i < meta[0].length; i++) o.push(`apop`);
+      o.push(...this.ConvertFrom(meta[0][0]));
+      return o;
+    }
+    meta = otherType.GetMetamethod("cast", [other]);
+    if (
+      meta !== null &&
+      meta[0].length > 0 &&
+      this.AssignableFrom(meta[0][0], true)
+    ) {
+      o.push(...meta[2]);
+      for (var i = 1; i < meta[0].length; i++) o.push(`apop`);
+      o.push(...this.ConvertFrom(meta[0][0]));
       return o;
     }
     if (this.PointerDepth < other.PointerDepth) {
@@ -186,7 +226,9 @@ export class VarType extends Token {
     }
     if (this.TypeName === "int") return TypeInt;
     if (this.TypeName === "void") return TypeVoid;
-    throw new Error("TODO: User Types");
+    var userType = Scope.CURRENT.UserTypes[this.TypeName];
+    if (!userType) throw new Error(`Undefined type ${this.TypeName}`);
+    return userType;
   }
 }
 

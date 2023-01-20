@@ -9,15 +9,20 @@ export class VariableDecleration extends Statement implements Assignable {
   Type: VarType | null = null;
   Identifier: Identifier | null = null;
   Label: string = "";
-  static Claim(claimer: Claimer, allowAny: boolean = false): VariableDecleration | null {
+  static Claim(
+    claimer: Claimer,
+    allowAny: boolean = false
+  ): VariableDecleration | null {
     var flag = claimer.Flag();
-    var typ: VarType|null;
-    if(claimer.Claim(/any\b/).Success){
-      if(!allowAny){
-        throw new Error("Variable defintion must include known type if not provided when defined.")
+    var typ: VarType | null;
+    if (claimer.Claim(/any\b/).Success) {
+      if (!allowAny) {
+        throw new Error(
+          "Variable defintion must include known type if not provided when defined."
+        );
       }
-      typ = VarType.Any
-    }else{
+      typ = VarType.Any;
+    } else {
       typ = VarType.Claim(claimer);
       if (typ === null) {
         flag.Fail();
@@ -36,17 +41,24 @@ export class VariableDecleration extends Statement implements Assignable {
   }
 
   Evaluate(scope: Scope): string[] {
-    if(this.Type !== VarType.Any)this.Label = scope.Set(this.Identifier!.Name, this.Type!);
+    if (this.Type !== VarType.Any)
+      this.Label = scope.Set(this.Identifier!.Name, this.Type!);
     return [];
   }
 
   Assign(scope: Scope, anyType: VarType): string[] {
-    this.Label ||= scope.Set(this.Identifier!.Name, this.Type!.TypeName==="var" ? anyType : this.Type!);
+    this.Label ||= scope.Set(
+      this.Identifier!.Name,
+      this.Type!.TypeName === "var" ? anyType : this.Type!
+    );
     return [`apopb`, `seta ${this.Label}`, `putbptra`];
   }
 
   GetType(scope: Scope): VarType {
     return this.Type!;
+  }
+  DefinitelyReturns(): boolean {
+    return false;
   }
 }
 

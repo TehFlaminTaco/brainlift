@@ -56,5 +56,8 @@ export class Return extends Statement {
     if (!tailCall) o.push(`ret`);
     return o;
   }
+  DefinitelyReturns(): boolean {
+    return true;
+  }
 }
 Statement.Register(Return.Claim);

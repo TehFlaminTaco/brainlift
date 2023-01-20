@@ -1,0 +1,21 @@
+function alloc(int size) -> int*{
+    int* table;
+    asm {seta [table]
+         setb aftercode
+         putbptra}
+    int lastSize;
+    while((((*(table+1))<(size+3))*(*(table+1))) + *table){
+        table = table + 1 + *(table + 1);
+    }
+    int nextSize = *(table+1);
+    if(nextSize > 0){
+        nextSize = (nextSize - size) - 2;
+        *(table+size+2) = nextSize;
+    }
+    *table = 1;
+    *(table+1) = size;
+    return table+2;
+}
+function free(void* p){
+    *(p-2 -> int*) = 0;
+}

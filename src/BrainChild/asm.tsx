@@ -29,5 +29,9 @@ export class ASM extends Statement {
       c.replace(/\[([a-zA-Z_]\w*\b)\]/, (_, a) => scope.Get(a)[1])
     );
   }
+
+  DefinitelyReturns(): boolean {
+    return false;
+  }
 }
 Statement.Register(ASM.Claim);

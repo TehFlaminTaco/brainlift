@@ -77,3 +77,8 @@
 .memorycell.selected {
   background-color: #8af;
 }
+
+span.error {
+  color: white;
+  background-color: red;
+}

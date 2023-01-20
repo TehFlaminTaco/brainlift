@@ -24,6 +24,7 @@ import "./BrainChild/stringconstant";
 import "./BrainChild/variabledefinition";
 import "./BrainChild/asm";
 import "./BrainChild/reference";
+import "./BrainChild/dereference";
 import "./BrainChild/call";
 import "./BrainChild/expressionstatement";
 import "./BrainChild/math";
@@ -45,29 +46,33 @@ export default function App() {
         value.replace(/\\\s*?\n/g, "\\\\n").replace(/\\\s*?$/g, ""),
         (err: any, result: string) => {
           if (err) return;
-          result = Scope.ObliterateRedundancies(Parse(result).Assembly).join(
-            "\n"
-          );
-          var compiledResult = ASMTranspile(result);
-          if (bfInterp === undefined && bmInterp === undefined) {
-            bsInterp = new ASMInterpreter(result);
-            document.getElementById("codeText")!.innerHTML = result;
-            bsInterp.RenderMemory(activeMemory);
-          } else if (bfInterp !== undefined) {
-            var bfCode = Transpile(compiledResult);
-            bmInterp = undefined;
-            bfInterp = new Interpreter(bfCode);
+          try {
+            result = Scope.ObliterateRedundancies(Parse(result).Assembly).join(
+              "\n"
+            );
+            var compiledResult = ASMTranspile(result);
+            if (bfInterp === undefined && bmInterp === undefined) {
+              bsInterp = new ASMInterpreter(result);
+              document.getElementById("codeText")!.innerHTML = result;
+              bsInterp.RenderMemory(activeMemory);
+            } else if (bfInterp !== undefined) {
+              var bfCode = Transpile(compiledResult);
+              bmInterp = undefined;
+              bfInterp = new Interpreter(bfCode);
+              document.getElementById("codeText")!.innerHTML =
+                bfInterp.CodeWithPointerHighlight();
+              bfInterp.RenderMemory(activeMemory);
+            } else if (bmInterp !== undefined) {
+              bmInterp = new MetaInterpreter(compiledResult);
+              bfInterp = undefined;
+              document.getElementById("codeText")!.innerHTML =
+                bmInterp.CodeWithPointerHighlight();
+              bmInterp.RenderMemory(activeMemory);
+            }
+          } catch (e: any) {
             document.getElementById(
               "codeText"
-            )!.innerHTML = bfInterp.CodeWithPointerHighlight();
-            bfInterp.RenderMemory(activeMemory);
-          } else if (bmInterp !== undefined) {
-            bmInterp = new MetaInterpreter(compiledResult);
-            bfInterp = undefined;
-            document.getElementById(
-              "codeText"
-            )!.innerHTML = bmInterp.CodeWithPointerHighlight();
-            bmInterp.RenderMemory(activeMemory);
+            )!.innerHTML = `<span class='error'>${e.stack}</span>`;
           }
         }
       );
@@ -84,16 +89,14 @@ export default function App() {
     }
     if (bfInterp !== undefined) {
       bfInterp.Step();
-      document.getElementById(
-        "codeText"
-      )!.innerHTML = bfInterp.CodeWithPointerHighlight();
+      document.getElementById("codeText")!.innerHTML =
+        bfInterp.CodeWithPointerHighlight();
       bfInterp.RenderMemory(activeMemory);
       document.getElementById("output")!.innerText = bfInterp.Output;
     } else if (bmInterp !== undefined) {
       bfInterp = bmInterp.ToBF();
-      document.getElementById(
-        "codeText"
-      )!.innerHTML = bfInterp.CodeWithPointerHighlight();
+      document.getElementById("codeText")!.innerHTML =
+        bfInterp.CodeWithPointerHighlight();
       bfInterp.RenderMemory(activeMemory);
       bmInterp = undefined;
     }
@@ -106,16 +109,14 @@ export default function App() {
     }
     if (bfInterp !== undefined) {
       bmInterp = MetaInterpreter.FromBF(bfInterp);
-      document.getElementById(
-        "codeText"
-      )!.innerHTML = bmInterp.CodeWithPointerHighlight();
+      document.getElementById("codeText")!.innerHTML =
+        bmInterp.CodeWithPointerHighlight();
       bmInterp.RenderMemory(activeMemory);
       bfInterp = undefined;
     } else if (bmInterp !== undefined) {
       bmInterp.Step();
-      document.getElementById(
-        "codeText"
-      )!.innerHTML = bmInterp.CodeWithPointerHighlight();
+      document.getElementById("codeText")!.innerHTML =
+        bmInterp.CodeWithPointerHighlight();
       document.getElementById("output")!.innerText = bmInterp.Output;
       bmInterp.RenderMemory(activeMemory);
     }
@@ -128,18 +129,16 @@ export default function App() {
     }
     if (bfInterp !== undefined) {
       bmInterp = MetaInterpreter.FromBF(bfInterp);
-      document.getElementById(
-        "codeText"
-      )!.innerHTML = bmInterp.CodeWithPointerHighlight();
+      document.getElementById("codeText")!.innerHTML =
+        bmInterp.CodeWithPointerHighlight();
       bmInterp.RenderMemory(activeMemory);
       bfInterp = undefined;
     } else if (bmInterp !== undefined) {
       for (var i = 0; i < 10; i++) {
         bmInterp.Step();
       }
-      document.getElementById(
-        "codeText"
-      )!.innerHTML = bmInterp.CodeWithPointerHighlight();
+      document.getElementById("codeText")!.innerHTML =
+        bmInterp.CodeWithPointerHighlight();
       document.getElementById("output")!.innerText = bmInterp.Output;
       bmInterp.RenderMemory(activeMemory);
     }
@@ -166,18 +165,16 @@ export default function App() {
         }
         if (bfInterp !== undefined) {
           bmInterp = MetaInterpreter.FromBF(bfInterp);
-          document.getElementById(
-            "codeText"
-          )!.innerHTML = bmInterp.CodeWithPointerHighlight();
+          document.getElementById("codeText")!.innerHTML =
+            bmInterp.CodeWithPointerHighlight();
           bmInterp.RenderMemory(activeMemory);
           bfInterp = undefined;
         } else if (bmInterp !== undefined) {
           for (var i = 0; i < 1000; i++) {
             bmInterp.Step();
           }
-          document.getElementById(
-            "codeText"
-          )!.innerHTML = bmInterp.CodeWithPointerHighlight();
+          document.getElementById("codeText")!.innerHTML =
+            bmInterp.CodeWithPointerHighlight();
           document.getElementById("output")!.innerText = bmInterp.Output;
           bmInterp.RenderMemory(activeMemory);
         }

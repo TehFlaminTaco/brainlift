@@ -21,5 +21,8 @@ export class ExpressionStatement extends Statement {
     }
     return o;
   }
+  DefinitelyReturns(): boolean {
+    return false;
+  }
 }
 Statement.Register(ExpressionStatement.Claim);
