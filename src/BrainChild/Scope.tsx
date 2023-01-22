@@ -1,6 +1,8 @@
 import { VarType } from "./vartype";
 import { Guid } from "js-guid";
 import { TypeDefinition } from "./Types";
+import { Claimer } from "./brainchild"
+import { FuncType } from "./vartype"
 
 export class Scope {
   static CURRENT: Scope;
@@ -28,7 +30,168 @@ export class Scope {
     if (this.UsingAllocator()) return;
     this.SetAllocator();
     var asm: string[] = [];
-    asm.push(`alloc:`);
+    asm.push(...`vAllocTable: db 0
+vAllocSize: db 0
+alloc:
+    seta vAllocTable
+    setb aftercode
+    putbptra
+    seta vAllocSize
+    apopb
+    putbptra
+    wAllocCond:
+        seta vAllocTable
+        ptra
+        ptra
+        jnza wAllocBody
+        seta vAllocTable
+        ptra
+        inca
+        ptra
+        nota
+        jnza wAllocDone
+        seta vAllocTable
+        ptra
+        inca
+        ptra
+        setb vAllocSize
+        ptrb
+        addb 3
+        cmp
+        jnzb wAllocBody
+        jmp wAllocDone
+    wAllocBody:
+        seta vAllocTable
+        ptra
+        setb vAllocTable
+        ptrb
+        incb
+        ptrb
+        addba
+        adda 2
+        setb vAllocTable
+        putaptrb
+        jmp wAllocCond
+    wAllocDone:
+    seta vAllocTable
+    ptra
+    inca
+    ptra
+    jnza fAllocSlip
+    jmp fAllocSlipDone
+    fAllocSlip:
+        setb vAllocSize
+        ptrb
+        subba
+        suba 2
+        apusha
+        seta vAllocTable
+        ptra
+        setb vAllocSize
+        ptrb
+        addba
+        adda 2
+        setb 0
+        putbptra
+        inca
+        apopb
+        putbptra
+    fAllocSlipDone:
+    seta vAllocTable
+    ptra
+    setb 1
+    putbptra
+    inca
+    setb vAllocSize
+    ptrb
+    putbptra
+    inca
+    apusha
+    ret
+
+vFreeTable: db 0
+vFreeTarget: db 0
+vFreeLast: db 0
+free:
+    seta vFreeTable
+    setb aftercode
+    putbptra
+    seta vFreeTarget
+    apopb
+    subb 2
+    putbptra
+    wFreeCond:
+        seta vFreeTable
+        ptra
+        setb vFreeTarget
+        ptrb
+        cmp
+        notb
+        jnzb wFreeDone
+        seta vFreeLast
+        setb vFreeTable
+        ptrb
+        putbptra
+        seta vFreeTable
+        ptra
+        setb vFreeTable
+        ptrb
+        incb
+        ptrb
+        addba
+        adda 2
+        setb vFreeTable
+        putaptrb
+        jmp wFreeCond
+    wFreeDone:
+    seta vFreeTable
+    ptra
+    setb vFreeTarget
+    ptrb
+    subab
+    notb
+    jnzb fFreeClear
+    ret
+    fFreeClear:
+        seta vFreeTable
+        ptra
+        setb 0
+        putbptra
+        seta vFreeLast
+        ptra
+        ptra
+        jnza fFreeDone
+        seta vFreeTarget
+        ptra
+        inca
+        ptra
+        setb vFreeLast
+        ptrb
+        incb
+        ptrb
+        addab
+        addb 2
+        seta vFreeLast
+        ptra
+        inca
+        putbptra
+    fFreeDone:
+    ret`.split('\n'));
+    this.Assembly.push(...asm);
+    var falseClaimer = new Claimer("");
+    var falseFlag = falseClaimer.Flag();
+    var allocType = new FuncType(falseClaimer, falseFlag);
+    allocType.ArgTypes = [VarType.Int];
+    allocType.RetTypes = [VarType.VoidPtr];
+    var freeType = new FuncType(falseClaimer, falseFlag);
+    freeType.ArgTypes = [VarType.VoidPtr];
+    freeType.RetTypes = [];
+    this.Set('alloc', allocType, false);
+    this.Set('free', freeType, false);
+    var allocV = this.Get('alloc');
+    var freeV = this.Get('free');
+    this.Assembly.push(`${allocV[1]}: db alloc`);
+    this.Assembly.push(`${freeV[1]}: db free`);
   }
 
   GetSafeName(name: string) {

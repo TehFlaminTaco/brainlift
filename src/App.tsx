@@ -2,7 +2,7 @@ import "./styles.css";
 import { MetaInterpreter, Transpile } from "./brainmeta";
 import React, { useState, ChangeEvent, MouseEventHandler } from "react";
 import { Interpreter } from "./bf";
-import { MAIN_LOOP, ASMInterpreter, ASMTranspile } from "./brainasm";
+import { ASMInterpreter, ASMTranspile } from "./brainasm";
 import AceEditor from "react-ace";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/mode-lua";
@@ -14,6 +14,7 @@ import { Scope } from "./BrainChild/Scope";
 import "./BrainChild/block";
 import "./BrainChild/functiondefinition";
 import "./BrainChild/class";
+import "./BrainChild/new";
 import "./BrainChild/if";
 import "./BrainChild/while";
 import "./BrainChild/return";
@@ -42,27 +43,36 @@ export default function App() {
   async function handleChange(value: string, event: ChangeEvent) {
     console.clear();
     try {
+      console.log("compiling...");
+      var t = Date.now();
       compiler.compile(
         value.replace(/\\\s*?\n/g, "\\\\n").replace(/\\\s*?$/g, ""),
         (err: any, result: string) => {
           if (err) return;
           try {
-            result = Scope.ObliterateRedundancies(Parse(result).Assembly).join(
-              "\n"
-            );
-            var compiledResult = ASMTranspile(result);
+            console.log(`preprocessed in ${Date.now() - t}ms`);
+            t = Date.now();
+            var parsed = Parse(result).Assembly;
+            console.log(`parsed in ${Date.now() - t}ms`);
+            t = Date.now();
+            parsed = Scope.ObliterateRedundancies(parsed);
+            console.log(`optimized in ${Date.now() - t}ms`);
+            t = Date.now();
             if (bfInterp === undefined && bmInterp === undefined) {
-              bsInterp = new ASMInterpreter(result);
-              document.getElementById("codeText")!.innerHTML = result;
+              bsInterp = new ASMInterpreter(parsed);
+              console.log(`compiled in ${Date.now() - t}ms`);
+              document.getElementById("codeText")!.innerHTML = parsed.join('\n');
               bsInterp.RenderMemory(activeMemory);
             } else if (bfInterp !== undefined) {
+              let compiledResult = ASMTranspile(parsed.join('\n'));
               var bfCode = Transpile(compiledResult);
               bmInterp = undefined;
               bfInterp = new Interpreter(bfCode);
               document.getElementById("codeText")!.innerHTML =
-                bfInterp.CodeWithPointerHighlight();
+              bfInterp.CodeWithPointerHighlight();
               bfInterp.RenderMemory(activeMemory);
             } else if (bmInterp !== undefined) {
+              let compiledResult = ASMTranspile(parsed.join('\n'));
               bmInterp = new MetaInterpreter(compiledResult);
               bfInterp = undefined;
               document.getElementById("codeText")!.innerHTML =

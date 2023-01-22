@@ -31,6 +31,7 @@ export var Keywords = [
   "int",
   "label",
   "metamethod",
+  "new",
   "return",
   "static",
   "void",

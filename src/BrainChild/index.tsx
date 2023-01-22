@@ -10,7 +10,7 @@ export class Index
   implements LeftDonor, ReadWritable, Referenceable
 {
   Left: Expression | null = null;
-  Right: Identifier | null = null;
+  Target: Identifier | null = null;
   Precedence: number = 17;
   LeftRightAssociative: boolean = true;
 
@@ -30,7 +30,7 @@ export class Index
     var name = Identifier.Claim(claimer);
     var indx = new Index(claimer, left.Claim);
     indx.Left = left;
-    indx.Right = name;
+    indx.Target = name;
     return indx;
   }
 
@@ -45,7 +45,7 @@ export class Index
     }
     var vType = valRes[0][0];
     var typeDef = vType.GetDefinition();
-    var targetName = this.Right!.Name;
+    var targetName = this.Target!.Name;
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
     o.push(`apopa`, `adda ${child[1]}`, `ptra`, `apusha`);
@@ -63,7 +63,7 @@ export class Index
     }
     var vType = valRes[0][0];
     var typeDef = vType.GetDefinition();
-    var targetName = this.Right!.Name;
+    var targetName = this.Target!.Name;
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
     o.push(`apopa`, `apopb`, `adda ${child[1]}`, `putbptra`);
@@ -80,7 +80,7 @@ export class Index
     }
     var vType = valRes[0][0];
     var typeDef = vType.GetDefinition();
-    var targetName = this.Right!.Name;
+    var targetName = this.Target!.Name;
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
     o.push(`apopa`, `adda ${child[1]}`, `ptra`, `apusha`);
@@ -92,7 +92,7 @@ export class Index
       throw new Error(`Cannot index expression that does not resolve in value`);
     var vType = valRes[0][0];
     var typeDef = vType.GetDefinition();
-    var targetName = this.Right!.Name;
+    var targetName = this.Target!.Name;
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
     return child[0];
@@ -108,7 +108,7 @@ export class Index
     }
     var vType = valRes[0][0];
     var typeDef = vType.GetDefinition();
-    var targetName = this.Right!.Name;
+    var targetName = this.Target!.Name;
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
     o.push(`apopa`, `adda ${child[1]}`, `apusha`);

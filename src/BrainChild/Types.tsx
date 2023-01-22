@@ -14,6 +14,7 @@ export class TypeDefinition {
 
   TypeType: TypeDefinition | null = null;
   ClassLabel: string = "";
+  Name: string = "";
 
   TryFallbacks(
     name: string,

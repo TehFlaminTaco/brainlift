@@ -1517,14 +1517,14 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     "PTRA",
     PTRA(),
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegA = interp.Heap[interp.RegA];
+      interp.RegA = interp.Heap[interp.RegA]??0;
     },
   ],
   [
     "PTRB",
     PTRB(),
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegB = interp.Heap[interp.RegB];
+      interp.RegB = interp.Heap[interp.RegB]??0;
     },
   ],
   [
@@ -1566,28 +1566,28 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     "JNZA",
     JNZA(),
     (interp: ASMInterpreter, arg: number) => {
-      if (interp.RegA !== 0) interp.IP = arg;
+      if (interp.RegA) interp.IP = arg;
     },
   ],
   [
     "JNZB",
     JNZB(),
     (interp: ASMInterpreter, arg: number) => {
-      if (interp.RegB !== 0) interp.IP = arg;
+      if (interp.RegB) interp.IP = arg;
     },
   ],
   [
     "JBNZA",
     JBNZA(),
     (interp: ASMInterpreter, arg: number) => {
-      if (interp.RegA === 0) interp.IP = interp.RegB;
+      if (interp.RegA) interp.IP = interp.RegB;
     },
   ],
   [
     "JANZB",
     JANZB(),
     (interp: ASMInterpreter, arg: number) => {
-      if (interp.RegB === 0) interp.IP = interp.RegA;
+      if (interp.RegB) interp.IP = interp.RegA;
     },
   ],
   [
@@ -1781,14 +1781,14 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     "NOTA",
     NOTA(),
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegA = interp.RegA > 0 ? 1 : 0;
+      interp.RegA = interp.RegA ? 0 : 1;
     },
   ],
   [
     "NOTB",
     NOTB(),
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegB = interp.RegB > 0 ? 1 : 0;
+      interp.RegB = interp.RegB ? 0 : 1;
     },
   ],
   [
@@ -1991,7 +1991,7 @@ END
 export function ASMTranspile(code: string) {
   var oldInstrs = INSTRUCTIONS;
   var commands = code.matchAll(
-    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
   );
   var usedInstructions: string[] = [];
   for (var c of commands) {
@@ -2136,114 +2136,203 @@ export class ASMInterpreter {
   InputPointer: number = 0;
   Output: string = "";
 
-  constructor(code: string) {
-    this.Code = code;
-    var commands = code.matchAll(
-      /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
-    );
+  constructor(code: string|string[]) {
+    if(typeof(code) ===  "string"){
+      this.Code = code;
+      var t = Date.now();
+      var commands = code.matchAll(
+        /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+      );
 
-    var heap: number[] = [];
-    var labels: any = {};
-    var waitingLabels: any = {};
-    var ptr = 0;
-    for (var c of commands) {
-      var label = c[1] ?? "";
-      var dbArgs = c[2] ?? "";
-      var command = c[4] ?? "";
-      var argNumber = c[5] ?? "";
-      var argLabel = c[6] ?? "";
-      var argChar = c[7] ?? "";
-      var argHex = c[8] ?? "";
+      var heap: number[] = [];
+      var labels: any = {};
+      var waitingLabels: any = {};
+      var commandTimes: number[] = [];
+      var ptr = 0;
+      for (var c of commands) {
+        let commandT = Date.now();
+        var label = c[1] ?? "";
+        var dbArgs = c[2] ?? "";
+        var command = c[4] ?? "";
+        var argNumber = c[5] ?? "";
+        var argLabel = c[6] ?? "";
+        var argChar = c[7] ?? "";
+        var argHex = c[8] ?? "";
 
-      if (label.length > 0) {
-        var l = ptr;
-        labels[label] = l;
-        if (waitingLabels[label]) {
-          waitingLabels[label].forEach((i: number) => {
-            heap[i] = l & 65535;
-          });
-          delete waitingLabels[label];
+        if (label.length > 0) {
+          var l = ptr;
+          labels[label] = l;
+          if (waitingLabels[label]) {
+            waitingLabels[label].forEach((i: number) => {
+              heap[i] = l & 65535;
+            });
+            delete waitingLabels[label];
+          }
         }
-      }
 
-      if (dbArgs.length > 0) {
-        var parsedArgs = dbArgs.matchAll(
-          /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
-        );
-        for (var a of parsedArgs) {
-          var stringBody = a[1] ?? "";
-          var hexBody = a[2] ?? "";
-          var numberBody = a[3] ?? "";
-          var charBody = a[4] ?? "";
-          var labelBody = a[5] ?? "";
-          if (numberBody.length > 0) {
-            heap[ptr++] = +numberBody;
-          } else if (hexBody.length > 2) {
-            var v = +hexBody;
-            heap[ptr++] = v;
-          } else if (charBody.length > 2) {
-            var v = 0;
-            if (charBody === "'\"'") {
-              v = 32;
+        if (dbArgs.length > 0) {
+          var parsedArgs = dbArgs.matchAll(
+            /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
+          );
+          for (var a of parsedArgs) {
+            var stringBody = a[1] ?? "";
+            var hexBody = a[2] ?? "";
+            var numberBody = a[3] ?? "";
+            var charBody = a[4] ?? "";
+            var labelBody = a[5] ?? "";
+            if (numberBody.length > 0) {
+              heap[ptr++] = +numberBody;
+            } else if (hexBody.length > 2) {
+              var v = +hexBody;
+              heap[ptr++] = v;
+            } else if (charBody.length > 2) {
+              var v = 0;
+              if (charBody === "'\"'") {
+                v = 32;
+              } else {
+                v = JSON.parse(charBody.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
+                  0
+                );
+              }
+              heap[ptr++] = v;
+            } else if (labelBody.length > 0) {
+              if (labels[labelBody] !== undefined) {
+                heap[ptr++] = labels[labelBody];
+              } else {
+                if (waitingLabels[labelBody] === undefined)
+                  waitingLabels[labelBody] = [];
+                waitingLabels[labelBody].push(ptr);
+                ptr++;
+              }
             } else {
-              v = JSON.parse(charBody.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
+              for (var i = 0; i < stringBody.length; i++) {
+                heap[ptr++] = stringBody.charCodeAt(i);
+              }
+            }
+          }
+        } else if (command.length > 0) {
+          var commandIndex = INSTRUCTIONS.findIndex(
+            (i) => i[0] === command.toUpperCase()
+          );
+          if (commandIndex < 0) {
+            console.log(`UNKNOWN COMMAND: ${command}`);
+          }
+          heap[ptr++] = commandIndex;
+          var argV = 0;
+          if (argNumber.length > 0) argV = +argNumber;
+          else if (argHex.length > 2) argV = +argHex;
+          else if (argChar.length > 2) {
+            if (argChar === "'\"'") {
+              argV = 32;
+            } else {
+              argV = JSON.parse(argChar.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
                 0
               );
             }
-            heap[ptr++] = v;
-          } else if (labelBody.length > 0) {
-            if (labels[labelBody] !== undefined) {
-              heap[ptr++] = labels[labelBody];
+          } else if (argLabel.length > 0) {
+            if (argLabel.toUpperCase() === "_IP") labels[argLabel] = ptr;
+            if (labels[argLabel] !== undefined) {
+              argV = labels[argLabel];
             } else {
-              if (waitingLabels[labelBody] === undefined)
-                waitingLabels[labelBody] = [];
-              waitingLabels[labelBody].push(ptr);
-              ptr++;
-            }
-          } else {
-            for (var i = 0; i < stringBody.length; i++) {
-              heap[ptr++] = stringBody.charCodeAt(i);
+              if (waitingLabels[argLabel] === undefined)
+                waitingLabels[argLabel] = [];
+              waitingLabels[argLabel].push(ptr);
             }
           }
+          heap[ptr++] = argV & 65535;
         }
-      } else if (command.length > 0) {
-        var commandIndex = INSTRUCTIONS.findIndex(
-          (i) => i[0] === command.toUpperCase()
-        );
-        if (commandIndex < 0) {
-          console.log(`UNKNOWN COMMAND: ${command}`);
-        }
-        heap[ptr++] = commandIndex;
-        var argV = 0;
-        if (argNumber.length > 0) argV = +argNumber;
-        else if (argHex.length > 2) argV = +argHex;
-        else if (argChar.length > 2) {
-          if (argChar === "'\"'") {
-            argV = 32;
-          } else {
-            argV = JSON.parse(argChar.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
-              0
-            );
-          }
-        } else if (argLabel.length > 0) {
-          if (argLabel.toUpperCase() === "_IP") labels[argLabel] = ptr;
-          if (labels[argLabel] !== undefined) {
-            argV = labels[argLabel];
-          } else {
-            if (waitingLabels[argLabel] === undefined)
-              waitingLabels[argLabel] = [];
-            waitingLabels[argLabel].push(ptr);
-          }
-        }
-        heap[ptr++] = argV & 65535;
+        commandTimes.push(Date.now() - commandT);
       }
-    }
+      console.log("Command Times: ");
+      console.dir(commandTimes);
+      console.log(`Total Time: ${Date.now() - t}ms`);
+      for (var name in waitingLabels) {
+        console.log("MISSING LABEL: " + name);
+      }
 
-    for (var name in waitingLabels) {
-      console.log("MISSING LABEL: " + name);
-    }
+      this.Heap = heap;
+    }else{
+      var t = Date.now();
+      this.Code = code.join('\n');
+      var heap: number[] = [];
+      var labels: any = {};
+      var waitingLabels: any = {};
+      var commandTimes: number[] = [];
+      var ptr = 0;
 
-    this.Heap = heap;
+      for(var i=0; i < code.length; i++){
+        var codel = code[i].match(/^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?$/);
+        if(!codel){
+          continue;
+        }
+        var label = codel[1] ?? "";
+        var dbArgs = codel[2] ?? "";
+        var command = codel[3] ?? "";
+        var argNumber = codel[4] ?? "";
+        var argLabel = codel[5] ?? "";
+
+        var commandT = Date.now();
+
+        if(label){
+          var l = ptr;
+          labels[label] = l;
+          if (waitingLabels[label]) {
+            waitingLabels[label].forEach((i: number) => {
+              heap[i] = l & 65535;
+            });
+            delete waitingLabels[label];
+          }
+        }
+        if(dbArgs.length > 0){
+          var argVals = dbArgs.matchAll(/(\d+)|([a-z_]\w*)/gi);
+          for (var argVal of argVals) {
+            var argNum = argVal[1] ?? "";
+            var argLab = argVal[2] ?? "";
+            if (argNum.length > 0) {
+              heap[ptr++] = +argNum;
+            } else if (argLab.length > 0) {
+              if (labels[argLab] !== undefined) {
+                heap[ptr++] = labels[argLab];
+              } else {
+                if (waitingLabels[argLab] === undefined)
+                  waitingLabels[argLab] = [];
+                waitingLabels[argLab].push(ptr);
+                ptr++;
+              }
+            }
+          }
+        }else if(command.length > 0){
+          var commandIndex = INSTRUCTIONS.findIndex(
+            (i) => i[0] === command.toUpperCase()
+          );
+          if (commandIndex < 0) {
+            console.log(`UNKNOWN COMMAND: ${command}`);
+          }
+          heap[ptr++] = commandIndex;
+          var argV = 0;
+          if (argNumber.length > 0) argV = +argNumber;
+          else if (argLabel.length > 0) {
+            if (argLabel.toUpperCase() === "_IP") labels[argLabel] = ptr;
+            if (labels[argLabel] !== undefined) {
+              argV = labels[argLabel];
+            } else {
+              if (waitingLabels[argLabel] === undefined)
+                waitingLabels[argLabel] = [];
+              waitingLabels[argLabel].push(ptr);
+            }
+          }
+          heap[ptr++] = argV & 65535;
+        }
+        commandTimes.push(Date.now() - commandT);
+      }
+      console.log("Command Times: ");
+      console.dir(commandTimes);
+      console.log(`Total Time: ${Date.now() - t}ms`);
+      for (var name in waitingLabels) {
+        console.log("MISSING LABEL: " + name);
+      }
+
+    }
   }
 
   ToMeta(): MetaInterpreter {
