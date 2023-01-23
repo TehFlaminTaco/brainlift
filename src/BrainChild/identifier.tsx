@@ -4,7 +4,10 @@ import { Scope } from "./Scope";
 import { ReadWritable, Referenceable, Variable } from "./variable";
 import { VarType } from "./vartype";
 
-export class Identifier extends Expression implements ReadWritable, Referenceable {
+export class Identifier
+  extends Expression
+  implements ReadWritable, Referenceable
+{
   Name: string = "";
   static Claim(claimer: Claimer): Identifier | null {
     var c = claimer.Claim(/[a-zA-Z_]\w*\b/);
@@ -34,7 +37,7 @@ export class Identifier extends Expression implements ReadWritable, Referenceabl
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var res = scope.Get(this.Name);
-    return [[res[0]], [`seta ${res[1]}`, `ptra`, `apusha`]]
+    return [[res[0]], [this.GetLine(), `seta ${res[1]}`, `ptra`, `apusha`]];
   }
 
   GetPointer(scope: Scope): string[] {
@@ -51,4 +54,4 @@ export class Identifier extends Expression implements ReadWritable, Referenceabl
 
 Variable.RegisterReadWritable(Identifier.Claim);
 Variable.RegisterReferenceable(Identifier.Claim);
-Expression.Register(Identifier.Claim)
+Expression.Register(Identifier.Claim);

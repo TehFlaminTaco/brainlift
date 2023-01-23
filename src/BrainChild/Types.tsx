@@ -11,6 +11,7 @@ export class TypeDefinition {
   Children: { [id: string]: [type: VarType, offset: number, initial: string] } =
     {};
   Size: number = 1;
+  Parent: TypeDefinition | null = null;
 
   TypeType: TypeDefinition | null = null;
   ClassLabel: string = "";
@@ -54,7 +55,11 @@ export class TypeDefinition {
     var mm = this.MetaMethods[name];
     if (mm === undefined)
       return canFallback ? this.TryFallbacks(name, argTypes) : null;
-    mm = mm.filter((c) => exactly ? VarType.AllEquals(c[1], argTypes) : VarType.CanCoax(c[1], argTypes));
+    mm = mm.filter((c) =>
+      exactly
+        ? VarType.AllEquals(c[1], argTypes)
+        : VarType.CanCoax(c[1], argTypes)
+    );
     if (mm.length === 0)
       return canFallback ? this.TryFallbacks(name, argTypes) : null;
     mm.sort(
@@ -82,6 +87,12 @@ export class TypeDefinition {
       this.MetaMethods[name] = [];
     }
     this.MetaMethods[name].push([returnTypes, argTypes, code]);
+  }
+
+  IsParent(other: TypeDefinition): boolean {
+    if (other === this) return true;
+    if (other.Parent === null) return false;
+    return this.IsParent(other.Parent);
   }
 }
 

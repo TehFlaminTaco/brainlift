@@ -28,7 +28,7 @@ export class While extends Statement {
   }
 
   Evaluate(scope: Scope): string[] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var condition = scope.GetSafeName(`whlcond${this.Condition!.toString()}`);
     var whileTrue = scope.GetSafeName(`whltrue${this.Condition!.toString()}`);
     var afterTrue = scope.GetSafeName(`whldone${this.Condition!.toString()}`);

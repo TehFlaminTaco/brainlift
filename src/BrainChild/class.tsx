@@ -68,7 +68,10 @@ export class Class extends Statement {
     while (member !== null) {
       if (member[1] instanceof FunctionDefinition) {
         var fnc = member[1] as FunctionDefinition;
-        if (!fnc.IsMeta && !member[0]) {
+        if (
+          (fnc.IsMeta && (fnc.Target as Identifier).Name === className.Name) ||
+          (!fnc.IsMeta && !member[0])
+        ) {
           var falseClaimer = new Claimer("");
           var falseFlag = falseClaimer.Flag();
           var declareThis = new VariableDecleration(falseClaimer, falseFlag);
@@ -76,7 +79,7 @@ export class Class extends Statement {
           declareThis.Identifier.Name = "this";
           declareThis.Type = new VarType(falseClaimer, falseFlag);
           declareThis.Type.TypeName = className.Name;
-          fnc.Args.unshift(declareThis);
+          fnc.Args.push(declareThis);
         }
         if (!(fnc.Target instanceof Identifier)) {
           flg.Fail();
@@ -126,6 +129,7 @@ export class Class extends Statement {
       if (child) asm.push(`  seta ${child[2]}`, `  putaptrb`);
       if (i < childrenByOffset.length - 1) asm.push(`  incb`);
     }
+    asm.push(`  ret`);
     scope.Assembly.push(...asm);
     return label;
   }
@@ -138,6 +142,8 @@ export class Class extends Statement {
     var classType = new TypeDefinition();
     objectType.ClassLabel = scope.GetSafeName(`class${this.Name!.Name}`);
     classType.ClassLabel = scope.GetSafeName(`classtype${this.Name!.Name}`);
+    objectType.Name = this.Name!.Name;
+    classType.Name = `type${this.Name!.Name}`;
     objectType.TypeType = classType;
     if (this.Parent !== null) {
       var parent = scope.UserTypes[this.Parent!.Name];
@@ -145,6 +151,8 @@ export class Class extends Statement {
       if (!parent || !classParent) {
         return false;
       }
+      objectType.Parent = parent;
+      classType.Parent = classParent;
       for (var id in parent.MetaMethods) {
         objectType.MetaMethods[id] = parent.MetaMethods[id].concat();
       }
@@ -237,7 +245,7 @@ export class Class extends Statement {
       if (member instanceof FunctionDefinition) {
         classType.Children[name.Name] = [
           type,
-          objectType.Size++,
+          classType.Size++,
           member instanceof FunctionDefinition ? member.Label : "0",
         ];
       }
@@ -255,6 +263,7 @@ export class Class extends Statement {
       throw new Error(
         `Tried to compile non-registered class: ${this.Name!.Name}`
       );
+    asm.push(this.GetLine());
     asm.push(`${classDef.ClassLabel}:`);
     for (var i = 0; i < this.StaticMembers.length; i++) {
       let member = this.StaticMembers[i];

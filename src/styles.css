@@ -82,3 +82,28 @@ span.error {
   color: white;
   background-color: red;
 }
+
+.ace_gutter-cell.ace_breakpoint::before {
+  content: "●";
+  text-align: left;
+  left: 1ch;
+  position: absolute;
+  color: red;
+  -webkit-text-stroke: 1px black;
+}
+
+.subtle {
+  color: darkgray;
+  font-size: 8pt;
+  min-width: 24ch;
+  display: inline-block;
+}
+
+#variables b {
+  min-width: 16ch;
+  display: inline-block;
+}
+
+#variables {
+  font-family: monospace;
+}

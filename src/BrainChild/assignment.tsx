@@ -40,7 +40,7 @@ export class Assignment extends Statement {
   }
 
   Evaluate(scope: Scope): string[] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var res = this.Value!.Evaluate(scope);
     o.push(...res[1]);
     var targetTypes: VarType[] = [];

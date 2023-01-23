@@ -15,4 +15,12 @@ export abstract class Token {
   toString(): string {
     return this.Claimer.Code.substr(this.Start, this.End - this.Start);
   }
+
+  GetLineNo(): number {
+    return this.Claimer.Code.substring(0, this.Start).split("\n").length - 1;
+  }
+
+  GetLine(): string {
+    return `line ${this.GetLineNo()}`;
+  }
 }

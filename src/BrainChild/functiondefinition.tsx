@@ -168,7 +168,7 @@ export class FunctionDefinition extends Statement {
     var bodyScope = scope.Sub();
     bodyScope.IsFunctionScope = true;
     bodyScope.CurrentRequiredReturns = this.RetTypes.concat();
-    var o = [`${label}:`];
+    var o = [this.GetLine(), `${label}:`];
     for (let i = 0; i < this.Args.length; i++) {
       o.push(...this.Args[i].Evaluate(bodyScope).map((c) => "  " + c));
     }

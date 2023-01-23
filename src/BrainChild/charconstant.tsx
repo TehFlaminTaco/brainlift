@@ -6,9 +6,7 @@ import { VarType } from "./vartype";
 export class CharConstant extends Expression {
   Value: number = 0;
   static Claim(claimer: Claimer): CharConstant | null {
-    var n = claimer.Claim(
-      /'\\?.'/
-    );
+    var n = claimer.Claim(/'\\?.'/);
     if (!n.Success) {
       return null;
     }
@@ -24,7 +22,7 @@ export class CharConstant extends Expression {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    return [[VarType.Int], [`apush ${this.Value}`]]
+    return [[VarType.Int], [this.GetLine(), `apush ${this.Value}`]];
   }
 }
 Expression.Register(CharConstant.Claim);

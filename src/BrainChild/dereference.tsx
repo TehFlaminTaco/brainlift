@@ -20,7 +20,7 @@ export class Dereference extends Expression implements ReadWritable {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var res = this.Target!.Evaluate(scope);
     o.push(...res[1]);
     if (res[0].length <= 0) {

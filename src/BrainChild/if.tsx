@@ -40,7 +40,7 @@ export class If extends Statement {
   Evaluate(scope: Scope): string[] {
     var o: string[] = [];
     var valueRes = this.Condition!.Evaluate(scope);
-    o.push(...valueRes[1]);
+    o.push(this.GetLine(), ...valueRes[1]);
     for (var i = 1; i < valueRes[0].length; i++) {
       o.push(`apop`);
     }
@@ -66,7 +66,11 @@ export class If extends Statement {
     return o;
   }
   DefinitelyReturns(): boolean {
-    return this.Else!=null && this.Body!.DefinitelyReturns() && this.Else!.DefinitelyReturns();
+    return (
+      this.Else != null &&
+      this.Body!.DefinitelyReturns() &&
+      this.Else!.DefinitelyReturns()
+    );
   }
 }
 Statement.Register(If.Claim);
