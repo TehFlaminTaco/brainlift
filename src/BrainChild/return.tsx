@@ -27,7 +27,7 @@ export class Return extends Statement {
       throw new Error("Cannot return outside of function.");
     }
     var tStack: VarType[] = [];
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var tailCall = false;
     for (var i = 0; i < this.Values.length; i++) {
       var v = this.Values[i];

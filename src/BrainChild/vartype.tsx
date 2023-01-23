@@ -1,4 +1,5 @@
 /* eslint-disable */
+import { ASMInterpreter } from "../brainasm";
 import { Claim, Claimer, Keywords } from "./brainchild";
 import { Scope } from "./Scope";
 import { Token } from "./token";
@@ -69,14 +70,17 @@ export class VarType extends Token {
     if (this.TypeName === "void") {
       return this.PointerDepth <= other.PointerDepth;
     }
+    if (other.TypeName === "void") {
+      return this.PointerDepth >= other.PointerDepth;
+    }
     if (
       !(other instanceof FuncType) &&
       this.TypeName === other.TypeName &&
       this.PointerDepth <= other.PointerDepth
     )
       return true;
+    var typeDef = this.GetDefinition();
     if (!directly) {
-      var typeDef = this.GetDefinition();
       var meta = typeDef.GetMetamethod("cast", [other], true, true);
       var otherType = other.GetDefinition();
       if (meta && meta[0].length > 0 && this.AssignableFrom(meta[0][0], true)) {
@@ -87,8 +91,8 @@ export class VarType extends Token {
         return true;
       }
     }
-    if (other instanceof FuncType) {
-      return false;
+    if (typeDef.IsParent(other.GetDefinition())) {
+      return this.PointerDepth <= other.PointerDepth;
     }
     return false;
   }
@@ -97,7 +101,17 @@ export class VarType extends Token {
     if (!this.AssignableFrom(other))
       throw new Error(`Cannot convert from ${other} to ${this}!`);
     var o: string[] = [];
+    if (this.PointerDepth < other.PointerDepth) {
+      o.push(`apopa`);
+      for (var i = this.PointerDepth; i < other.PointerDepth; i++) {
+        o.push(`ptra`);
+      }
+      o.push(`apusha`);
+    }
     if (this.TypeName === "void") {
+      return o;
+    }
+    if (other.TypeName === "void") {
       return o;
     }
     var typeDef = this.GetDefinition();
@@ -124,14 +138,49 @@ export class VarType extends Token {
       o.push(...this.ConvertFrom(meta[0][0]));
       return o;
     }
-    if (this.PointerDepth < other.PointerDepth) {
-      o.push(`apopa`);
-      for (var i = this.PointerDepth; i < other.PointerDepth; i++) {
-        o.push(`ptra`);
-      }
-      o.push(`apusha`);
-    }
     return o;
+  }
+
+  Debug(
+    scope: Scope,
+    bs: ASMInterpreter,
+    l: string,
+    i: string,
+    v: number
+  ): string {
+    let val: string = "" + bs.Heap[v];
+    let valHolding: string | undefined = undefined;
+    for (let id in bs.Labels) {
+      if (bs.Labels[id] === bs.Heap[v]) {
+        val = `${id} (${bs.Heap[v]})`;
+        break;
+      }
+    }
+    if (this.PointerDepth > 0) {
+      var higher = this.Clone();
+      higher.PointerDepth--;
+      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}<br>${higher.Debug(
+        scope,
+        bs,
+        "*",
+        "->",
+        bs.Heap[v]
+      )}`;
+    } else if (scope.UserTypes[this.TypeName]) {
+      var t = scope.UserTypes[this.TypeName];
+      var s = `<span class='subtle'>${l}</span><b>${this}</b> ${i} = {<br>`;
+      for (var name in t.Children) {
+        var child = t.Children[name];
+        if (!child || !child[0]) continue;
+        s +=
+          child[0].Debug(scope, bs, "", name, bs.Heap[v] + child[1]) + "<br>";
+      }
+      s += "}";
+      return s;
+    } else {
+      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}`;
+    }
+    return ``;
   }
 
   static AllEquals(targetStack: VarType[], receivedStack: VarType[]) {
@@ -298,6 +347,8 @@ export class FuncType extends VarType {
   }
 
   AssignableFrom(other: VarType): boolean {
+    if (other.TypeName === "void")
+      return this.PointerDepth >= other.PointerDepth;
     if (!(other instanceof FuncType)) return false;
     if (other.ArgTypes.length != this.ArgTypes.length) return false;
     if (other.RetTypes.length != this.RetTypes.length) return false;

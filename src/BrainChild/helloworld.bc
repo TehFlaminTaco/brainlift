@@ -1,0 +1,25 @@
+function writechar(int c){
+    asm {seta [c]
+         ptra
+         writea}
+}
+
+class string {
+    int length;
+    int* data;
+    metamethod string(int length, int* data){
+        this.length = length;
+        this.data = data;
+    }
+    
+    function print(){
+        int l = this.length;
+        int* d = this.data;
+        while(l--){
+            writechar(d++);
+        }
+    }
+}
+
+string h = new string("Hello, World!\n");
+h.print();

@@ -56,7 +56,7 @@ export class MathExp extends Expression implements RightDonor {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     if (this.Operator === "and") {
       throw new Error("TODO");
     }

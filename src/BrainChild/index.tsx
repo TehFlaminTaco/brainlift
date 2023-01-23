@@ -13,6 +13,7 @@ export class Index
   Target: Identifier | null = null;
   Precedence: number = 17;
   LeftRightAssociative: boolean = true;
+  Curry: boolean = false;
 
   static Claim(claimer: Claimer): Index | null {
     var flg = claimer.Flag();
@@ -34,14 +35,19 @@ export class Index
     return indx;
   }
 
+  CurryType: VarType | null = null;
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
     o.push(...valRes[1]);
     for (var i = 1; i < valRes[0].length; i++) {
       o.push(`apop`);
+    }
+    if (this.Curry) {
+      o.push(`apopa`, `apusha`, `apusha`);
+      this.CurryType = valRes[0][0];
     }
     var vType = valRes[0][0];
     var typeDef = vType.GetDefinition();
@@ -53,7 +59,7 @@ export class Index
   }
 
   Assign(scope: Scope, anyType: VarType): string[] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
@@ -70,7 +76,7 @@ export class Index
     return o;
   }
   Read(scope: Scope): string[] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
@@ -98,7 +104,7 @@ export class Index
     return child[0];
   }
   GetPointer(scope: Scope): string[] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
@@ -118,6 +124,13 @@ export class Index
     var t = this.GetType(scope).Clone();
     t.PointerDepth++;
     return t;
+  }
+
+  TryCurry(scope: Scope) {
+    if (this.Left instanceof Identifier) {
+      if (scope.UserTypes[this.Left.Name]) return; // Static method
+    }
+    this.Curry = true;
   }
 }
 Variable.RegisterReadWritable(Index.Claim);

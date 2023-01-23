@@ -4,6 +4,7 @@ import React, { useState, ChangeEvent, MouseEventHandler } from "react";
 import { Interpreter } from "./bf";
 import { ASMInterpreter, ASMTranspile } from "./brainasm";
 import AceEditor from "react-ace";
+import { Ace } from "ace-builds";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/mode-lua";
 import "./mode-brainchild";
@@ -39,7 +40,9 @@ export default function App() {
   var bfInterp: Interpreter | undefined = undefined;
   var bmInterp: MetaInterpreter | undefined = undefined;
   var bsInterp: ASMInterpreter | undefined = undefined;
+  var scope: Scope | null = null;
   var activeMemory = "baMemory";
+  let editor: Ace.Editor;
   async function handleChange(value: string, event: ChangeEvent) {
     console.clear();
     try {
@@ -52,7 +55,8 @@ export default function App() {
           try {
             console.log(`preprocessed in ${Date.now() - t}ms`);
             t = Date.now();
-            var parsed = Parse(result).Assembly;
+            scope = Parse(result);
+            var parsed = scope.Assembly;
             console.log(`parsed in ${Date.now() - t}ms`);
             t = Date.now();
             parsed = Scope.ObliterateRedundancies(parsed);
@@ -61,18 +65,19 @@ export default function App() {
             if (bfInterp === undefined && bmInterp === undefined) {
               bsInterp = new ASMInterpreter(parsed);
               console.log(`compiled in ${Date.now() - t}ms`);
-              document.getElementById("codeText")!.innerHTML = parsed.join('\n');
-              bsInterp.RenderMemory(activeMemory);
+              document.getElementById("codeText")!.innerHTML =
+                parsed.join("\n");
+              scope.RenderBSMemory(bsInterp);
             } else if (bfInterp !== undefined) {
-              let compiledResult = ASMTranspile(parsed.join('\n'));
+              let compiledResult = ASMTranspile(parsed.join("\n"));
               var bfCode = Transpile(compiledResult);
               bmInterp = undefined;
               bfInterp = new Interpreter(bfCode);
               document.getElementById("codeText")!.innerHTML =
-              bfInterp.CodeWithPointerHighlight();
+                bfInterp.CodeWithPointerHighlight();
               bfInterp.RenderMemory(activeMemory);
             } else if (bmInterp !== undefined) {
-              let compiledResult = ASMTranspile(parsed.join('\n'));
+              let compiledResult = ASMTranspile(parsed.join("\n"));
               bmInterp = new MetaInterpreter(compiledResult);
               bfInterp = undefined;
               document.getElementById("codeText")!.innerHTML =
@@ -198,8 +203,10 @@ export default function App() {
   function ASMStep() {
     if (bsInterp !== undefined) {
       bsInterp.Step();
-      bsInterp.RenderMemory(activeMemory);
+      if (scope!==null) scope.RenderBSMemory(bsInterp);
       document.getElementById("output")!.innerText = bsInterp.Output;
+      document.getElementById("codeText")!.innerHTML =
+        bsInterp.CodeWithPointerHighlight();
     } else {
       bfInterp = undefined;
       bmInterp = undefined;
@@ -223,9 +230,22 @@ export default function App() {
         if (bsInterp !== undefined) {
           for (var i = 0; i < 1000; i++) {
             bsInterp.Step();
+            // Check breakpoint
+            let line = bsInterp.LineMap[bsInterp.IP];
+            var breakPoints = editor.session.getBreakpoints();
+            if (breakPoints[line]) {
+              event.target.innerText = "ASM Run";
+              scope!.RenderBSMemory(bsInterp);
+              document.getElementById("output")!.innerText = bsInterp.Output;
+              document.getElementById("codeText")!.innerHTML =
+                bsInterp.CodeWithPointerHighlight();
+              asmRunning = false;
+              clearInterval(asmRunTimer);
+              break;
+            }
             if (!bsInterp.running) break;
           }
-          bsInterp.RenderMemory(activeMemory);
+          scope!.RenderBSMemory(bsInterp);
           document.getElementById("output")!.innerText = bsInterp.Output;
         } else {
           bfInterp = undefined;
@@ -239,6 +259,37 @@ export default function App() {
       event.target.innerText = "ASM Run";
       clearInterval(asmRunTimer);
     }
+  }
+
+  function addGutter(e: Ace.Editor) {
+    editor = e;
+    (editor.on as any)("guttermousedown", function (e: any) {
+      var target = e.domEvent.target;
+
+      if (target.className.indexOf("ace_gutter-cell") === -1) {
+        return;
+      }
+
+      if (!editor.isFocused()) {
+        return;
+      }
+
+      if (e.clientX > 25 + target.getBoundingClientRect().left) {
+        return;
+      }
+
+      var row = e.getDocumentPosition().row;
+      var breakpoints = e.editor.session.getBreakpoints(row, 0);
+
+      // If there's a breakpoint already defined, it should be removed, offering the toggle feature
+      if (typeof breakpoints[row] === typeof undefined) {
+        e.editor.session.setBreakpoint(row);
+      } else {
+        e.editor.session.clearBreakpoint(row);
+      }
+
+      e.stop();
+    });
   }
 
   function selectTab(event: any) {
@@ -270,6 +321,7 @@ export default function App() {
       <h2>Uplifting BF into a usable language!</h2>
       <AceEditor
         onChange={handleChange}
+        onLoad={addGutter}
         width="100%"
         theme="github"
         mode="brainchild"

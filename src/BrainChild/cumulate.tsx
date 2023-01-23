@@ -6,7 +6,7 @@ import { VarType } from "./vartype";
 
 var cumulativeOperators: [RegExp, string][] = [
   [/\+\+/, "add"],
-  [/--/, "sub"]
+  [/--/, "sub"],
 ];
 
 export class Cumulate extends Expression implements Donor {
@@ -18,11 +18,11 @@ export class Cumulate extends Expression implements Donor {
 
   static Claim(claimer: Claimer): Cumulate | null {
     var flag = claimer.Flag();
-    for(var i=0; i < cumulativeOperators.length; i++){
+    for (var i = 0; i < cumulativeOperators.length; i++) {
       let op = cumulativeOperators[i];
-      if(claimer.Claim(op[0]).Success){
+      if (claimer.Claim(op[0]).Success) {
         var exp = Variable.ClaimReadWritable(claimer);
-        if(exp === null){
+        if (exp === null) {
           flag.Fail();
           return null;
         }
@@ -35,12 +35,12 @@ export class Cumulate extends Expression implements Donor {
     return null;
   }
   static RightClaim(left: Expression, claimer: Claimer): Cumulate | null {
-    if(!IsReadWritable(left))return null;
+    if (!IsReadWritable(left)) return null;
     let l = left as unknown as ReadWritable;
     var flag = claimer.Flag();
-    for(var i=0; i < cumulativeOperators.length; i++){
+    for (var i = 0; i < cumulativeOperators.length; i++) {
       var op = cumulativeOperators[i];
-      if(claimer.Claim(op[0]).Success){
+      if (claimer.Claim(op[0]).Success) {
         var cumu = new Cumulate(claimer, flag);
         cumu.Target = l;
         cumu.Operator = op[1];
@@ -53,32 +53,34 @@ export class Cumulate extends Expression implements Donor {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [];
+    var o: string[] = [this.GetLine()];
     var t = this.Target!.GetType(scope);
     o.push(...this.Target!.Read(scope));
-    if(this.PostFix){
+    if (this.PostFix) {
       o.push(`apopa`, `apusha`, `apusha`);
     }
-    var metaName = (this.PostFix ? `post` : `pre`) + `crement` + (this.Operator)
+    var metaName = (this.PostFix ? `post` : `pre`) + `crement` + this.Operator;
     var meta = t.GetDefinition().GetMetamethod(metaName, [t]);
-    if(meta === null){
+    if (meta === null) {
       // Try the math operator instead
       meta = t.GetDefinition().GetMetamethod(this.Operator, [t, VarType.Int]);
       o.push(`apush 1`);
     }
-    if(meta === null){
+    if (meta === null) {
       throw new Error(`Cannot ${metaName} type ${t}. No metamethod`);
     }
-    
-    if(!VarType.AllEquals([t], meta[0])){
-      throw new Error(`Metamethod ${metaName} for type ${t} must return the same time.`);
+
+    if (!VarType.AllEquals([t], meta[0])) {
+      throw new Error(
+        `Metamethod ${metaName} for type ${t} must return the same time.`
+      );
     }
     o.push(...meta[2]);
-    if(!this.PostFix){
+    if (!this.PostFix) {
       o.push(`apopa`, `apusha`, `apusha`);
     }
     o.push(...this.Target!.Assign(scope, t));
-    return [[t],o];
+    return [[t], o];
   }
 }
 

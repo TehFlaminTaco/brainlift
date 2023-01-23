@@ -69,7 +69,7 @@ export class Claimer {
     this.Code = code;
   }
 
-  Claim(reg: RegExp) {
+  Claim(reg: RegExp): Claim {
     this.Skip();
     reg = new RegExp(reg.source, reg.flags + (reg.sticky ? "" : "y"));
     var match = this.Code.substring(this.Ptr).match(reg);
@@ -80,7 +80,7 @@ export class Claimer {
     this.Ptr += match[0].length;
     return c;
   }
-  Flag() {
+  Flag(): Claim {
     var flag = new Claim(this, undefined, this.Ptr);
     flag.Success = true;
     return flag;

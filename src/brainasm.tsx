@@ -1476,7 +1476,7 @@ ${REG.Left()}
 ${REG.Left()}`;
 }
 
-export var INSTRUCTIONS: [string, string, Function][] = [
+export let INSTRUCTIONS: [string, string, Function][] = [
   ["NOP", "", (interp: ASMInterpreter, arg: number) => {}],
   [
     "HALT",
@@ -1517,14 +1517,14 @@ export var INSTRUCTIONS: [string, string, Function][] = [
     "PTRA",
     PTRA(),
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegA = interp.Heap[interp.RegA]??0;
+      interp.RegA = interp.Heap[interp.RegA] ?? 0;
     },
   ],
   [
     "PTRB",
     PTRB(),
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegB = interp.Heap[interp.RegB]??0;
+      interp.RegB = interp.Heap[interp.RegB] ?? 0;
     },
   ],
   [
@@ -1755,8 +1755,8 @@ export var INSTRUCTIONS: [string, string, Function][] = [
         interp.RegA = 0;
         interp.RegB = 0;
       } else {
-        var quotient = Math.floor(interp.RegA / interp.RegB);
-        var remainder = interp.RegA % interp.RegB;
+        let quotient = Math.floor(interp.RegA / interp.RegB);
+        let remainder = interp.RegA % interp.RegB;
         interp.RegB = remainder;
         interp.RegA = quotient;
       }
@@ -1770,8 +1770,8 @@ export var INSTRUCTIONS: [string, string, Function][] = [
         interp.RegA = 0;
         interp.RegB = 0;
       } else {
-        var quotient = Math.floor(interp.RegB / interp.RegA);
-        var remainder = interp.RegB % interp.RegA;
+        let quotient = Math.floor(interp.RegB / interp.RegA);
+        let remainder = interp.RegB % interp.RegA;
         interp.RegA = remainder;
         interp.RegB = quotient;
       }
@@ -1925,11 +1925,11 @@ export var INSTRUCTIONS: [string, string, Function][] = [
 
 // Assumes instruction is in INSTRUCTION
 let DO_INSTRUCTION = function () {
-  var s = `${REG.Right()}
+  let s = `${REG.Right()}
 ${REG.Right()}
 ${REG.Right()}`;
-  for (var id in INSTRUCTIONS) {
-    var instr = INSTRUCTIONS[id];
+  for (let id in INSTRUCTIONS) {
+    let instr = INSTRUCTIONS[id];
     s += `
 PUT ${STACK1} 1
 ${IF(REG.LeftStack, `ZER ${STACK1}`)}
@@ -1989,38 +1989,41 @@ END
 };
 
 export function ASMTranspile(code: string) {
-  var oldInstrs = INSTRUCTIONS;
-  var commands = code.matchAll(
+  let oldInstrs = INSTRUCTIONS;
+  let commands = code.matchAll(
     /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
   );
-  var usedInstructions: string[] = [];
-  for (var c of commands) {
-    var command = c[4] ?? "";
+  let usedInstructions: string[] = [];
+  for (let c of commands) {
+    let command = c[4] ?? "";
     if (command.length > 0 && !usedInstructions.includes(command)) {
       usedInstructions.push(command);
     }
   }
   INSTRUCTIONS = [];
-  for (var i = 0; i < oldInstrs.length; i++) {
-    var old = oldInstrs[i];
+  for (let i = 0; i < oldInstrs.length; i++) {
+    let old = oldInstrs[i];
     INSTRUCTIONS[i] = [old[0], "", old[2]];
   }
 
-  var heap: number[] = [];
-  var labels: { [label: string]: number } = {};
-  var waitingLabels: any = {};
-  var ptr = 0;
-  for (var c of commands) {
-    var label = c[1] ?? "";
-    var dbArgs = c[2] ?? "";
-    var command = c[4] ?? "";
-    var argNumber = c[5] ?? "";
-    var argLabel = c[6] ?? "";
-    var argChar = c[7] ?? "";
-    var argHex = c[8] ?? "";
+  commands = code.matchAll(
+    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+  );
+  let heap: number[] = [];
+  let labels: { [label: string]: number } = {};
+  let waitingLabels: any = {};
+  let ptr = 0;
+  for (let c of commands) {
+    let label = c[1] ?? "";
+    let dbArgs = c[2] ?? "";
+    let command = c[4] ?? "";
+    let argNumber = c[5] ?? "";
+    let argLabel = c[6] ?? "";
+    let argChar = c[7] ?? "";
+    let argHex = c[8] ?? "";
 
     if (label.length > 0) {
-      var l = Math.floor(ptr / 2);
+      let l = Math.floor(ptr / 2);
       labels[label] = l;
       if (waitingLabels[label]) {
         waitingLabels[label].forEach((i: number) => {
@@ -2032,25 +2035,25 @@ export function ASMTranspile(code: string) {
     }
 
     if (dbArgs.length > 0) {
-      var parsedArgs = dbArgs.matchAll(
+      let parsedArgs = dbArgs.matchAll(
         /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
       );
-      for (var a of parsedArgs) {
-        var stringBody = a[1] ?? "";
-        var hexBody = a[2] ?? "";
-        var numberBody = a[3] ?? "";
-        var charBody = a[4] ?? "";
-        var labelBody = a[5] ?? "";
+      for (let a of parsedArgs) {
+        let stringBody = a[1] ?? "";
+        let hexBody = a[2] ?? "";
+        let numberBody = a[3] ?? "";
+        let charBody = a[4] ?? "";
+        let labelBody = a[5] ?? "";
         if (numberBody.length > 0) {
-          var v = +numberBody;
+          let v = +numberBody;
           heap[ptr++] = v & 255;
           heap[ptr++] = (v >> 8) & 255;
         } else if (hexBody.length > 2) {
-          var v = +hexBody;
+          let v = +hexBody;
           heap[ptr++] = v & 255;
           heap[ptr++] = (v >> 8) & 255;
         } else if (charBody.length > 2) {
-          var v = 0;
+          let v = 0;
           if (charBody === "'\"'") {
             v = 32;
           } else {
@@ -2060,7 +2063,7 @@ export function ASMTranspile(code: string) {
           heap[ptr++] = (v >> 8) & 255;
         } else if (labelBody.length > 0) {
           if (labels[labelBody]) {
-            var v = labels[labelBody];
+            let v = labels[labelBody];
             heap[ptr++] = v & 255;
             heap[ptr++] = (v >> 8) & 255;
           } else {
@@ -2069,14 +2072,14 @@ export function ASMTranspile(code: string) {
             ptr += 2;
           }
         } else {
-          for (var i = 0; i < stringBody.length; i++) {
+          for (let i = 0; i < stringBody.length; i++) {
             heap[ptr++] = stringBody.charCodeAt(i);
             heap[ptr++] = 0;
           }
         }
       }
     } else if (command.length > 0) {
-      var commandIndex = INSTRUCTIONS.findIndex(
+      let commandIndex = INSTRUCTIONS.findIndex(
         (i) => i[0] === command.toUpperCase()
       );
       if (commandIndex < 0) {
@@ -2084,7 +2087,7 @@ export function ASMTranspile(code: string) {
       }
       heap[ptr++] = commandIndex;
       heap[ptr++] = 0;
-      var argV = 0;
+      let argV = 0;
       if (argNumber.length > 0) argV = +argNumber;
       else if (argHex.length > 2) argV = +argHex;
       else if (argChar.length > 2) {
@@ -2109,12 +2112,12 @@ export function ASMTranspile(code: string) {
     }
   }
 
-  for (var name in waitingLabels) {
+  for (let name in waitingLabels) {
     console.log("MISSING LABEL: " + name);
   }
 
-  var s = "";
-  for (var i = ptr - 1; i >= 0; i--) {
+  let s = "";
+  for (let i = ptr - 1; i >= 0; i--) {
     if (i > 0) s += `PUT ${HEAP.RightStack} ${heap[i]}\n`;
     else s += `INC ${HEAP.LeftStack} ${heap[0]}`;
   }
@@ -2135,32 +2138,35 @@ export class ASMInterpreter {
   Input: string = "";
   InputPointer: number = 0;
   Output: string = "";
+  LineMap: { [instruction: number]: number } = {};
+  Labels: { [label: string]: number } = {};
+  ASMMap: number[] = [];
 
-  constructor(code: string|string[]) {
-    if(typeof(code) ===  "string"){
+  constructor(code: string | string[]) {
+    if (typeof code === "string") {
       this.Code = code;
-      var t = Date.now();
-      var commands = code.matchAll(
+      let t = Date.now();
+      let commands = code.matchAll(
         /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
       );
 
-      var heap: number[] = [];
-      var labels: any = {};
-      var waitingLabels: any = {};
-      var commandTimes: number[] = [];
-      var ptr = 0;
-      for (var c of commands) {
+      let heap: number[] = [];
+      let labels: any = {};
+      let waitingLabels: any = {};
+      let commandTimes: number[] = [];
+      let ptr = 0;
+      for (let c of commands) {
         let commandT = Date.now();
-        var label = c[1] ?? "";
-        var dbArgs = c[2] ?? "";
-        var command = c[4] ?? "";
-        var argNumber = c[5] ?? "";
-        var argLabel = c[6] ?? "";
-        var argChar = c[7] ?? "";
-        var argHex = c[8] ?? "";
+        let label = c[1] ?? "";
+        let dbArgs = c[2] ?? "";
+        let command = c[4] ?? "";
+        let argNumber = c[5] ?? "";
+        let argLabel = c[6] ?? "";
+        let argChar = c[7] ?? "";
+        let argHex = c[8] ?? "";
 
         if (label.length > 0) {
-          var l = ptr;
+          let l = ptr;
           labels[label] = l;
           if (waitingLabels[label]) {
             waitingLabels[label].forEach((i: number) => {
@@ -2171,22 +2177,22 @@ export class ASMInterpreter {
         }
 
         if (dbArgs.length > 0) {
-          var parsedArgs = dbArgs.matchAll(
+          let parsedArgs = dbArgs.matchAll(
             /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
           );
-          for (var a of parsedArgs) {
-            var stringBody = a[1] ?? "";
-            var hexBody = a[2] ?? "";
-            var numberBody = a[3] ?? "";
-            var charBody = a[4] ?? "";
-            var labelBody = a[5] ?? "";
+          for (let a of parsedArgs) {
+            let stringBody = a[1] ?? "";
+            let hexBody = a[2] ?? "";
+            let numberBody = a[3] ?? "";
+            let charBody = a[4] ?? "";
+            let labelBody = a[5] ?? "";
             if (numberBody.length > 0) {
               heap[ptr++] = +numberBody;
             } else if (hexBody.length > 2) {
-              var v = +hexBody;
+              let v = +hexBody;
               heap[ptr++] = v;
             } else if (charBody.length > 2) {
-              var v = 0;
+              let v = 0;
               if (charBody === "'\"'") {
                 v = 32;
               } else {
@@ -2205,20 +2211,20 @@ export class ASMInterpreter {
                 ptr++;
               }
             } else {
-              for (var i = 0; i < stringBody.length; i++) {
+              for (let i = 0; i < stringBody.length; i++) {
                 heap[ptr++] = stringBody.charCodeAt(i);
               }
             }
           }
         } else if (command.length > 0) {
-          var commandIndex = INSTRUCTIONS.findIndex(
+          let commandIndex = INSTRUCTIONS.findIndex(
             (i) => i[0] === command.toUpperCase()
           );
           if (commandIndex < 0) {
             console.log(`UNKNOWN COMMAND: ${command}`);
           }
           heap[ptr++] = commandIndex;
-          var argV = 0;
+          let argV = 0;
           if (argNumber.length > 0) argV = +argNumber;
           else if (argHex.length > 2) argV = +argHex;
           else if (argChar.length > 2) {
@@ -2246,35 +2252,46 @@ export class ASMInterpreter {
       console.log("Command Times: ");
       console.dir(commandTimes);
       console.log(`Total Time: ${Date.now() - t}ms`);
-      for (var name in waitingLabels) {
+      for (let name in waitingLabels) {
         console.log("MISSING LABEL: " + name);
       }
 
       this.Heap = heap;
-    }else{
-      var t = Date.now();
-      this.Code = code.join('\n');
-      var heap: number[] = [];
-      var labels: any = {};
-      var waitingLabels: any = {};
-      var commandTimes: number[] = [];
-      var ptr = 0;
+    } else {
+      let t = Date.now();
+      this.Code = code.join("\n");
+      let heap: number[] = [];
+      let labels: any = {};
+      let waitingLabels: any = {};
+      let commandTimes: number[] = [];
+      let ptr = 0;
 
-      for(var i=0; i < code.length; i++){
-        var codel = code[i].match(/^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?$/);
-        if(!codel){
+      let lineMap: { [instruction: number]: number } = {};
+
+      for (let i = 0; i < code.length; i++) {
+        this.ASMMap[ptr] = i;
+        let lineMarker = code[i].match(/^\s*LINE\s+(\d+)/i);
+        if (lineMarker) {
+          lineMap[ptr] = +lineMarker[1];
           continue;
         }
-        var label = codel[1] ?? "";
-        var dbArgs = codel[2] ?? "";
-        var command = codel[3] ?? "";
-        var argNumber = codel[4] ?? "";
-        var argLabel = codel[5] ?? "";
+        let codel = code[i].match(
+          /^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?$/im
+        );
+        if (!codel) {
+          console.log(`No match: ${code[i]}`);
+          continue;
+        }
+        let label = codel[1] ?? "";
+        let dbArgs = codel[2] ?? "";
+        let command = codel[3] ?? "";
+        let argNumber = codel[4] ?? "";
+        let argLabel = codel[5] ?? "";
 
-        var commandT = Date.now();
+        let commandT = Date.now();
 
-        if(label){
-          var l = ptr;
+        if (label) {
+          let l = ptr;
           labels[label] = l;
           if (waitingLabels[label]) {
             waitingLabels[label].forEach((i: number) => {
@@ -2283,11 +2300,11 @@ export class ASMInterpreter {
             delete waitingLabels[label];
           }
         }
-        if(dbArgs.length > 0){
-          var argVals = dbArgs.matchAll(/(\d+)|([a-z_]\w*)/gi);
-          for (var argVal of argVals) {
-            var argNum = argVal[1] ?? "";
-            var argLab = argVal[2] ?? "";
+        if (dbArgs.length > 0) {
+          let argVals = dbArgs.matchAll(/(\d+)|([a-z_]\w*)/gi);
+          for (let argVal of argVals) {
+            let argNum = argVal[1] ?? "";
+            let argLab = argVal[2] ?? "";
             if (argNum.length > 0) {
               heap[ptr++] = +argNum;
             } else if (argLab.length > 0) {
@@ -2301,15 +2318,15 @@ export class ASMInterpreter {
               }
             }
           }
-        }else if(command.length > 0){
-          var commandIndex = INSTRUCTIONS.findIndex(
+        } else if (command.length > 0) {
+          let commandIndex = INSTRUCTIONS.findIndex(
             (i) => i[0] === command.toUpperCase()
           );
           if (commandIndex < 0) {
             console.log(`UNKNOWN COMMAND: ${command}`);
           }
           heap[ptr++] = commandIndex;
-          var argV = 0;
+          let argV = 0;
           if (argNumber.length > 0) argV = +argNumber;
           else if (argLabel.length > 0) {
             if (argLabel.toUpperCase() === "_IP") labels[argLabel] = ptr;
@@ -2328,27 +2345,39 @@ export class ASMInterpreter {
       console.log("Command Times: ");
       console.dir(commandTimes);
       console.log(`Total Time: ${Date.now() - t}ms`);
-      for (var name in waitingLabels) {
+      for (let name in waitingLabels) {
         console.log("MISSING LABEL: " + name);
       }
-
+      this.Heap = heap;
+      this.LineMap = lineMap;
+      this.Labels = labels;
     }
   }
 
+  CodeWithPointerHighlight(): string {
+    var code = this.Code.split(`\n`);
+    var currentInstruction = this.ASMMap[this.IP];
+    if (currentInstruction)
+      code[
+        currentInstruction
+      ] = `<span class='pointer'>${code[currentInstruction]}</span>`;
+    return code.join(`\n`);
+  }
+
   ToMeta(): MetaInterpreter {
-    var interp = new MetaInterpreter(ASMTranspile(this.Code));
+    let interp = new MetaInterpreter(ASMTranspile(this.Code));
     interp.CodePointer = interp.Code.findIndex((c) => c[0] === "CDE");
 
     // Rebuild the WhileStack
-    for (var i = 0; i < interp.CodePointer; i++) {
-      var codel = interp.Code[i];
+    for (let i = 0; i < interp.CodePointer; i++) {
+      let codel = interp.Code[i];
       if (codel[0] === "WHL") {
-        var args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
+        let args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
           .map((c) => c[1])
           .map((c) =>
             c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c
           );
-        var a: number = GetStackIndex(args[0]);
+        let a: number = GetStackIndex(args[0]);
         interp.WhileStack.push([i, a]);
       } else if (codel[0] === "END") {
         interp.WhileStack.pop();
@@ -2387,11 +2416,11 @@ export class ASMInterpreter {
     interp.Stacks[0].push(0);
 
     // Rebuild Heap
-    var maxHeap = 0;
+    let maxHeap = 0;
     this.Heap.forEach((c, i) => {
       maxHeap = Math.max(maxHeap, i);
     });
-    for (var i = maxHeap; i >= 0; i--) {
+    for (let i = maxHeap; i >= 0; i--) {
       interp.Stacks[3].push(((this.Heap[i] ?? 0) >> 8) & 255);
       interp.Stacks[i > 0 ? 3 : 2].push((this.Heap[i] ?? 0) & 255);
     }
@@ -2400,8 +2429,8 @@ export class ASMInterpreter {
 
   Step() {
     if (!this.running) return;
-    var command = this.Heap[this.IP];
-    var arg = this.Heap[this.IP + 1];
+    let command = this.Heap[this.IP];
+    let arg = this.Heap[this.IP + 1];
     this.IP += 2;
     INSTRUCTIONS[command]?.[2]?.(this, arg);
   }
@@ -2415,11 +2444,11 @@ export class ASMInterpreter {
   }
 
   RenderBSMemory() {
-    var instructionPtr = this.IP;
-    var regA = this.RegA;
-    var regB = this.RegB;
+    let instructionPtr = this.IP;
+    let regA = this.RegA;
+    let regB = this.RegB;
 
-    var body = `Instruction PTR: ${instructionPtr}<br>
+    let body = `Instruction PTR: ${instructionPtr}<br>
 Instruction: ${
       "x" +
       ("0" + (this.Heap[instructionPtr] ?? 0).toString(16).toUpperCase()).slice(

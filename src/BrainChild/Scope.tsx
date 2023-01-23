@@ -1,12 +1,14 @@
 import { VarType } from "./vartype";
 import { Guid } from "js-guid";
 import { TypeDefinition } from "./Types";
-import { Claimer } from "./brainchild"
-import { FuncType } from "./vartype"
+import { Claimer } from "./brainchild";
+import { FuncType } from "./vartype";
+import { ASMInterpreter } from "../brainasm";
 
 export class Scope {
   static CURRENT: Scope;
   Vars: { [Identifier: string]: [Type: VarType, AssembledName: string] } = {};
+  AllVars: { [Label: string]: [VarType, string] } = {};
   Parent: Scope | null = null;
   Assembly: string[] = [];
   TakenLabels: { [label: string]: boolean } = {};
@@ -30,7 +32,8 @@ export class Scope {
     if (this.UsingAllocator()) return;
     this.SetAllocator();
     var asm: string[] = [];
-    asm.push(...`vAllocTable: db 0
+    asm.push(
+      ...`vAllocTable: db 0
 vAllocSize: db 0
 alloc:
     seta vAllocTable
@@ -176,7 +179,8 @@ free:
         inca
         putbptra
     fFreeDone:
-    ret`.split('\n'));
+    ret`.split("\n")
+    );
     this.Assembly.push(...asm);
     var falseClaimer = new Claimer("");
     var falseFlag = falseClaimer.Flag();
@@ -186,10 +190,10 @@ free:
     var freeType = new FuncType(falseClaimer, falseFlag);
     freeType.ArgTypes = [VarType.VoidPtr];
     freeType.RetTypes = [];
-    this.Set('alloc', allocType, false);
-    this.Set('free', freeType, false);
-    var allocV = this.Get('alloc');
-    var freeV = this.Get('free');
+    this.Set("alloc", allocType, false);
+    this.Set("free", freeType, false);
+    var allocV = this.Get("alloc");
+    var freeV = this.Get("free");
     this.Assembly.push(`${allocV[1]}: db alloc`);
     this.Assembly.push(`${freeV[1]}: db free`);
   }
@@ -216,6 +220,7 @@ free:
     var name = this.GetSafeName(`var${Type}${Identifier}`);
     this.Vars[Identifier] = [Type, name];
     if (setup) this.Assembly.push(`${name}: db 0`);
+    this.AllVars[name] = [Type, Identifier];
     return name;
   }
 
@@ -227,6 +232,7 @@ free:
     subScope.IsFunctionScope = this.IsFunctionScope;
     subScope.UserTypes = this.UserTypes;
     subScope.CurrentRequiredReturns = this.CurrentRequiredReturns;
+    subScope.AllVars = this.AllVars;
     return subScope;
   }
 
@@ -321,5 +327,20 @@ free:
       }
     }
     return assembly;
+  }
+
+  RenderBSMemory(bs: ASMInterpreter) {
+    bs.RenderBSMemory();
+    var body = `<br><div id='variables'>`;
+    for (let label in this.AllVars) {
+      var v = this.AllVars[label];
+      if (!v) continue;
+      var t = v[0];
+      if (!t) continue;
+      body += `${t.Debug(this, bs, label, v[1], bs.Labels[label])}<br>`;
+    }
+    body += "</div>";
+    document.querySelector('div.tab[data-target="baMemory"]')!.innerHTML +=
+      body;
   }
 }

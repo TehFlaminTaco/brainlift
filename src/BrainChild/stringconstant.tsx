@@ -17,12 +17,15 @@ export class StringConstant extends Expression {
     var label = scope.GetSafeName(`str${this.Value}`);
     var stringDef = `${label}: db `;
     var comma = "";
-    for(var i=0; i < this.Value.length; i++){
+    for (var i = 0; i < this.Value.length; i++) {
       stringDef += comma + this.Value.charCodeAt(i);
       comma = ", ";
     }
-    scope.Assembly.push(stringDef)
-    return [[VarType.Int, VarType.IntPtr], [`apush ${this.Value.length}`, `apush ${label}`]];
+    scope.Assembly.push(stringDef);
+    return [
+      [VarType.Int, VarType.IntPtr],
+      [this.GetLine(), `apush ${this.Value.length}`, `apush ${label}`],
+    ];
   }
 }
 Expression.Register(StringConstant.Claim);

@@ -1,16 +1,16 @@
 import { Expression } from "./expression";
 import { Scope } from "./Scope";
 import { VarType } from "./vartype";
-import {Referenceable, Variable} from "./variable";
+import { Referenceable, Variable } from "./variable";
 import { Claimer } from "./brainchild";
 
 export class Reference extends Expression {
-  Target: Referenceable|null = null;
+  Target: Referenceable | null = null;
   static Claim(claimer: Claimer): Reference | null {
     var ref = claimer.Claim(/&/);
-    if(!ref.Success)return null;
+    if (!ref.Success) return null;
     var target = Variable.ClaimReferencable(claimer);
-    if(target === null){
+    if (target === null) {
       ref.Fail();
       return null;
     }
@@ -20,7 +20,10 @@ export class Reference extends Expression {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    return [[this.Target!.GetReferenceType(scope)], this.Target!.GetPointer(scope)];
+    return [
+      [this.Target!.GetReferenceType(scope)],
+      this.Target!.GetPointer(scope)
+    ];
   }
 }
 
