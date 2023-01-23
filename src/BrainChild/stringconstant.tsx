@@ -24,7 +24,7 @@ export class StringConstant extends Expression {
     scope.Assembly.push(stringDef);
     return [
       [VarType.Int, VarType.IntPtr],
-      [this.GetLine(), `apush ${this.Value.length}`, `apush ${label}`],
+      [`apush ${this.Value.length}`, `apush ${label}`],
     ];
   }
 }

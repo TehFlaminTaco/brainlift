@@ -3,7 +3,6 @@ import { Guid } from "js-guid";
 import { TypeDefinition } from "./Types";
 import { Claimer } from "./brainchild";
 import { FuncType } from "./vartype";
-import { ASMInterpreter } from "../brainasm";
 
 export class Scope {
   static CURRENT: Scope;
@@ -11,6 +10,7 @@ export class Scope {
   AllVars: { [Label: string]: [VarType, string] } = {};
   Parent: Scope | null = null;
   Assembly: string[] = [];
+  Data: string[] = [];
   TakenLabels: { [label: string]: boolean } = {};
   CurrentRequiredReturns: VarType[] = [];
   IsFunctionScope: boolean = false;
@@ -327,20 +327,5 @@ free:
       }
     }
     return assembly;
-  }
-
-  RenderBSMemory(bs: ASMInterpreter) {
-    bs.RenderBSMemory();
-    var body = `<br><div id='variables'>`;
-    for (let label in this.AllVars) {
-      var v = this.AllVars[label];
-      if (!v) continue;
-      var t = v[0];
-      if (!t) continue;
-      body += `${t.Debug(this, bs, label, v[1], bs.Labels[label])}<br>`;
-    }
-    body += "</div>";
-    document.querySelector('div.tab[data-target="baMemory"]')!.innerHTML +=
-      body;
   }
 }

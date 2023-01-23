@@ -39,7 +39,7 @@ export class New extends Expression {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [this.GetLine()];
+    var o: string[] = [];
     var objectType = scope.UserTypes[this.Type!.Name];
     if (objectType === undefined)
       throw new Error(`Cannot find type ${this.Type!.Name}`);

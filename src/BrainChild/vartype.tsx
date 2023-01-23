@@ -1,5 +1,4 @@
 /* eslint-disable */
-import { ASMInterpreter } from "../brainasm";
 import { Claim, Claimer, Keywords } from "./brainchild";
 import { Scope } from "./Scope";
 import { Token } from "./token";
@@ -139,48 +138,6 @@ export class VarType extends Token {
       return o;
     }
     return o;
-  }
-
-  Debug(
-    scope: Scope,
-    bs: ASMInterpreter,
-    l: string,
-    i: string,
-    v: number
-  ): string {
-    let val: string = "" + bs.Heap[v];
-    let valHolding: string | undefined = undefined;
-    for (let id in bs.Labels) {
-      if (bs.Labels[id] === bs.Heap[v]) {
-        val = `${id} (${bs.Heap[v]})`;
-        break;
-      }
-    }
-    if (this.PointerDepth > 0) {
-      var higher = this.Clone();
-      higher.PointerDepth--;
-      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}<br>${higher.Debug(
-        scope,
-        bs,
-        "*",
-        "->",
-        bs.Heap[v]
-      )}`;
-    } else if (scope.UserTypes[this.TypeName]) {
-      var t = scope.UserTypes[this.TypeName];
-      var s = `<span class='subtle'>${l}</span><b>${this}</b> ${i} = {<br>`;
-      for (var name in t.Children) {
-        var child = t.Children[name];
-        if (!child || !child[0]) continue;
-        s +=
-          child[0].Debug(scope, bs, "", name, bs.Heap[v] + child[1]) + "<br>";
-      }
-      s += "}";
-      return s;
-    } else {
-      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}`;
-    }
-    return ``;
   }
 
   static AllEquals(targetStack: VarType[], receivedStack: VarType[]) {

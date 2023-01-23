@@ -22,7 +22,7 @@ export class CharConstant extends Expression {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    return [[VarType.Int], [this.GetLine(), `apush ${this.Value}`]];
+    return [[VarType.Int], [`apush ${this.Value}`]];
   }
 }
 Expression.Register(CharConstant.Claim);

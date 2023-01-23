@@ -37,7 +37,7 @@ export class Index
 
   CurryType: VarType | null = null;
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [this.GetLine()];
+    var o: string[] = [];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
@@ -59,7 +59,7 @@ export class Index
   }
 
   Assign(scope: Scope, anyType: VarType): string[] {
-    var o: string[] = [this.GetLine()];
+    var o: string[] = [];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
@@ -76,7 +76,7 @@ export class Index
     return o;
   }
   Read(scope: Scope): string[] {
-    var o: string[] = [this.GetLine()];
+    var o: string[] = [];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
@@ -104,7 +104,7 @@ export class Index
     return child[0];
   }
   GetPointer(scope: Scope): string[] {
-    var o: string[] = [this.GetLine()];
+    var o: string[] = [];
     var valRes = this.Left!.Evaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);

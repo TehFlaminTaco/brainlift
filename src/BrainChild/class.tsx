@@ -263,7 +263,6 @@ export class Class extends Statement {
       throw new Error(
         `Tried to compile non-registered class: ${this.Name!.Name}`
       );
-    asm.push(this.GetLine());
     asm.push(`${classDef.ClassLabel}:`);
     for (var i = 0; i < this.StaticMembers.length; i++) {
       let member = this.StaticMembers[i];

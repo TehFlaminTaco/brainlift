@@ -25,12 +25,9 @@ export class ASM extends Statement {
     return as;
   }
   Evaluate(scope: Scope): string[] {
-    return [
-      this.GetLine(),
-      ...this.Instructions.map((c) =>
-        c.replace(/\[([a-zA-Z_]\w*\b)\]/, (_, a) => scope.Get(a)[1])
-      ),
-    ];
+    return this.Instructions.map((c) =>
+      c.replace(/\[([a-zA-Z_]\w*\b)\]/, (_, a) => scope.Get(a)[1])
+    );
   }
 
   DefinitelyReturns(): boolean {

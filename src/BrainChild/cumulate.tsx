@@ -53,7 +53,7 @@ export class Cumulate extends Expression implements Donor {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [this.GetLine()];
+    var o: string[] = [];
     var t = this.Target!.GetType(scope);
     o.push(...this.Target!.Read(scope));
     if (this.PostFix) {

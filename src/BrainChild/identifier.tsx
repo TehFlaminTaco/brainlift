@@ -37,7 +37,7 @@ export class Identifier
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var res = scope.Get(this.Name);
-    return [[res[0]], [this.GetLine(), `seta ${res[1]}`, `ptra`, `apusha`]];
+    return [[res[0]], [`seta ${res[1]}`, `ptra`, `apusha`]];
   }
 
   GetPointer(scope: Scope): string[] {

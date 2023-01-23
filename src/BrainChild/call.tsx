@@ -34,7 +34,7 @@ export class Call extends Expression implements LeftDonor {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [this.GetLine()];
+    var o: string[] = [];
     var callArgumentTypes: VarType[] = [];
     if (this.Left! instanceof Index) {
       this.Left.TryCurry(scope);

@@ -96,7 +96,7 @@ export class Claimer {
 export function Parse(code: string): Scope {
   var scope = new Scope();
   Scope.CURRENT = scope;
-  scope.Assembly.push(`jmp postdata`);
+  scope.Assembly.push(`section .text`, '  global _start');
   var claimer = new Claimer(code);
   var statements = [];
   var s = Statement.ClaimTopLevel(claimer);
@@ -118,9 +118,9 @@ export function Parse(code: string): Scope {
   for (var i = 0; i < statements.length; i++) {
     o.push(...statements[i].Evaluate(scope));
   }
-  scope.Assembly.push("postdata:", ...o);
-  scope.Assembly.push(`halt`);
-  if (scope.UsingAllocator()) scope.Assembly.push(`aftercode: db aftercode, 2`);
+  scope.Assembly.push("_start:", ...(o.map(c=>'  ' + c)));
+  scope.Assembly.push(`  mov eax, 1`, `  int 0x80`);
+  //if (scope.UsingAllocator()) scope.Assembly.push(`aftercode: db aftercode, 2`);
   console.dir(statements);
   console.dir(scope);
 
