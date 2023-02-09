@@ -1,0 +1,69 @@
+include term.bc;
+include array.bc;
+
+class array2d : array {
+    int width;
+    int height;
+    
+    metamethod array2d(int w, int h) {
+        this.width = w;
+        this.height = h;
+        
+        this.length = (w * h);
+        this.data = alloc(w * h);
+    }
+    
+    function wrap(int x, int y) -> int, int {
+        return x%this.width, y%this.height;
+    }
+    
+    metamethod get_index(array2d this, int x, int y) -> void {
+        x, y = this.wrap(x,y);
+        return *(this.data + y*this.width + x);
+    }
+    
+    metamethod set_index(array2d this, int x, int y, void v) {
+        x, y = this.wrap(x,y);
+        *(this.data + y*this.width + x) = v;
+    }
+    
+    metamethod ptr_index(array2d this, int x, int y) {
+        x, y = this.wrap(x,y);
+        return (this.data + y*this.width + x);
+    }
+}
+
+class GOL {
+    array2d Current;
+    array2d Off;
+    
+    int Width;
+    int Height;
+    
+    metamethod GOL(int w, int h) {
+        this.Width = w;
+        this.Height = h;
+        this.Current = new array2d(w, h);
+        this.Off = new array2d(w, h);
+    }
+    
+    function Draw(){
+        int x = 0;
+        int y = 0;
+        while(y < this.Height){
+            while(x < this.Width){
+                if (this.Current[x, y] -> int)
+                    Term.writechar('#')
+                else
+                    Term.writechar(' ')
+                x++;
+            }
+            Term.writechar('\n');
+            y++;
+        }
+    }
+}
+
+
+GOL game = new GOL(64, 32);
+game.Draw();

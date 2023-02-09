@@ -6,7 +6,7 @@ import { VarType } from "./vartype";
 export class StringConstant extends Expression {
   Value: string = "";
   static Claim(claimer: Claimer): StringConstant | null {
-    var s = claimer.Claim(/"(\\[bfnrt"\\]|.)+?"/);
+    var s = claimer.Claim(/"(\\[bfnrt"\\]|.)*?"/);
     if (!s.Success) return null;
     var str = new StringConstant(claimer, s);
     str.Value = JSON.parse(s.Body![0]);
@@ -26,6 +26,10 @@ export class StringConstant extends Expression {
       [VarType.Int, VarType.IntPtr],
       [this.GetLine(), `apush ${this.Value.length}`, `apush ${label}`],
     ];
+  }
+
+  GetTypes(scope: Scope): VarType[] {
+    return [VarType.Int, VarType.IntPtr];
   }
 }
 Expression.Register(StringConstant.Claim);

@@ -31,10 +31,6 @@ export class Identifier
     return [`seta ${res[1]}`, `ptra`, `apusha`];
   }
 
-  GetType(scope: Scope): VarType {
-    return scope.Get(this.Name)[0];
-  }
-
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var res = scope.Get(this.Name);
     return [[res[0]], [this.GetLine(), `seta ${res[1]}`, `ptra`, `apusha`]];
@@ -44,11 +40,15 @@ export class Identifier
     var res = scope.Get(this.Name);
     return [`apush ${res[1]}`];
   }
-  GetReferenceType(scope: Scope): VarType {
+  GetReferenceTypes(scope: Scope): VarType[] {
     var res = scope.Get(this.Name);
     var t = res[0].Clone();
     t.PointerDepth++;
-    return t;
+    return [t];
+  }
+
+  GetTypes(scope: Scope): VarType[] {
+    return [scope.Get(this.Name)[0]];
   }
 }
 

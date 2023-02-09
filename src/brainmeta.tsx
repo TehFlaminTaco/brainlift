@@ -24,12 +24,12 @@ OUT stack          // Write the top of stack to STDOUT
 import { Interpreter } from "./bf";
 import { INSTRUCTIONS } from "./brainasm";
 
-var CURRENTSTACK = "A";
+let CURRENTSTACK = "A";
 
 function SelectStack(stack: string) {
   if (!stack) return "";
   if (!stack.length) return "";
-  var diff = stack.charCodeAt(0) - CURRENTSTACK.charCodeAt(0);
+  let diff = stack.charCodeAt(0) - CURRENTSTACK.charCodeAt(0);
   CURRENTSTACK = stack;
   if (diff === 0) return "";
   diff += 6; // This'll ensure we're on valid memory.
@@ -92,7 +92,7 @@ function GeneratePOP(stack: string) {
     SelectStack(stack) + "[-]<[[-]«[«]]»[»]<<<<<<<<<<<" // Select the target stack // Clear the value and the rail
   );
 }
-var whileStack: string[] = [];
+let whileStack: string[] = [];
 function GenerateWHL(stack: string) {
   whileStack.push(stack);
   return SelectStack(stack) + "[";
@@ -197,18 +197,17 @@ const ParseInstruction: any = {
   ZER: GenerateZER,
   INP: GenerateINP,
   OUT: GenerateOUT,
-  CDE: () => ""
+  CDE: () => "",
 };
 
 export function Transpile(code: string): string {
-  var out = "";
+  let out = "";
   CURRENTSTACK = "A";
-  var i = 0;
-  for (var s of code.matchAll(
+  for (let s of code.matchAll(
     /(?<instruction>MOV|CPY|PUT|POP|WHL|END|INC|DEC|ADD|SUB|MUL|DIV|ZER|INP|OUT|CDE)(?<arguments>(?:,?[ \t]*(?:[A-F]|\d+|'.'))*)/g
   )) {
-    var instruction = s[1];
-    var args = Array.from(s[2].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
+    let instruction = s[1];
+    let args = Array.from(s[2].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
       .map((c) => c[1])
       .map((c) => (c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c));
     out += `:("${s[0]}"\t${ParseInstruction[instruction](...args)
@@ -238,12 +237,12 @@ export class MetaInterpreter {
         /(?<instruction>MOV|CPY|PUT|POP|WHL|END|INC|DEC|ADD|SUB|MUL|DIV|ZER|INP|OUT|CDE)(?<arguments>(?:,?[ \t]*(?:[A-F]|\d+|'.'))*)/g
       )
     ).map((c) => [c[1], c[2]]);
-    for (var i = 0; i < 6; i++) this.Stacks[i] = [];
+    for (let i = 0; i < 6; i++) this.Stacks[i] = [];
   }
 
   CodeWithPointerHighlight(): string {
-    var s = "";
-    for (var i = 0; i < this.Code.length; i++) {
+    let s = "";
+    for (let i = 0; i < this.Code.length; i++) {
       if (this.CodePointer === i) {
         s += "<span class='pointer'>";
       }
@@ -258,17 +257,17 @@ export class MetaInterpreter {
 
   ToBF(): Interpreter {
     // Stringify our code.
-    var code = Transpile(this.Code.map((c) => `${c[0]} ${c[1]}`).join("\n"));
-    var bf = new Interpreter(code);
+    let code = Transpile(this.Code.map((c) => `${c[0]} ${c[1]}`).join("\n"));
+    let bf = new Interpreter(code);
 
     // Move onto the Code Pointer
-    var codeLengths = code.split("\n").map((c) => c.length + 1);
+    let codeLengths = code.split("\n").map((c) => c.length + 1);
     bf.CodePointer = codeLengths
       .slice(0, this.CodePointer)
       .reduce((a, b) => a + b, 0);
 
     // Rebuild the while stack
-    for (var i = 0; i < this.WhileStack.length; i++) {
+    for (let i = 0; i < this.WhileStack.length; i++) {
       bf.LoopStack.push(
         codeLengths.slice(0, this.WhileStack[i][0]).reduce((a, b) => a + b, 0)
       );
@@ -279,25 +278,25 @@ export class MetaInterpreter {
     bf.Output = this.Output;
 
     // Rebuild memory
-    var maxStack = Math.max(...this.Stacks.map((c) => c.length));
-    for (var j = 0; j < 12; j++) {
+    let maxStack = Math.max(...this.Stacks.map((c) => c.length));
+    for (let j = 0; j < 12; j++) {
       bf.Tape[j] = 0;
     }
-    for (var i = 0; i < maxStack; i++) {
-      for (var j = 0; j < 6; j++) {
+    for (let i = 0; i < maxStack; i++) {
+      for (let j = 0; j < 6; j++) {
         bf.Tape[11 + i * 12 + j * 2] = i < this.Stacks[j].length ? 1 : 0;
         bf.Tape[12 + i * 12 + j * 2] = this.Stacks[j][i] ?? 0;
       }
     }
 
     bf.TapePointer =
-      12 * i * this.Stacks[this.LastStack].length + this.LastStack * 2;
+      12 * maxStack * this.Stacks[this.LastStack].length + this.LastStack * 2;
 
     return bf;
   }
 
   static FromBF(bf: Interpreter): MetaInterpreter {
-    var interp = new MetaInterpreter(bf.Code);
+    let interp = new MetaInterpreter(bf.Code);
     // Step the BF interpreter until we're SURE we're on a meta line.
     while (
       bf.CodePointer < bf.Code.length &&
@@ -306,7 +305,7 @@ export class MetaInterpreter {
       bf.Step();
     }
     // Find out what Codel line we're on
-    var line = bf.Code.substr(0, bf.CodePointer).replace(/[^\n]/g, "").length;
+    let line = bf.Code.substr(0, bf.CodePointer).replace(/[^\n]/g, "").length;
     interp.CodePointer = line;
 
     interp.Input = bf.Input;
@@ -314,24 +313,24 @@ export class MetaInterpreter {
     interp.Output = bf.Output;
 
     // Parse the memory
-    for (var i = 0; i < 6; i++) {
+    for (let i = 0; i < 6; i++) {
       // 6 stacks
-      for (var j = i * 2 + 11; j < bf.Tape.length; j += 12) {
+      for (let j = i * 2 + 11; j < bf.Tape.length; j += 12) {
         if (bf.Tape[j] === 0) continue;
         interp.Stacks[i].push(bf.Tape[j + 1]);
       }
     }
 
     // Rebuild the WhileStack
-    for (var i = 0; i < interp.CodePointer; i++) {
-      var codel = interp.Code[i];
+    for (let i = 0; i < interp.CodePointer; i++) {
+      let codel = interp.Code[i];
       if (codel[0] === "WHL") {
-        var args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
+        let args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
           .map((c) => c[1])
           .map((c) =>
             c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c
           );
-        var a: number = GetStackIndex(args[0]);
+        let a: number = GetStackIndex(args[0]);
         interp.WhileStack.push([i, a]);
       } else if (codel[0] === "END") {
         interp.WhileStack.pop();
@@ -343,15 +342,15 @@ export class MetaInterpreter {
   }
 
   Step(): boolean {
-    var codel = this.Code[this.CodePointer++];
+    let codel = this.Code[this.CodePointer++];
     if (codel === undefined) return true;
-    var instruction = codel[0];
-    var args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
+    let instruction = codel[0];
+    let args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
       .map((c) => c[1])
       .map((c) => (c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c));
-    var a: number = GetStackIndex(args[0]);
-    var b: number = GetStackIndex(args[1]);
-    for (var i = 0; i < 6; i++) {
+    let a: number = GetStackIndex(args[0]);
+    let b: number = GetStackIndex(args[1]);
+    for (let i = 0; i < 6; i++) {
       if (this.Stacks[i].length === 0) this.Stacks[i].push(0);
     }
     switch (instruction) {
@@ -378,9 +377,9 @@ export class MetaInterpreter {
       case "WHL": {
         let val = this.Stacks[a][this.Stacks[a].length - 1] ?? 0;
         if (val === 0) {
-          var depth = 1;
+          let depth = 1;
           while (this.CodePointer < this.Code.length) {
-            var p = this.Code[this.CodePointer++];
+            let p = this.Code[this.CodePointer++];
             if (p[0] === "WHL") depth++;
             if (p[0] === "END") {
               depth--;
@@ -472,23 +471,25 @@ export class MetaInterpreter {
 
   RenderBFMemory() {
     // Falsify BF memory
-    var tape = [];
-    var maxStack = Math.max(...this.Stacks.map((c) => c.length));
-    for (var j = 0; j < 12; j++) {
+    let tape = [];
+    let maxStack = Math.max(...this.Stacks.map((c) => c.length));
+    for (let j = 0; j < 12; j++) {
       tape[j] = 0;
     }
-    for (var i = 0; i < maxStack; i++) {
-      for (var j = 0; j < 6; j++) {
+    for (let i = 0; i < maxStack; i++) {
+      for (let j = 0; j < 6; j++) {
         tape[11 + i * 12 + j * 2] = i < this.Stacks[j].length ? 1 : 0;
         tape[12 + i * 12 + j * 2] = this.Stacks[j][i] ?? 0;
       }
     }
 
-    var ptr =
-      12 + i * (this.Stacks[this.LastStack].length - 1) + this.LastStack * 2;
+    let ptr =
+      12 +
+      maxStack * (this.Stacks[this.LastStack].length - 1) +
+      this.LastStack * 2;
 
-    var body = "<div class='tape'>";
-    for (var i = 0; i < tape.length; i++) {
+    let body = "<div class='tape'>";
+    for (let i = 0; i < tape.length; i++) {
       body += `<span class='memorycell${
         i === ptr ? " selected" : ""
       }'><span class='character'>${
@@ -500,56 +501,55 @@ export class MetaInterpreter {
   }
 
   RenderBFBMMemory() {
-    var body = "";
-    var stacks: string[] = [];
-    for (var i = 0; i < 6; i++) {
+    let body = "";
+    let stacks: string[] = [];
+    for (let i = 0; i < 6; i++) {
       // 6 stacks
       stacks[i] = `${i} <span class='tape${
         i === this.LastStack ? " selected" : ""
       }'>`;
-      for (var j = 0; j < this.Stacks[i].length; j++) {
-        var character = `<span class='character'>${
+      for (let j = 0; j < this.Stacks[i].length; j++) {
+        let character = `<span class='character'>${
           this.Stacks[i][j] >= 33 && this.Stacks[i][j] <= 126
             ? String.fromCharCode(this.Stacks[i][j])
             : ""
         }</span>`;
-        var number = `<span class='number'>${this.Stacks[i][j]}</span>`;
+        let number = `<span class='number'>${this.Stacks[i][j]}</span>`;
         stacks[i] += `<span class='memorycell'>${character}${number}</span>`;
       }
       stacks[i] += "</span>";
     }
     body =
       stacks[0] + stacks[1] + stacks[2] + stacks[3] + stacks[4] + stacks[5];
-    document.querySelector(
-      'div.tab[data-target="bfbmMemory"]'
-    )!.innerHTML = body;
+    document.querySelector('div.tab[data-target="bfbmMemory"]')!.innerHTML =
+      body;
   }
 
   RenderBSMemory() {
-    var regTape = this.Stacks[0].concat(this.Stacks[1].concat().reverse());
-    var heapTape = this.Stacks[2].concat(this.Stacks[3].concat().reverse());
-    var stack1 = this.Stacks[4];
-    var stack2 = this.Stacks[5];
+    let regTape = this.Stacks[0].concat(this.Stacks[1].concat().reverse());
+    let heapTape = this.Stacks[2].concat(this.Stacks[3].concat().reverse());
+    let stack1 = this.Stacks[4];
+    let stack2 = this.Stacks[5];
 
-    var heapShorts = [];
-    for (var i = 0; i < heapTape.length; i += 2) {
+    let heapShorts = [];
+    for (let i = 0; i < heapTape.length; i += 2) {
       heapShorts[i / 2] = heapTape[i] + (heapTape[i + 1] << 8);
     }
 
-    var heapPtr = (regTape[0] ?? 0) + ((regTape[1] ?? 0) << 8);
-    var heapTargetPtr = (regTape[2] ?? 0) + ((regTape[3] ?? 0) << 8);
-    var instructionPtr = (regTape[4] ?? 0) + ((regTape[5] ?? 0) << 8);
-    var nextInstruction =
+    let heapPtr = (regTape[0] ?? 0) + ((regTape[1] ?? 0) << 8);
+    let heapTargetPtr = (regTape[2] ?? 0) + ((regTape[3] ?? 0) << 8);
+    let instructionPtr = (regTape[4] ?? 0) + ((regTape[5] ?? 0) << 8);
+    let nextInstruction =
       INSTRUCTIONS[heapShorts[instructionPtr]]?.[0] ??
       heapShorts[instructionPtr] ??
       "NOP";
-    var loadedInstruction =
+    let loadedInstruction =
       INSTRUCTIONS[regTape[6] ?? 0]?.[0] ?? regTape[6] ?? 0;
-    var instructionArgument = (regTape[8] ?? 0) + ((regTape[9] ?? 0) << 8);
-    var regA = (regTape[10] ?? 0) + ((regTape[11] ?? 0) << 8);
-    var regB = (regTape[12] ?? 0) + ((regTape[13] ?? 0) << 8);
+    let instructionArgument = (regTape[8] ?? 0) + ((regTape[9] ?? 0) << 8);
+    let regA = (regTape[10] ?? 0) + ((regTape[11] ?? 0) << 8);
+    let regB = (regTape[12] ?? 0) + ((regTape[13] ?? 0) << 8);
 
-    var body = `Heap PTR: ${heapPtr}<br>
+    let body = `Heap PTR: ${heapPtr}<br>
 Heap Target PTR: ${heapTargetPtr}<br>
 Instruction PTR: ${instructionPtr}<br>
 Next Instruction: ${nextInstruction}<br>

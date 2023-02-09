@@ -58,7 +58,7 @@ export class TypeDefinition {
     mm = mm.filter((c) =>
       exactly
         ? VarType.AllEquals(c[1], argTypes)
-        : VarType.CanCoax(c[1], argTypes)
+        : VarType.CanCoax(c[1], argTypes)[0]
     );
     if (mm.length === 0)
       return canFallback ? this.TryFallbacks(name, argTypes) : null;
@@ -99,16 +99,19 @@ export class TypeDefinition {
 export var TypeInt = new TypeDefinition();
 export var TypeVoid = new TypeDefinition();
 
-var simpleAdd = [`apopb`, `apopa`, `addab`, `apushb`];
-var simpleSub = [`apopb`, `apopa`, `subba`, `apusha`];
-var simpleMul = [`apopb`, `apopa`, `mulab`, `apushb`];
-var simpleDiv = [`apopb`, `apopa`, `divab`, `apusha`];
-var simpleMod = [`apopb`, `apopa`, `divab`, `apushb`];
-var simpleDivMod = [`apopb`, `apopa`, `divab`, `apusha`, `apushb`];
-var simpleLt = [`apopb`, `apopa`, `cmp`, `apushb`];
-var simpleGt = [`apopb`, `apopa`, `cmp`, `apusha`];
-var simpleEq = [`apopb`, `apopa`, `cmp`, `addba`, `nota`, `apusha`];
-var simpleNe = [`apopb`, `apopa`, `cmp`, `addba`, `apusha`];
+let simpleAdd: string[] = [`apopb`, `apopa`, `addab`, `apushb`];
+let simpleSub: string[] = [`apopb`, `apopa`, `subba`, `apusha`];
+let simpleMul: string[] = [`apopb`, `apopa`, `mulab`, `apushb`];
+let simpleDiv: string[] = [`apopb`, `apopa`, `divab`, `apusha`];
+let simpleMod: string[] = [`apopb`, `apopa`, `divab`, `apushb`];
+let simpleDivMod: string[] = [`apopb`, `apopa`, `divab`, `apusha`, `apushb`];
+let simpleLt: string[] = [`apopb`, `apopa`, `cmp`, `apushb`];
+let simpleGt: string[] = [`apopb`, `apopa`, `cmp`, `apusha`];
+let simpleEq: string[] = [`apopb`, `apopa`, `cmp`, `addba`, `nota`, `apusha`];
+let simpleNe: string[] = [`apopb`, `apopa`, `cmp`, `addba`, `apusha`];
+let simpleUnm: string[] = [`apopb`, `seta 0`, `subab`, `apushb`];
+let simpleUnp: string[] = [];
+let simpleNot: string[] = [`apopa`, `nota`, `apusha`];
 
 var simpleOps: [string, string[]][] = [
   ["add", simpleAdd],
@@ -135,6 +138,9 @@ export function GeneratePointerType(typ: VarType): TypeDefinition {
   t.AddMetamethod("divmod", [typ, typ], [typ, VarType.VoidPtr], simpleDivMod);
   t.AddMetamethod("divmod", [typ, typ], [VarType.VoidPtr, typ], simpleDivMod);
   t.AddMetamethod("truthy", [VarType.Int], [typ], []);
+  t.AddMetamethod("not", [VarType.Int], [typ], simpleNot);
+  t.AddMetamethod("unm", [typ], [typ], simpleUnm);
+  t.AddMetamethod("unp", [VarType.Int], [typ], simpleUnp);
 
   return t;
 }
@@ -155,3 +161,6 @@ TypeInt.AddMetamethod(
   simpleDivMod
 );
 TypeInt.AddMetamethod("truthy", [VarType.Int], [VarType.Int], []);
+TypeInt.AddMetamethod("not", [VarType.Int], [VarType.Int], simpleNot);
+TypeInt.AddMetamethod("unm", [VarType.Int], [VarType.Int], simpleUnm);
+TypeInt.AddMetamethod("unp", [VarType.Int], [VarType.Int], simpleUnp);

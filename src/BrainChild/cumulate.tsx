@@ -54,33 +54,39 @@ export class Cumulate extends Expression implements Donor {
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var o: string[] = [this.GetLine()];
-    var t = this.Target!.GetType(scope);
-    o.push(...this.Target!.Read(scope));
-    if (this.PostFix) {
-      o.push(`apopa`, `apusha`, `apusha`);
-    }
-    var metaName = (this.PostFix ? `post` : `pre`) + `crement` + this.Operator;
-    var meta = t.GetDefinition().GetMetamethod(metaName, [t]);
-    if (meta === null) {
-      // Try the math operator instead
-      meta = t.GetDefinition().GetMetamethod(this.Operator, [t, VarType.Int]);
-      o.push(`apush 1`);
-    }
-    if (meta === null) {
-      throw new Error(`Cannot ${metaName} type ${t}. No metamethod`);
-    }
+    var ts = this.Target!.GetTypes(scope);
+    ts.forEach((t) => {
+      o.push(...this.Target!.Read(scope));
+      if (this.PostFix) {
+        o.push(`apopa`, `apusha`, `apusha`);
+      }
+      var metaName = (this.Operator === "add" ? "in" : "de") + `crement`;
+      var meta = t.GetDefinition().GetMetamethod(metaName, [t]);
+      if (meta === null) {
+        // Try the math operator instead
+        meta = t.GetDefinition().GetMetamethod(this.Operator, [t, VarType.Int]);
+        o.push(`apush 1`);
+      }
+      if (meta === null) {
+        throw new Error(`Cannot ${metaName} type ${t}. No metamethod`);
+      }
 
-    if (!VarType.AllEquals([t], meta[0])) {
-      throw new Error(
-        `Metamethod ${metaName} for type ${t} must return the same time.`
-      );
-    }
-    o.push(...meta[2]);
-    if (!this.PostFix) {
-      o.push(`apopa`, `apusha`, `apusha`);
-    }
-    o.push(...this.Target!.Assign(scope, t));
-    return [[t], o];
+      if (!VarType.AllEquals([t], meta[0])) {
+        throw new Error(
+          `Metamethod ${metaName} for type ${t} must return the same time.`
+        );
+      }
+      o.push(...meta[2]);
+      if (!this.PostFix) {
+        o.push(`apopa`, `apusha`, `apusha`);
+      }
+      o.push(...this.Target!.Assign(scope, t));
+    });
+    return [ts, o];
+  }
+
+  GetTypes(scope: Scope): VarType[] {
+    return this.Target!.GetTypes(scope);
   }
 }
 

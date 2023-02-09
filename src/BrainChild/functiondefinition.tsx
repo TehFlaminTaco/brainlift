@@ -1,20 +1,19 @@
 import { Claimer } from "./brainchild";
 import { Identifier } from "./identifier";
 import { Index } from "./index";
-import { Statement } from "./statement";
 import { Scope } from "./Scope";
 import { Assignable, Variable } from "./variable";
 import { VariableDecleration } from "./variabledefinition";
 import { FuncType, VarType } from "./vartype";
-import { ExpressionStatement } from "./expressionstatement";
 import { Call } from "./call";
 import { Block } from "./block";
+import { Expression } from "./expression";
 
-export class FunctionDefinition extends Statement {
+export class FunctionDefinition extends Expression {
   Args: VariableDecleration[] = [];
-  RetTypes: VarType[] = [];
+  RetTypes: VarType[] | null = [];
   Target: Assignable | null = null;
-  Body: Statement | null = null;
+  Body: Expression | null = null;
   IsMeta: boolean = false;
   Label: string = "";
 
@@ -24,12 +23,12 @@ export class FunctionDefinition extends Statement {
       return null;
     }
 
-    var target = Variable.ClaimAssignable(claimer);
-    if (target === null) {
-      fnc.Fail();
-      return null;
-    }
-    if (!(target instanceof Identifier) && !(target instanceof Index)) {
+    var target = Variable.ClaimAssignable(claimer, false);
+    if (
+      target !== null &&
+      !(target instanceof Identifier) &&
+      !(target instanceof Index)
+    ) {
       fnc.Fail();
       return null;
     }
@@ -60,20 +59,20 @@ export class FunctionDefinition extends Statement {
       }
     }
 
-    var body = Statement.Claim(claimer);
+    var body = Expression.Claim(claimer);
     if (body === null) {
       fnc.Fail();
       return null;
     }
-    if (!(body instanceof Block)) {
-      fnc.Fail();
-      return null;
-    }
-    if (body.Statements.length > 0) {
-      var last = body.Statements[body.Statements.length - 1];
-      if (last instanceof ExpressionStatement && last.Body instanceof Call) {
-        last.Body.IsFinalExpression = true;
+    if (body instanceof Block) {
+      if (body.Expressions.length > 0) {
+        var last = body.Expressions[body.Expressions.length - 1];
+        if (last instanceof Call) {
+          last.IsFinalExpression = true;
+        }
       }
+    } else if (body instanceof Call) {
+      body.IsFinalExpression = true;
     }
     var funct = new FunctionDefinition(claimer, fnc);
     funct.Args = args;
@@ -81,6 +80,61 @@ export class FunctionDefinition extends Statement {
     funct.Target = target;
     funct.Body = body;
     return funct;
+  }
+
+  static ClaimArrow(claimer: Claimer): FunctionDefinition | null {
+    var flg = claimer.Flag();
+    var lParen = claimer.Claim(/\(/);
+    var args: VariableDecleration[] = [];
+    if (lParen.Success) {
+      let c = VariableDecleration.Claim(claimer);
+      while (c !== null) {
+        args.push(c);
+        if (!claimer.Claim(/,/).Success) break;
+        c = VariableDecleration.Claim(claimer);
+      }
+    } else {
+      let c = VariableDecleration.Claim(claimer);
+      if (c === null) {
+        flg.Fail();
+        return null;
+      }
+      args.push(c);
+    }
+    if (lParen.Success && !claimer.Claim(/\)/).Success) {
+      flg.Fail();
+      return null;
+    }
+    var retTypes: VarType[] | null = null;
+    if (claimer.Claim(/->/).Success) {
+      retTypes = [];
+      var retType = VarType.Claim(claimer);
+      while (retType !== null) {
+        retTypes.push(retType);
+        if (!claimer.Claim(/,/).Success) break;
+        retType = VarType.Claim(claimer);
+      }
+    }
+    if (!claimer.Claim(/=>/).Success) {
+      flg.Fail();
+      return null;
+    }
+    var body = Expression.Claim(claimer);
+    if (body instanceof Block) {
+      if (body.Expressions.length > 0) {
+        var last = body.Expressions[body.Expressions.length - 1];
+        if (last instanceof Call) {
+          last.IsFinalExpression = true;
+        }
+      }
+    } else if (body instanceof Call) {
+      body.IsFinalExpression = true;
+    }
+    var func = new FunctionDefinition(claimer, flg);
+    func.Args = args;
+    func.RetTypes = retTypes;
+    func.Body = body;
+    return func;
   }
 
   static ClaimMetamethod(claimer: Claimer) {
@@ -121,20 +175,20 @@ export class FunctionDefinition extends Statement {
       }
     }
 
-    var body = Statement.Claim(claimer);
+    var body = Expression.Claim(claimer);
     if (body === null) {
       fnc.Fail();
       return null;
     }
-    if (!(body instanceof Block)) {
-      fnc.Fail();
-      return null;
-    }
-    if (body.Statements.length > 0) {
-      var last = body.Statements[body.Statements.length - 1];
-      if (last instanceof ExpressionStatement && last.Body instanceof Call) {
-        last.Body.IsFinalExpression = true;
+    if (body instanceof Block) {
+      if (body.Expressions.length > 0) {
+        var last = body.Expressions[body.Expressions.length - 1];
+        if (last instanceof Call) {
+          last.IsFinalExpression = true;
+        }
       }
+    } else if (body instanceof Call) {
+      body.IsFinalExpression = true;
     }
     var funct = new FunctionDefinition(claimer, fnc);
     funct.Args = args;
@@ -145,11 +199,9 @@ export class FunctionDefinition extends Statement {
     return funct;
   }
 
-  Evaluate(scope: Scope): string[] {
-    if (!this.Body!.DefinitelyReturns() && this.RetTypes.length > 0) {
-      throw new Error(
-        `Function ${this.Target} must return types ${this.RetTypes}`
-      );
+  Evaluate(scope: Scope): [VarType[], string[]] {
+    if (this.RetTypes === null) {
+      this.RetTypes = this.Body!.GetTypes(scope);
     }
     var falseClaimer = new Claimer("");
     var falseClaim = falseClaimer.Flag();
@@ -166,27 +218,65 @@ export class FunctionDefinition extends Statement {
       scope.Set(this.Target.Name, funcType);
     }
     var bodyScope = scope.Sub();
+    bodyScope.CurrentFunction = this.Label;
     bodyScope.IsFunctionScope = true;
-    bodyScope.CurrentRequiredReturns = this.RetTypes.concat();
+    bodyScope.SetRequiredReturns(this.RetTypes?.concat() ?? null);
     var o = [this.GetLine(), `${label}:`];
     for (let i = 0; i < this.Args.length; i++) {
-      o.push(...this.Args[i].Evaluate(bodyScope).map((c) => "  " + c));
+      this.Args[i].TryEvaluate(bodyScope)[1].map((c) => "  " + c);
     }
     for (let i = this.Args.length - 1; i >= 0; i--) {
       o.push(`  seta ${this.Args[i].Label}`, `  apopb`, `  putbptra`);
     }
-    o.push(...this.Body!.Evaluate(bodyScope).map((c) => "  " + c));
+    var res = this.Body!.TryEvaluate(bodyScope);
+    if (
+      !this.Body!.DefinitelyReturns() &&
+      !VarType.CanCoax(bodyScope.GetRequiredReturns()!, res[0])
+    ) {
+      throw new Error(
+        `Function ${this.Target} must return types ${this.RetTypes}`
+      );
+    }
+    o.push(...res[1].map((c) => "  " + c));
     if (!this.Body!.DefinitelyReturns()) {
-      if (this.RetTypes.length > 0) throw new Error("Impossible");
+      o.push(...VarType.Coax(bodyScope.GetRequiredReturns()!, res[0])[0]);
       o.push(`  ret`);
     }
     scope.Assembly.push(...o);
-    if (this.IsMeta) return [];
-    return [`apush ${label}`, ...this.Target!.Assign(scope, funcType)];
+    let name = this.Target+"";
+    if(this.Target instanceof Identifier)name = this.Target.Name;
+    scope.AllVars[this.Label] = [funcType, name, scope.CurrentFile, scope.CurrentFunction];
+    if (this.IsMeta) return [[], []];
+    if (this.Target === null)
+      return [[funcType], [this.GetLine(), `apush ${label}`]];
+    return [
+      [funcType],
+      [
+        this.GetLine(),
+        `apush ${label}`,
+        `apush ${label}`,
+        ...this.Target!.Assign(scope, funcType),
+      ],
+    ];
   }
   DefinitelyReturns(): boolean {
     return false;
   }
+  GetTypes(scope: Scope): VarType[] {
+    if (this.RetTypes === null) {
+      if (!(this.Body instanceof Expression)) {
+        throw new Error(`Impossible`);
+      }
+      this.RetTypes = this.Body.GetTypes(scope);
+    }
+    var falseClaimer = new Claimer("");
+    var falseFlag = falseClaimer.Flag();
+    var funcType = new FuncType(falseClaimer, falseFlag);
+    funcType.RetTypes = this.RetTypes.concat();
+    funcType.ArgTypes = this.Args.map((c) => c.Type!);
+    return [funcType];
+  }
 }
 
-Statement.RegisterTopLevel(FunctionDefinition.Claim);
+Expression.Register(FunctionDefinition.Claim);
+Expression.Register(FunctionDefinition.ClaimArrow);

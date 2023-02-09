@@ -1,11 +1,10 @@
 import { Claimer } from "./brainchild";
 import { Expression } from "./expression";
 import { Scope } from "./Scope";
-import { Statement } from "./statement";
 import { VarType } from "./vartype";
 import { Call } from "./call";
 
-export class Return extends Statement {
+export class Return extends Expression {
   Values: Expression[] = [];
   static Claim(claimer: Claimer): Return | null {
     var ret = claimer.Claim(/return\b/);
@@ -22,7 +21,7 @@ export class Return extends Statement {
     return Ret;
   }
 
-  Evaluate(scope: Scope): string[] {
+  Evaluate(scope: Scope): [VarType[], string[]] {
     if (!scope.IsFunctionScope) {
       throw new Error("Cannot return outside of function.");
     }
@@ -32,32 +31,38 @@ export class Return extends Statement {
     for (var i = 0; i < this.Values.length; i++) {
       var v = this.Values[i];
       if (i === this.Values.length - 1 && v instanceof Call) {
-        var callRes = v.Evaluate(scope);
+        var callRes = v.GetTypes(scope);
+        if (scope.GetRequiredReturns() === null) {
+          scope.SetRequiredReturns(callRes);
+        }
         if (
-          VarType.AllEquals(
-            scope.CurrentRequiredReturns,
-            tStack.concat(callRes[0])
-          )
+          VarType.AllEquals(scope.GetRequiredReturns()!, tStack.concat(callRes))
         ) {
           tailCall = true;
           v.TailCall = true;
         }
       }
-      var res = v.Evaluate(scope);
+      var res = v.TryEvaluate(scope);
       tStack.push(...res[0]);
       o.push(...res[1]);
     }
-    if (!VarType.CanCoax(scope.CurrentRequiredReturns, tStack)) {
+    if (scope.GetRequiredReturns() === null) {
+      scope.SetRequiredReturns(tStack);
+    }
+    if (!VarType.CanCoax(scope.GetRequiredReturns()!, tStack)[0]) {
       throw new Error(
-        `Unable to return value type: ${tStack} expected ${scope.CurrentRequiredReturns}`
+        `Unable to return value type: ${tStack} expected ${scope.GetRequiredReturns()}`
       );
     }
-    o.push(...VarType.Coax(scope.CurrentRequiredReturns, tStack));
+    o.push(...VarType.Coax(scope.GetRequiredReturns()!, tStack)[0]);
     if (!tailCall) o.push(`ret`);
-    return o;
+    return [[], o];
   }
   DefinitelyReturns(): boolean {
     return true;
   }
+  GetTypes(): VarType[] {
+    return [];
+  }
 }
-Statement.Register(Return.Claim);
+Expression.Register(Return.Claim);

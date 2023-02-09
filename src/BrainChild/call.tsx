@@ -33,15 +33,43 @@ export class Call extends Expression implements LeftDonor {
     return call;
   }
 
+  GetTypes(scope: Scope): VarType[] {
+    var callArgumentTypes: VarType[] = [];
+    if (this.Left! instanceof Index) {
+      this.Left.TryCurry(scope);
+    }
+    var resolveTarget = this.Left!.GetTypes(scope);
+    for (var i = 0; i < this.Arguments.length; i++) {
+      var resolveArgument = this.Arguments[i].GetTypes(scope);
+      callArgumentTypes.push(...resolveArgument);
+    }
+    var functionTypes: FuncType[] = resolveTarget.filter(
+      (c) => c instanceof FuncType
+    ) as FuncType[];
+    if (functionTypes.length === 0)
+      throw new Error(`Attempted to call non-callable: ${resolveTarget[0]}`);
+    if (this.Left! instanceof Index && this.Left.Curry) {
+      callArgumentTypes.push(this.Left.CurryType!);
+    }
+    var functionMatchesTypes: FuncType[] = functionTypes.filter(
+      (c) => VarType.CanCoax(c.ArgTypes, callArgumentTypes)[0]
+    );
+    if (functionMatchesTypes.length === 0)
+      throw new Error(
+        `Cannot call, argument mismatch. Expected: ${functionTypes[0].ArgTypes} Got: ${callArgumentTypes}`
+      );
+    return functionMatchesTypes[0].RetTypes;
+  }
+
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var o: string[] = [this.GetLine()];
     var callArgumentTypes: VarType[] = [];
     if (this.Left! instanceof Index) {
       this.Left.TryCurry(scope);
     }
-    var resolveTarget = this.Left!.Evaluate(scope);
+    var resolveTarget = this.Left!.TryEvaluate(scope);
     for (var i = 0; i < this.Arguments.length; i++) {
-      var resolveArgument = this.Arguments[i].Evaluate(scope);
+      var resolveArgument = this.Arguments[i].TryEvaluate(scope);
       o.push(...resolveArgument[1]);
       callArgumentTypes.push(...resolveArgument[0]);
     }
@@ -53,17 +81,17 @@ export class Call extends Expression implements LeftDonor {
     if (this.Left! instanceof Index && this.Left.Curry) {
       callArgumentTypes.push(this.Left.CurryType!);
     }
-    var functionMatchesTypes: FuncType[] = functionTypes.filter((c) =>
-      VarType.CanCoax(c.ArgTypes, callArgumentTypes)
+    var functionMatchesTypes: FuncType[] = functionTypes.filter(
+      (c) => VarType.CanCoax(c.ArgTypes, callArgumentTypes)[0]
     );
     if (functionMatchesTypes.length === 0)
       throw new Error(
         `Cannot call, argument mismatch. Expected: ${functionTypes[0].ArgTypes} Got: ${callArgumentTypes}`
       );
     var funcType = functionMatchesTypes[0];
-    o.push(...VarType.Coax(funcType.ArgTypes, callArgumentTypes));
+    o.push(...VarType.Coax(funcType.ArgTypes, callArgumentTypes)[0]);
     o.push(...resolveTarget[1]);
-    o.push(...VarType.Coax([funcType], resolveTarget[0]));
+    o.push(...VarType.Coax([funcType], resolveTarget[0])[0]);
     if (!this.IsFinalExpression && !this.TailCall)
       o.push(...scope.DumpFunctionVariables());
     o.push(`apopa`, this.TailCall ? `jmpa` : `calla`);

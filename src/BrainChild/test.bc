@@ -1,0 +1,152 @@
+include term.bc;
+include extmacros.bc;
+include random.bc;
+
+void discard;
+
+abstract class pVec2 {
+    static function make(int x, int y) -> pVec2 { ((x%256) + (y*256) -> pVec2) }
+    metamethod get_x(pVec2 this) -> int { (this -> int)%256 }
+    metamethod get_y(pVec2 this) -> int { (this -> int)/256 }
+    static function with_x(pVec2 this, int x) -> pVec2 { ((x%256) + (((this->int)/256)*256) -> pVec2) }
+    static function with_y(pVec2 this, int y) -> pVec2 { (((this->int)%256)+ (y*256) -> pVec2) }
+    
+    metamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%256)+((b->int)%256))%256) + ((((a->int)/256)*256)+(((b->int)/256)*256)) -> pVec2) }
+    metamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%256)-((b->int)%256))%256) + ((((a->int)/256)*256)-(((b->int)/256)*256)) -> pVec2) }
+    metamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }
+}
+
+pVec2 apple = pVec2.make(0xFF,0xFF);
+
+discard, @int DirectionVectors = "\uFF00\u0001\u0100\u00FF";
+discard, @int DirectionHeads = "^>v<";
+
+class Body {
+    pVec2 Pos;
+    pVec2 LastPos;
+    Body Tail;
+    
+    function Move(pVec2 pos){
+        this.LastPos = this.Pos;
+        if(this.Tail)this.Tail.Move(this.Pos);
+        this.Pos = pos;
+    }
+    
+    function MoveBy(pVec2 amount){
+        this.Move(this.Pos + amount);
+    }
+    
+    function Grow(){
+        if(this.Tail)return this.Tail.Grow();
+        this.Tail = new Body(this.LastPos);
+    }
+    
+    function Draw(){
+        if(this.Tail)this.Tail.Draw();
+        Term.cursor.x = this.Pos.x;
+        Term.cursor.y = this.Pos.y;
+        Term.writechar('#');
+    }
+    
+    metamethod Body(pVec2 pos){
+        this.LastPos = pos;
+        this.Pos = pos;
+    }
+    metamethod truthy(Body this)->int{
+        return (this -> int);
+    }
+}
+
+class Head : Body {
+    int Direction;
+    metamethod Head(pVec2 pos){
+        this.Direction = 1;
+        this.Pos = pos;
+        this.LastPos = pos;
+    }
+    function Draw(){
+        if(this.Tail)this.Tail.Draw();
+        Term.cursor.x = this.Pos.x;
+        Term.cursor.y = this.Pos.y;
+        Term.writechar(DirectionHeads + this.Direction);
+    }
+}
+
+int score = 0;
+function GameOver(){
+    Term.clear();
+    Term.style.fore = Red;
+    Term.style.bold = 1;
+    Term.cursor.x = 27;
+    Term.cursor.y = 15;
+    Term.write("GAME  OVER");
+    Term.cursor.x = 28;
+    Term.cursor.y = 16;
+    Term.write("SCORE: ");
+    Term.writenum(score);
+    asm {halt}
+}
+
+Head snake = new Head(pVec2.make(32, 16));
+snake.Grow();
+snake.Grow();
+snake.Grow();
+
+int frame = 0;
+int counter = 0;
+int grace = 3;
+Term.pollEvents();
+Term.frame.push(()=>{
+    seed += counter;
+    rand();
+    if(apple.x > 63){
+        var a = (rand() -> pVec2);
+        apple = pVec2.make(a.x%64, 1 + (a.y%31));
+    }
+    if(frame++ >= 2 + (2*!(snake.Direction%2))){
+        snake.MoveBy((*(DirectionVectors + snake.Direction) -> pVec2));
+        frame = 0;
+    }
+    if(snake.Pos == apple){
+        score++;
+        snake.Grow();
+        var a = (rand() -> pVec2);
+        apple = pVec2.make(a.x%64, 1 + (a.y%31));
+    }
+    if(grace)grace--
+    else{
+        var b = snake.Tail;
+        while(b){
+            if(snake.Pos == b.Pos){
+                GameOver();
+            }
+            b = b.Tail;
+        }
+    }
+    if(snake.Pos.x > 63){GameOver();}
+    if(snake.Pos.y > 31){GameOver();}
+    if(snake.Pos.y < 1){GameOver();}
+    Term.clear();
+    Term.cursor.reset();
+    Term.style.back = White;
+    Term.style.fore = Black;
+    Term.write("                                                                ");
+    Term.cursor.reset();
+    Term.write("SCORE: ");
+    Term.writenum(score);
+    Term.style.back = Black;
+    Term.style.fore = White;
+    Term.cursor.x = apple.x;
+    Term.cursor.y = apple.y;
+    Term.writechar('a');
+    snake.Draw();
+});
+
+Term.keyDown.push(function(int h, int l){
+    if(h=='w')if(1 == snake.Direction%2)return snake.Direction = 0;
+    if(h=='d')if(0 == snake.Direction%2)return snake.Direction = 1;
+    if(h=='s')if(1 == snake.Direction%2)return snake.Direction = 2;
+    if(h=='a')if(0 == snake.Direction%2)return snake.Direction = 3;
+})
+
+while(1){counter++;Term.pollEvents();}

@@ -64,7 +64,7 @@ export class New extends Expression {
     vType.TypeName = this.Type!.Name;
     var argTypes: VarType[] = [];
     for (let i = 0; i < this.Arguments.length; i++) {
-      var arg = this.Arguments[i].Evaluate(scope);
+      var arg = this.Arguments[i].TryEvaluate(scope);
       o.push(...arg[1]);
       argTypes.push(...arg[0]);
     }
@@ -78,6 +78,20 @@ export class New extends Expression {
     o.push(`bpopa`, `apusha`);
     o.push(...constructorMetamethod[2]);
     return [[vType], o];
+  }
+  
+  GetTypes(scope: Scope): VarType[] {
+    var objectType = scope.UserTypes[this.Type!.Name];
+    if (objectType === undefined)
+      throw new Error(`Cannot find type ${this.Type!.Name}`);
+    var classType = objectType.TypeType;
+    if (!classType)
+      throw new Error(`Cannot find type type for ${this.Type!.Name}`);
+    var falseClaimer = new Claimer("");
+    var falseFlag = falseClaimer.Flag();
+    var vType = new VarType(falseClaimer, falseFlag);
+    vType.TypeName = this.Type!.Name;
+    return [vType];
   }
 }
 Expression.Register(New.Claim);

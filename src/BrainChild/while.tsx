@@ -1,12 +1,11 @@
 import { Claimer } from "./brainchild";
 import { Expression } from "./expression";
 import { Scope } from "./Scope";
-import { Statement } from "./statement";
 import { VarType } from "./vartype";
 
-export class While extends Statement {
+export class While extends Expression {
   Condition: Expression | null = null;
-  Body: Statement | null = null;
+  Body: Expression | null = null;
 
   static Claim(claimer: Claimer): While | null {
     var f = claimer.Claim(/while\b/);
@@ -16,7 +15,7 @@ export class While extends Statement {
       f.Fail();
       return null;
     }
-    var body = Statement.Claim(claimer);
+    var body = Expression.Claim(claimer);
     if (body === null) {
       f.Fail();
       return null;
@@ -27,12 +26,12 @@ export class While extends Statement {
     return outF;
   }
 
-  Evaluate(scope: Scope): string[] {
+  Evaluate(scope: Scope): [VarType[], string[]] {
     var o: string[] = [this.GetLine()];
     var condition = scope.GetSafeName(`whlcond${this.Condition!.toString()}`);
     var whileTrue = scope.GetSafeName(`whltrue${this.Condition!.toString()}`);
     var afterTrue = scope.GetSafeName(`whldone${this.Condition!.toString()}`);
-    var valueRes = this.Condition!.Evaluate(scope);
+    var valueRes = this.Condition!.TryEvaluate(scope);
     o.push(`${condition}:`);
     o.push(...valueRes[1]);
     for (var i = 1; i < valueRes[0].length; i++) {
@@ -43,19 +42,24 @@ export class While extends Statement {
     if (meta === null) {
       throw new Error(`Type ${resType} has no truth method`);
     }
-    if (!VarType.CanCoax([VarType.Int], meta[0])) {
+    if (!VarType.CanCoax([VarType.Int], meta[0])[0]) {
       throw new Error("Condition's truthy method must resolve to an int");
     }
     o.push(...meta[2]);
-    o.push(...VarType.Coax([VarType.Int], meta[0]));
+    o.push(...VarType.Coax([VarType.Int], meta[0])[0]);
     o.push(`apopa`, `jnza ${whileTrue}`);
     o.push(`jmp ${afterTrue}`, `${whileTrue}:`);
-    o.push(...this.Body!.Evaluate(scope).map((c) => `  ${c}`));
+    let res = this.Body!.TryEvaluate(scope);
+    o.push(...res[1].map((c) => `  ${c}`));
+    for (let i = 0; i < res.length; i++) o.push(`apop`);
     o.push(`jmp ${condition}`, `${afterTrue}:`);
-    return o;
+    return [[], o];
   }
   DefinitelyReturns(): boolean {
     return false;
   }
+  GetTypes(): VarType[] {
+    return [];
+  }
 }
-Statement.Register(While.Claim);
+Expression.Register(While.Claim);

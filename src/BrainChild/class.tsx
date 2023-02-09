@@ -11,10 +11,13 @@ export class Class extends Statement {
   Members: (VariableDecleration | FunctionDefinition)[] = [];
   StaticMembers: (VariableDecleration | FunctionDefinition)[] = [];
   Name: Identifier | null = null;
-  Parent: Identifier | null = null;
+  Parent: VarType | null = null;
+  GenericArgs: string[] = [];
+  IsAbstract: boolean = false;
 
   private static ClaimMember(
-    claimer: Claimer
+    claimer: Claimer,
+    isAbstract: boolean
   ):
     | [isStatic: boolean, member: VariableDecleration | FunctionDefinition]
     | null {
@@ -23,6 +26,7 @@ export class Class extends Statement {
     if (claimer.Claim(/static\b/).Success) {
       member =
         VariableDecleration.Claim(claimer) ??
+        VariableDecleration.ClaimAbstract(claimer) ??
         FunctionDefinition.Claim(claimer) ??
         null;
       if (member === null) {
@@ -33,6 +37,7 @@ export class Class extends Statement {
     }
     member =
       VariableDecleration.Claim(claimer) ??
+      VariableDecleration.ClaimAbstract(claimer) ??
       FunctionDefinition.ClaimMetamethod(claimer) ??
       FunctionDefinition.Claim(claimer) ??
       null;
@@ -41,22 +46,43 @@ export class Class extends Statement {
   }
 
   static Claim(claimer: Claimer): Class | null {
-    var flg = claimer.Claim(/class\b/);
-    if (!flg.Success) return null;
+    var flg = claimer.Flag();
+    var abstract = false;
+    if (claimer.Claim(/abstract\b/).Success) abstract = true;
+    var c = claimer.Claim(/class\b/);
+    if (!c.Success) return null;
     var className = Identifier.Claim(claimer);
     if (className === null) {
       flg.Fail();
       return null;
     }
-    var parent: Identifier | null = null;
+    let generics: string[] = [];
+    let genArgNum = 0;
+    if (claimer.Claim(/</).Success) {
+      let arg = Identifier.Claim(claimer);
+      while (arg !== null) {
+        generics.push(arg.Name);
+        VarType.CurrentGenericArgs[arg.Name] = genArgNum++;
+        if (!claimer.Claim(/,/).Success) break;
+        arg = Identifier.Claim(claimer);
+      }
+      if (!claimer.Claim(/>/).Success) {
+        VarType.CurrentGenericArgs = {};
+        flg.Fail();
+        return null;
+      }
+    }
+    var parent: VarType | null = null;
     if (claimer.Claim(/:/).Success) {
-      parent = Identifier.Claim(claimer);
+      parent = VarType.Claim(claimer);
       if (parent === null) {
+        VarType.CurrentGenericArgs = {};
         flg.Fail();
         return null;
       }
     }
     if (!claimer.Claim(/\{/).Success) {
+      VarType.CurrentGenericArgs = {};
       flg.Fail();
       return null;
     }
@@ -64,7 +90,7 @@ export class Class extends Statement {
     var staticMembers: (VariableDecleration | FunctionDefinition)[] = [];
     var member:
       | [isStatic: boolean, member: VariableDecleration | FunctionDefinition]
-      | null = Class.ClaimMember(claimer);
+      | null = Class.ClaimMember(claimer, abstract);
     while (member !== null) {
       if (member[1] instanceof FunctionDefinition) {
         var fnc = member[1] as FunctionDefinition;
@@ -82,15 +108,17 @@ export class Class extends Statement {
           fnc.Args.push(declareThis);
         }
         if (!(fnc.Target instanceof Identifier)) {
+          VarType.CurrentGenericArgs = {};
           flg.Fail();
           return null;
         }
       }
       (member[0] ? staticMembers : members).push(member[1]);
       claimer.Claim(/;/);
-      member = Class.ClaimMember(claimer);
+      member = Class.ClaimMember(claimer, abstract);
     }
 
+    VarType.CurrentGenericArgs = {};
     if (!claimer.Claim(/}/).Success) {
       flg.Fail();
       return null;
@@ -100,6 +128,7 @@ export class Class extends Statement {
     cls.StaticMembers = staticMembers;
     cls.Name = className;
     cls.Parent = parent;
+    cls.IsAbstract = abstract;
     return cls;
   }
 
@@ -115,10 +144,6 @@ export class Class extends Statement {
       `  apopb`,
       `  apushb`
     );
-    for (let i = 0; i < this.Members.length; i++) {
-      var member = this.Members[i];
-      if (member instanceof FunctionDefinition) member.Evaluate(scope);
-    }
     var childrenByOffset = [];
     for (let id in typeDef.Children) {
       let child = typeDef.Children[id];
@@ -135,20 +160,20 @@ export class Class extends Statement {
   }
 
   TrySetup(scope: Scope): boolean {
-    if (this.Parent !== null && !scope.UserTypes[this.Parent!.Name]) {
+    if (this.Parent !== null && !this.Parent.HasDefinition()) {
       return false;
     }
     var objectType = new TypeDefinition();
     var classType = new TypeDefinition();
     objectType.ClassLabel = scope.GetSafeName(`class${this.Name!.Name}`);
-    classType.ClassLabel = scope.GetSafeName(`classtype${this.Name!.Name}`);
+    classType.ClassLabel = objectType.ClassLabel; //scope.GetSafeName(`classtype${this.Name!.Name}`);
     objectType.Name = this.Name!.Name;
     classType.Name = `type${this.Name!.Name}`;
     objectType.TypeType = classType;
     if (this.Parent !== null) {
-      var parent = scope.UserTypes[this.Parent!.Name];
+      var parent = this.Parent!.GetDefinition();
       var classParent = parent.TypeType;
-      if (!parent || !classParent) {
+      if (!parent) {
         return false;
       }
       objectType.Parent = parent;
@@ -161,30 +186,38 @@ export class Class extends Statement {
           objectType.Children[name] = parent.Children[name];
       }
       objectType.Size = parent.Size;
-      for (let name in classParent.Children) {
-        if (classParent.Children[name][1] > 1)
-          classType.Children[name] = classParent.Children[name];
+      if (classParent) {
+        for (let name in classParent.Children) {
+          if (classParent.Children[name][1] > 1)
+            classType.Children[name] = classParent.Children[name];
+        }
+
+        classType.Size = classParent.Size;
+        classType.Children["base"] = [VarType.Type, 0, classParent.ClassLabel];
+      } else {
+        classType.Size = 2;
       }
-      classType.Size = classParent.Size;
-      classType.Children["base"] = [VarType.Type, 0, classParent.ClassLabel];
     } else {
       objectType.Size = 1;
       classType.Size = 2;
     }
     objectType.Children["class"] = [VarType.Type, 0, classType.ClassLabel];
     classType.Children["new"] = [VarType.Void, 1, "0"];
-    for (var i = 0; i < this.StaticMembers.length; i++) {
+    for (let i = 0; i < this.StaticMembers.length; i++) {
       let member = this.StaticMembers[i];
+      if (member instanceof FunctionDefinition) {
+        let funcType = member.GetTypes(scope)[0] as FuncType;
+        member.Label = scope.GetSafeName(
+          "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
+        );
+      }
       let name: Identifier =
         member instanceof FunctionDefinition
           ? (member.Target as Identifier)
           : (member as VariableDecleration).Identifier!;
       let type: VarType;
       if (member instanceof FunctionDefinition) {
-        let ftype = new FuncType(member.Claimer, member.Claim);
-        ftype.RetTypes = member.RetTypes;
-        ftype.ArgTypes = member.Args.map((c) => c.Type!);
-        type = ftype;
+        type = member.GetTypes(scope)[0];
       } else {
         type = member.Type!;
       }
@@ -194,31 +227,23 @@ export class Class extends Statement {
         member instanceof FunctionDefinition ? member.Label : "0",
       ];
     }
-    for (var i = 0; i < this.Members.length; i++) {
+    for (let i = 0; i < this.Members.length; i++) {
       let member = this.Members[i];
       if (member instanceof FunctionDefinition) {
         if (member.IsMeta) {
-          let falseClaimer = new Claimer("");
-          let falseClaim = falseClaimer.Flag();
-          let funcType = new FuncType(falseClaimer, falseClaim);
-          funcType.RetTypes = member.RetTypes.concat();
-          funcType.ArgTypes = member.Args.map((c) => c.Type!);
+          let funcType = member.GetTypes(scope)[0] as FuncType;
           member.Label = scope.GetSafeName(
             "metamethod_" + funcType.RetTypes + "_" + funcType.ArgTypes
           );
           objectType.AddMetamethod(
             (member.Target as Identifier).Name,
-            member.RetTypes,
+            funcType.RetTypes,
             member.Args.map((c) => c.Type) as VarType[],
             [`seta ${member.Label}`, `calla`]
           );
           continue;
         } else {
-          let falseClaimer = new Claimer("");
-          let falseClaim = falseClaimer.Flag();
-          let funcType = new FuncType(falseClaimer, falseClaim);
-          funcType.RetTypes = member.RetTypes.concat();
-          funcType.ArgTypes = member.Args.map((c) => c.Type!);
+          let funcType = member.GetTypes(scope)[0] as FuncType;
           member.Label = scope.GetSafeName(
             "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
           );
@@ -230,28 +255,42 @@ export class Class extends Statement {
           : (member as VariableDecleration).Identifier!;
       let type: VarType;
       if (member instanceof FunctionDefinition) {
-        let ftype = new FuncType(member.Claimer, member.Claim);
-        ftype.RetTypes = member.RetTypes;
-        ftype.ArgTypes = member.Args.map((c) => c.Type!);
-        type = ftype;
+        type = member.GetTypes(scope)[0];
       } else {
         type = member.Type!;
       }
-      objectType.Children[name.Name] = [
-        type,
-        objectType.Size++,
-        member instanceof FunctionDefinition ? member.Label : "0",
-      ];
-      if (member instanceof FunctionDefinition) {
-        classType.Children[name.Name] = [
+      if (objectType.Children[name.Name]) {
+        objectType.Children[name.Name] = [
           type,
-          classType.Size++,
+          objectType.Children[name.Name][1],
           member instanceof FunctionDefinition ? member.Label : "0",
         ];
+      } else {
+        objectType.Children[name.Name] = [
+          type,
+          objectType.Size++,
+          member instanceof FunctionDefinition ? member.Label : "0",
+        ];
+      }
+      if (member instanceof FunctionDefinition) {
+        if (classType.Children[name.Name]) {
+          classType.Children[name.Name] = [
+            type,
+            classType.Children[name.Name][1],
+            member.Label,
+          ];
+        } else {
+          classType.Children[name.Name] = [
+            type,
+            classType.Size++,
+            member.Label,
+          ];
+        }
       }
     }
 
     scope.UserTypes[this.Name!.Name] = objectType;
+    scope.UserTypes["type" + this.Name!.Name] = classType;
     return true;
   }
 
@@ -264,16 +303,35 @@ export class Class extends Statement {
         `Tried to compile non-registered class: ${this.Name!.Name}`
       );
     asm.push(this.GetLine());
+    var falseClaimer = new Claimer("");
+    var falseFlag = falseClaimer.Flag();
+    var t = new VarType(falseClaimer, falseFlag);
+    t.TypeName = "type" + this.Name!.Name;
+    var typeVarLabel = scope.GetSafeName(`vartype${this.Name!.Name}`);
+    scope.Vars[this.Name!.Name] = [t, typeVarLabel];
+    scope.AllVars[typeVarLabel] = [
+      t,
+      this.Name!.Name,
+      scope.CurrentFile,
+      scope.CurrentFunction,
+    ];
+    scope.Assembly.push(`${typeVarLabel}: db ${classDef.ClassLabel}`);
     asm.push(`${classDef.ClassLabel}:`);
     for (var i = 0; i < this.StaticMembers.length; i++) {
       let member = this.StaticMembers[i];
       if (member instanceof FunctionDefinition) {
         member.IsMeta = true;
-        member.Evaluate(scope);
+        member.TryEvaluate(scope);
       }
     }
-    var newMethod = this.GenerateNewMethod(scope);
-    classDef.Children["new"][2] = newMethod;
+    for (let i = 0; i < this.Members.length; i++) {
+      var member = this.Members[i];
+      if (member instanceof FunctionDefinition) member.TryEvaluate(scope);
+    }
+    if (!this.IsAbstract) {
+      var newMethod = this.GenerateNewMethod(scope);
+      classDef.Children["new"][2] = newMethod;
+    }
     var vars: string[] = ["0"];
     for (var id in classDef.Children) {
       var child = classDef.Children[id];

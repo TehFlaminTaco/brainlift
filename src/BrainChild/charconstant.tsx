@@ -24,5 +24,9 @@ export class CharConstant extends Expression {
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     return [[VarType.Int], [this.GetLine(), `apush ${this.Value}`]];
   }
+
+  GetTypes(scope: Scope): VarType[] {
+    return [VarType.Int];
+  }
 }
 Expression.Register(CharConstant.Claim);

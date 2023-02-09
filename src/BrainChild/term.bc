@@ -1,0 +1,137 @@
+abstract class Color3B {
+    metamethod get_r(Color3B c) -> int {
+        return (c->int)%2;
+    }
+    metamethod get_g(Color3B c) -> int {
+        return ((c->int)/2)%2;
+    }
+    metamethod get_b(Color3B c) -> int {
+        return ((c->int)/4)%2;
+    }
+    static function fromrgb(int r, int g, int b) -> Color3B{
+        return ((r%2) + (g%2)*2 + (b%2)*4 -> Color3B);
+    }
+}
+
+Color3B Black   = (0 -> Color3B);
+Color3B Red     = (1 -> Color3B);
+Color3B Green   = (2 -> Color3B);
+Color3B Yellow  = (3 -> Color3B);
+Color3B Blue    = (4 -> Color3B);
+Color3B Magenta = (5 -> Color3B);
+Color3B Cyan    = (6 -> Color3B);
+Color3B White   = (7 -> Color3B);
+
+int _, int* numBuffer = "00000";
+abstract class Term {
+    static function writechar(int n){
+        asm { seta [n]
+              ptra 
+              writea }
+    }
+    
+    static function write(int length, int* data){
+        while(length--)Term.writechar(data++);
+    }
+    
+    static function writenum(int n){
+        if(n==0)return Term.writechar('0');
+        int l = 0;
+        while(n>0){
+            n,int m = n/%10;
+            *((numBuffer+4)-l) = '0' + m;
+            l++;
+        }
+        Term.write(l, (numBuffer+5)-l);
+    }
+    
+    static function smethod(int c){
+        Term.writechar(0x1B);
+        Term.writechar('[');
+        Term.writechar(c);
+    }
+    
+    static function method(int n, int c){
+        Term.writechar(0x1B);
+        Term.writechar('[');
+        Term.writenum(n);
+        Term.writechar(c);
+    }
+    
+    // Formatting stuff
+    static function format(int n){
+        Term.method(n, 'm');
+    }
+    static __Style style;
+    static __Cursor cursor;
+    
+    // Clear
+    static function clearAfter(){
+        return Term.smethod('J');
+    }
+    static function clearBefore(){
+        return Term.method(1, 'J');
+    }
+    static function clear(){
+        return Term.method(2, 'J');
+    }
+}
+
+abstract class __Style {
+    metamethod get_fore(__Style s) -> void{return 0;}
+    metamethod get_back(__Style s) -> void{return 0;}
+    metamethod get_bold(__Style s) -> void{return 0;}
+    metamethod get_italic(__Style s) -> void{return 0;}
+    metamethod get_underline(__Style s) -> void{return 0;}
+    metamethod get_striked(__Style s) -> void{return 0;}
+    
+    metamethod set_fore(__Style s, Color3B col){
+        return Term.format(30 + (col -> int));
+    }
+    metamethod set_back(__Style s, Color3B col){
+        return Term.format(40 + (col -> int));
+    }
+    metamethod set_bold(__Style s, int b){
+        if(b)Term.format(1)
+        else Term.format(22);
+    }
+    metamethod set_italic(__Style s, int b){
+        if(b)Term.format(3)
+        else Term.format(23);
+    }
+    metamethod set_underline(__Style s, int b){
+        if(b)Term.format(4)
+        else Term.format(24);
+    }
+    metamethod set_striked(__Style s, int b){
+        if(b)Term.format(9)
+        else Term.format(29);
+    }
+}
+
+abstract class __Cursor {
+    metamethod get_x(__Cursor c) -> void {return 0};
+    metamethod get_y(__Cursor c) -> void {return 0};
+    metamethod get_up(__Cursor c) -> void {return 0};
+    metamethod get_down(__Cursor c) -> void {return 0};
+    metamethod get_left(__Cursor c) -> void {return 0};
+    metamethod get_right(__Cursor c) -> void {return 0};
+    
+    metamethod set_x(__Cursor c, int x){ return Term.method(x, 'G') }
+    metamethod set_y(__Cursor c, int y){ return Term.method(y, 'H') }
+    function up(int n){ return Term.method(n, 'A') }
+    function down(int n){ return Term.method(n, 'B') }
+    function left(int n){ return Term.method(n, 'D') }
+    function right(int n){ return Term.method(n, 'C') }
+    function push(){ return Term.smethod('s') }
+    function pop(){ return Term.smethod('u') }
+    function reset(){ return Term.smethod('H') }
+    function nextLine(){ return Term.method(1, 'E') }
+    function prevLine(){ return Term.method(1, 'F') }
+}
+
+Term.style.fore = Red;
+Term.style.bold = 1;
+Term.cursor.x = 5;
+Term.cursor.y = 5;
+Term.write("Hello, World!\n"); 

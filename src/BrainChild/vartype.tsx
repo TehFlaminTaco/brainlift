@@ -11,12 +11,19 @@ import {
   GenerateFuncType,
 } from "./Types";
 
+function hexPad(value: number, amount: number = 2) {
+  value ??= 0;
+  return ("0".repeat(amount) + value.toString(16).toUpperCase()).slice(-amount);
+}
+
 /*
   (FuncType | "int" | "void" | identifier) "*"*
 */
 export class VarType extends Token {
   PointerDepth: number = 0;
   TypeName: string = "";
+
+  static CurrentGenericArgs: { [key: string]: number } = {};
 
   static Int: VarType;
   static Void: VarType;
@@ -27,7 +34,11 @@ export class VarType extends Token {
 
   static Claim(claimer: Claimer): VarType | null {
     var ftype = FuncType.Claim(claimer);
-    if (ftype !== null) return VarType.Point(ftype, claimer);
+    if (ftype !== null) return ftype;
+    let flag = claimer.Flag();
+    let depth = 0;
+    let ptr = claimer.Claim(/@+/);
+    if (ptr.Success) depth = ptr.Body![0].length;
     var c = claimer.Claim(/(int|void|[a-zA-Z_]\w*)\b/);
     if (!c.Success) return null;
     if (
@@ -35,23 +46,16 @@ export class VarType extends Token {
       c.Body![0] !== "int" &&
       c.Body![0] !== "void"
     ) {
-      c.Fail();
+      flag.Fail();
       return null;
     }
-    var vType = new VarType(claimer, c);
+    var vType = new VarType(claimer, flag);
     vType.TypeName = c.Body![0];
-    return VarType.Point(vType, claimer);
-  }
-
-  static Point(typ: VarType, claimer: Claimer) {
-    var d = 0;
-    var c: Claim;
-    while ((c = claimer.Claim(/\*/)).Success) {
-      d++;
+    if (VarType.CurrentGenericArgs[vType.TypeName] !== undefined) {
+      vType.TypeName = "$" + VarType.CurrentGenericArgs[vType.TypeName];
     }
-    typ.PointerDepth = d;
-    typ.End += d;
-    return typ;
+    vType.PointerDepth = depth;
+    return vType;
   }
 
   Equals(other: VarType): boolean {
@@ -65,7 +69,28 @@ export class VarType extends Token {
     );
   }
 
-  AssignableFrom(other: VarType, directly: boolean = false): boolean {
+  CastableFrom(other: VarType): boolean {
+    if (this.TypeName === "var") return true;
+    if (this.TypeName === "void") {
+      return this.PointerDepth <= other.PointerDepth;
+    }
+    if (other.TypeName === "void") {
+      return this.PointerDepth >= other.PointerDepth;
+    }
+    if (
+      !(other instanceof FuncType) &&
+      this.TypeName === other.TypeName &&
+      this.PointerDepth === other.PointerDepth
+    )
+      return true;
+    var typeDef = this.GetDefinition();
+    if (typeDef.IsParent(other.GetDefinition())) {
+      return this.PointerDepth === other.PointerDepth;
+    }
+    return false;
+  }
+
+  AssignableFrom(other: VarType): boolean {
     if (this.TypeName === "var") return true;
     if (this.TypeName === "void") {
       return this.PointerDepth <= other.PointerDepth;
@@ -80,17 +105,6 @@ export class VarType extends Token {
     )
       return true;
     var typeDef = this.GetDefinition();
-    if (!directly) {
-      var meta = typeDef.GetMetamethod("cast", [other], true, true);
-      var otherType = other.GetDefinition();
-      if (meta && meta[0].length > 0 && this.AssignableFrom(meta[0][0], true)) {
-        return true;
-      }
-      meta = otherType.GetMetamethod("cast", [other], true, true);
-      if (meta && meta[0].length > 0 && this.AssignableFrom(meta[0][0], true)) {
-        return true;
-      }
-    }
     if (typeDef.IsParent(other.GetDefinition())) {
       return this.PointerDepth <= other.PointerDepth;
     }
@@ -100,6 +114,7 @@ export class VarType extends Token {
   ConvertFrom(other: VarType): string[] {
     if (!this.AssignableFrom(other))
       throw new Error(`Cannot convert from ${other} to ${this}!`);
+    if (this.TypeName === "var") return [];
     var o: string[] = [];
     if (this.PointerDepth < other.PointerDepth) {
       o.push(`apopa`);
@@ -108,79 +123,115 @@ export class VarType extends Token {
       }
       o.push(`apusha`);
     }
-    if (this.TypeName === "void") {
-      return o;
-    }
-    if (other.TypeName === "void") {
-      return o;
-    }
-    var typeDef = this.GetDefinition();
-    var otherType = other.GetDefinition();
-    var meta = typeDef.GetMetamethod("cast", [other]);
-    if (
-      meta !== null &&
-      meta[0].length > 0 &&
-      this.AssignableFrom(meta[0][0], true)
-    ) {
-      o.push(...meta[2]);
-      for (var i = 1; i < meta[0].length; i++) o.push(`apop`);
-      o.push(...this.ConvertFrom(meta[0][0]));
-      return o;
-    }
-    meta = otherType.GetMetamethod("cast", [other]);
-    if (
-      meta !== null &&
-      meta[0].length > 0 &&
-      this.AssignableFrom(meta[0][0], true)
-    ) {
-      o.push(...meta[2]);
-      for (var i = 1; i < meta[0].length; i++) o.push(`apop`);
-      o.push(...this.ConvertFrom(meta[0][0]));
+    if (this.TypeName === "void" || other.TypeName === "void") {
       return o;
     }
     return o;
   }
 
-  Debug(
+  OldDebug(
     scope: Scope,
     bs: ASMInterpreter,
-    l: string,
-    i: string,
-    v: number
+    label: string,
+    identifier: string,
+    location: number
   ): string {
-    let val: string = "" + bs.Heap[v];
-    let valHolding: string | undefined = undefined;
+    let val: string = hexPad(bs.Heap[location], 8);
     for (let id in bs.Labels) {
-      if (bs.Labels[id] === bs.Heap[v]) {
-        val = `${id} (${bs.Heap[v]})`;
+      if (bs.Labels[id] === bs.Heap[location]) {
+        val = `${hexPad(bs.Heap[location], 8)} (${id})`;
         break;
       }
     }
     if (this.PointerDepth > 0) {
-      var higher = this.Clone();
-      higher.PointerDepth--;
-      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}<br>${higher.Debug(
-        scope,
-        bs,
-        "*",
-        "->",
-        bs.Heap[v]
-      )}`;
-    } else if (scope.UserTypes[this.TypeName]) {
+      return `<span class='subtle'>${label}</span><b>${this}</b> ${identifier} = ${val}`;
+    } else if (bs.Heap[location] > 0 && scope.UserTypes[this.TypeName]) {
       var t = scope.UserTypes[this.TypeName];
-      var s = `<span class='subtle'>${l}</span><b>${this}</b> ${i} = {<br>`;
+      var s = `<span class='subtle'>${label}</span><b>${this}</b> ${identifier} = (${val}) {<br>`;
       for (var name in t.Children) {
         var child = t.Children[name];
         if (!child || !child[0]) continue;
+        if (child[0] instanceof FuncType) continue;
         s +=
-          child[0].Debug(scope, bs, "", name, bs.Heap[v] + child[1]) + "<br>";
+          child[0].Debug(scope, bs, "", name, bs.Heap[location] + child[1]) +
+          "<br>";
       }
       s += "}";
       return s;
-    } else {
-      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}`;
     }
-    return ``;
+    return `<span class='subtle'>${label}</span><b>${this}</b> ${identifier} = ${val}`;
+  }
+
+  Debug(
+    scope: Scope,
+    bs: ASMInterpreter,
+    label: string,
+    identifier: string,
+    location: number
+  ): string {
+    if (scope.DebuggedVals.has(location))
+      return `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${hexPad(
+        bs.Heap[location],
+        8
+      )}`;
+    scope.DebuggedVals.add(location);
+    if (
+      this.PointerDepth === 0 &&
+      bs.Heap[location] > 0 &&
+      scope.UserTypes[this.TypeName]
+    ) {
+      let t = scope.UserTypes[this.TypeName];
+      let cls = bs.Heap[bs.Heap[location]];
+      let val = hexPad(bs.Heap[location], 8);
+      let s = `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${val} {<br>`;
+      let childrenByOffset: [VarType, number, string, string][] = [];
+      let className = "undefined";
+      for (let id in bs.Labels) {
+        if (!id.startsWith("class")) continue;
+        if (bs.Labels[id] === cls) {
+          for (let clsName in scope.UserTypes) {
+            if (clsName.startsWith("type")) continue;
+            if (scope.UserTypes[clsName].ClassLabel === id) {
+              className = clsName;
+              break;
+            }
+          }
+          break;
+        }
+      }
+      if (className !== "undefined") {
+        if (t.IsParent(scope.UserTypes[className]))
+          t = scope.UserTypes[className];
+      }
+
+      for (let ident in t.Children) {
+        let child = t.Children[ident];
+        childrenByOffset[child[1]] = [child[0], child[1], child[2], ident];
+      }
+      for (let i = 0; i < childrenByOffset.length; i++) {
+        let child = childrenByOffset[i];
+        if (!child) continue;
+        if (child[3] === "class") {
+          if (className === "undefined") continue;
+          if (className === this.TypeName) continue;
+          s += `\t<b>class</b> = <b>${className}</b><br>`;
+          continue;
+        }
+        let v = bs.Heap[bs.Heap[location] + child[1]];
+        let expected = +child[2];
+        if (bs.Labels[child[2]]) expected = bs.Labels[child[2]];
+        if (v !== expected)
+          s +=
+            "\t" +
+            child[0]
+              .Debug(scope, bs, "", child[3], bs.Heap[location] + child[1])
+              .replace(/<br>(?!$)/g, "<br>\t") +
+            "<br>";
+      }
+      return s + "}";
+    }
+    let val = hexPad(bs.Heap[location], 8);
+    return `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${val}`;
   }
 
   static AllEquals(targetStack: VarType[], receivedStack: VarType[]) {
@@ -203,7 +254,7 @@ export class VarType extends Token {
     return o;
   }
 
-  static CanCoax(targetStack: VarType[], receivedStack: VarType[]): boolean {
+  static oldCanCoax(targetStack: VarType[], receivedStack: VarType[]): boolean {
     var maxRet = 0;
     for (let i = 0; i < targetStack.length; i++) {
       while (
@@ -218,7 +269,112 @@ export class VarType extends Token {
     return true;
   }
 
-  static Coax(targetStack: VarType[], receivedStack: VarType[]): string[] {
+  static CanCoaxSoft(
+    targetStack: VarType[],
+    receivedStack: VarType[]
+  ): boolean {
+    var receivedPtr = 0;
+    for (let targetPtr = 0; targetPtr < targetStack.length; targetPtr++) {
+      if (!targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr]))
+        return false;
+      receivedPtr++;
+      targetPtr++;
+    }
+    return true;
+  }
+
+  static CanCoax(
+    targetStack: VarType[],
+    receivedStack: VarType[],
+    restricted: Set<
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+    > = new Set(),
+    sticky: boolean = false
+  ): [success: boolean, count?: number] {
+    let scope = Scope.CURRENT;
+    var receivedPtr = 0;
+    let targetPtr = 0;
+    while (targetPtr < targetStack.length) {
+      if (receivedPtr >= receivedStack.length) return [false];
+      while (receivedPtr < receivedStack.length) {
+        if (sticky && receivedPtr > 0) {
+          return [false, 0];
+        }
+        // Directly assignable
+        if (targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr])) {
+          receivedPtr++;
+          targetPtr++;
+          break;
+        }
+
+        // Get all metamethods
+        var metas: Set<
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+        > = new Set();
+        for (let t in scope.UserTypes) {
+          var typ = scope.UserTypes[t];
+          typ.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+        }
+        let metasArr = [...metas];
+        // That are casts to and from
+        metasArr = metasArr.filter((c) => !restricted.has(c));
+        metasArr = metasArr.filter((c) =>
+          VarType.CanCoaxSoft(
+            targetStack.slice(targetPtr, targetPtr + c[0].length),
+            c[0]
+          )
+        );
+        metasArr = metasArr.filter((c) => {
+          let r = new Set(restricted);
+          r.add(c);
+          return VarType.CanCoax(
+            c[1],
+            receivedStack.slice(receivedPtr),
+            r,
+            true
+          )[0];
+        });
+
+        // Score all metas by how good a match they are
+        var scoreArr: [
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]],
+          score: number
+        ][] = metasArr.map((c) => [
+          c,
+          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) +
+            VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
+        ]);
+        scoreArr.sort((a, b) => b[1] - a[1]);
+        if (scoreArr.length === 0) {
+          receivedPtr++;
+          continue;
+        }
+        let best = scoreArr[0][1];
+        scoreArr.filter((c) => c[1] >= best);
+        if (scoreArr.length > 1)
+          throw new Error(
+            `Ambigious casts from ${receivedStack.slice(
+              receivedPtr
+            )} to ${targetStack.slice(targetPtr)} (${scoreArr.length} choices)`
+          );
+        let m = scoreArr[0][0];
+        targetPtr += m[0].length;
+        let r = new Set(restricted);
+        r.add(m);
+        receivedPtr += VarType.CanCoax(
+          m[1],
+          receivedStack.slice(receivedPtr),
+          r,
+          true
+        )[1]!;
+        break;
+      }
+      sticky = false;
+    }
+    return [true, receivedPtr];
+  }
+
+  static oldCoax(targetStack: VarType[], receivedStack: VarType[]): string[] {
     var o = [];
     var targetLookup: { [id: number]: number } = {};
     var maxRet = 0;
@@ -258,8 +414,128 @@ export class VarType extends Token {
     return o;
   }
 
+  static Coax(
+    targetStack: VarType[],
+    receivedStack: VarType[],
+    restricted: Set<
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+    > = new Set(),
+    cleanup: boolean = true,
+    sticky: boolean = false
+  ): [asm: string[], used: number, converted: VarType[]] {
+    let scope = Scope.CURRENT;
+    var receivedPtr = 0;
+    var asm: string[] = [];
+    // Cycle everything to the B stack (So we handle it from left to right)
+    for (let i = 0; i < receivedStack.length; i++) {
+      asm.push(`apopa`, `bpusha`);
+    }
+    let converted: VarType[] = [];
+    let targetPtr = 0;
+    while (targetPtr < targetStack.length) {
+      if (receivedPtr >= receivedStack.length)
+        throw new Error(`Failed to Coax (Missed check?)`);
+      while (receivedPtr < receivedStack.length) {
+        if (sticky && receivedPtr > 0) {
+          throw new Error(`Failed to Coax (Missed check?)`);
+        }
+        // Directly assignable
+        if (targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr])) {
+          asm.push(`bpopa`, `apusha`);
+          asm.push(
+            ...targetStack[targetPtr].ConvertFrom(receivedStack[receivedPtr])
+          );
+          converted.push(receivedStack[receivedPtr]);
+          receivedPtr++;
+          targetPtr++;
+          break;
+        }
+
+        // Get all metamethods
+        var metas: Set<
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+        > = new Set();
+        for (let t in scope.UserTypes) {
+          var typ = scope.UserTypes[t];
+          typ.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+        }
+        let metasArr = [...metas];
+        // That are casts to and from
+        metasArr = metasArr.filter((c) => !restricted.has(c));
+        metasArr = metasArr.filter((c) =>
+          VarType.CanCoaxSoft(
+            targetStack.slice(targetPtr, targetPtr + c[0].length),
+            c[0]
+          )
+        );
+        metasArr = metasArr.filter((c) => {
+          let r = new Set(restricted);
+          r.add(c);
+          return VarType.CanCoax(
+            c[1],
+            receivedStack.slice(receivedPtr),
+            r,
+            true
+          )[0];
+        });
+
+        // Score all metas by how good a match they are
+        var scoreArr: [
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]],
+          score: number
+        ][] = metasArr.map((c) => [
+          c,
+          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) +
+            VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
+        ]);
+        scoreArr.sort((a, b) => b[1] - a[1]);
+        if (scoreArr.length === 0)
+          throw new Error(`Failed to Coax (Missed check?)`);
+        let best = scoreArr[0][1];
+        scoreArr.filter((c) => c[1] >= best);
+        if (scoreArr.length > 1)
+          throw new Error(
+            `Ambigious casts from ${receivedStack.slice(
+              receivedPtr
+            )} to ${targetStack.slice(targetPtr)} (${scoreArr.length} choices)`
+          );
+        let m = scoreArr[0][0];
+        var r = new Set(restricted);
+        r.add(m);
+        let c = VarType.CanCoax(
+          m[1],
+          receivedStack.slice(receivedPtr),
+          r,
+          true
+        )[1]!;
+        for (let i = 0; i < c; i++) {
+          asm.push(`bpopa`, `apusha`);
+        }
+        asm.push(
+          ...VarType.Coax(
+            m[1],
+            receivedStack.slice(receivedPtr, receivedPtr + c),
+            r,
+            false,
+            true
+          )[0]
+        );
+        asm.push(...m[2]);
+        converted.push(...m[0]);
+        targetPtr += m[0].length;
+        receivedPtr += c;
+        break;
+      }
+      sticky = false;
+    }
+    if (cleanup) {
+      while (receivedPtr++ < receivedStack.length) asm.push(`bpop`);
+    }
+    return [asm, receivedPtr, converted];
+  }
+
   toString(): string {
-    return `${this.TypeName}${"*".repeat(this.PointerDepth)}`;
+    return `${"@".repeat(this.PointerDepth)}${this.TypeName}`;
   }
 
   Clone(): VarType {
@@ -267,6 +543,15 @@ export class VarType extends Token {
     t.PointerDepth = this.PointerDepth;
     t.TypeName = this.TypeName;
     return t;
+  }
+
+  HasDefinition(): boolean {
+    if (this.PointerDepth > 0) true;
+    if (this.TypeName === "int") return true;
+    if (this.TypeName === "void") return true;
+    var userType = Scope.CURRENT.UserTypes[this.TypeName];
+    if (!userType) return false;
+    return true;
   }
 
   GetDefinition(): TypeDefinition {
@@ -286,6 +571,9 @@ export class FuncType extends VarType {
   RetTypes: VarType[] = [];
   static Claim(claimer: Claimer): FuncType | null {
     var flag = claimer.Flag();
+    let depth = 0;
+    let ptr = claimer.Claim(/@+/);
+    if (ptr.Success) depth = ptr.Body![0].length;
     var leftParen = claimer.Claim(/\(/);
     var fnc = claimer.Claim(/func\b/);
     if (!fnc.Success) {
@@ -327,6 +615,7 @@ export class FuncType extends VarType {
     var fType = new FuncType(claimer, flag);
     fType.ArgTypes = argTypes;
     fType.RetTypes = retTypes;
+    fType.PointerDepth = depth;
     return fType;
   }
 
@@ -345,21 +634,37 @@ export class FuncType extends VarType {
     }
     return true;
   }
+  CastableFrom(other: VarType): boolean {
+    if (other.TypeName === "void")
+      return this.PointerDepth >= other.PointerDepth;
+    if (!(other instanceof FuncType)) return false;
+    if (other.PointerDepth < this.PointerDepth) return false;
+    if (this.ArgTypes.length != other.ArgTypes.length) return false;
+    if (this.RetTypes.length != other.RetTypes.length) return false;
+    for (let i = 0; i < this.ArgTypes.length; i++)
+      if (!other.ArgTypes[i].CastableFrom(this.ArgTypes[i])) return false;
+    for (let i = 0; i < this.RetTypes.length; i++)
+      if (!this.RetTypes[i].CastableFrom(other.RetTypes[i])) return false;
+    return true;
+  }
 
   AssignableFrom(other: VarType): boolean {
     if (other.TypeName === "void")
       return this.PointerDepth >= other.PointerDepth;
     if (!(other instanceof FuncType)) return false;
-    if (other.ArgTypes.length != this.ArgTypes.length) return false;
-    if (other.RetTypes.length != this.RetTypes.length) return false;
     if (other.PointerDepth < this.PointerDepth) return false;
-    for (var i = 0; i < this.ArgTypes.length; i++) {
-      if (!this.ArgTypes[i].Equals(other.ArgTypes[i])) return false;
-    }
-    for (var i = 0; i < this.RetTypes.length; i++) {
-      if (!this.RetTypes[i].Equals(other.RetTypes[i])) return false;
-    }
+    if (this.ArgTypes.length != other.ArgTypes.length) return false;
+    if (this.RetTypes.length != other.RetTypes.length) return false;
+    for (let i = 0; i < this.ArgTypes.length; i++)
+      if (!other.ArgTypes[i].CastableFrom(this.ArgTypes[i])) return false;
+    for (let i = 0; i < this.RetTypes.length; i++)
+      if (!this.RetTypes[i].CastableFrom(other.RetTypes[i])) return false;
     return true;
+  }
+  ConvertFrom(other: VarType): string[] {
+    if (!this.AssignableFrom(other))
+      throw new Error(`cannot cast from ${other} to ${this}`);
+    return [];
   }
 
   toString(): string {
@@ -368,9 +673,9 @@ export class FuncType extends VarType {
         this.RetTypes.length > 0 ? "->" + this.RetTypes : ""
       }`;
     }
-    return `(func(${this.ArgTypes})${
+    return `${"@".repeat(this.PointerDepth)}(func(${this.ArgTypes})${
       this.RetTypes.length > 0 ? "->" + this.RetTypes : ""
-    })${"*".repeat(this.PointerDepth)}`;
+    })`;
   }
 
   Clone(): FuncType {

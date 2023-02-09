@@ -1634,7 +1634,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     INCA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA++;
-      if (interp.RegA > 65535) interp.RegA = 0;
+      if (interp.RegA > 0xffffffff) interp.RegA = 0;
     },
   ],
   [
@@ -1642,7 +1642,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     INCB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB++;
-      if (interp.RegB > 65535) interp.RegB = 0;
+      if (interp.RegB > 0xffffffff) interp.RegB = 0;
     },
   ],
   [
@@ -1650,7 +1650,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     DECA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA--;
-      if (interp.RegA < 0) interp.RegA = 65535;
+      if (interp.RegA < 0) interp.RegA = 0xffffffff;
     },
   ],
   [
@@ -1658,7 +1658,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     DECB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB--;
-      if (interp.RegB < 0) interp.RegB = 65535;
+      if (interp.RegB < 0) interp.RegB = 0xffffffff;
     },
   ],
   [
@@ -1666,7 +1666,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     ADDA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA += arg;
-      interp.RegA &= 65535;
+      interp.RegA &= 0xffffffff;
+      interp.RegA >>>= 0;
     },
   ],
   [
@@ -1674,7 +1675,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     ADDB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB += arg;
-      interp.RegB &= 65535;
+      interp.RegB &= 0xffffffff;
+      interp.RegB >>>= 0;
     },
   ],
   [
@@ -1682,7 +1684,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     ADDAB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB += interp.RegA;
-      interp.RegB &= 65535;
+      interp.RegB &= 0xffffffff;
+      interp.RegB >>>= 0;
       interp.RegA = 0;
     },
   ],
@@ -1691,7 +1694,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     ADDBA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA += interp.RegB;
-      interp.RegA &= 65535;
+      interp.RegA &= 0xffffffff;
+      interp.RegA >>>= 0;
       interp.RegB = 0;
     },
   ],
@@ -1700,7 +1704,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     SUBA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA -= arg;
-      interp.RegA &= 65535;
+      interp.RegA &= 0xffffffff;
+      interp.RegA >>>= 0;
     },
   ],
   [
@@ -1708,7 +1713,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     SUBB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB -= arg;
-      interp.RegB &= 65535;
+      interp.RegB &= 0xffffffff;
+      interp.RegB >>>= 0;
     },
   ],
   [
@@ -1716,7 +1722,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     SUBAB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB -= interp.RegA;
-      interp.RegB &= 65535;
+      interp.RegB &= 0xffffffff;
+      interp.RegB >>>= 0;
       interp.RegA = 0;
     },
   ],
@@ -1725,7 +1732,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     SUBBA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA -= interp.RegB;
-      interp.RegA &= 65535;
+      interp.RegA &= 0xffffffff;
+      interp.RegA >>>= 0;
       interp.RegB = 0;
     },
   ],
@@ -1734,7 +1742,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     MULAB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB *= interp.RegA;
-      interp.RegB &= 65535;
+      interp.RegB &= 0xffffffff;
+      interp.RegB >>>= 0;
       interp.RegA = 0;
     },
   ],
@@ -1743,7 +1752,8 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     MULBA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA *= interp.RegB;
-      interp.RegA &= 65535;
+      interp.RegA &= 0xffffffff;
+      interp.RegA >>>= 0;
       interp.RegB = 0;
     },
   ],
@@ -1796,7 +1806,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     READA(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = interp.Input.charCodeAt(interp.InputPointer++);
-      if (interp.InputPointer >= interp.Input.length) interp.InputPointer = 0;
+      if (interp.InputPointer > interp.Input.length) interp.RegA = 0;
     },
   ],
   [
@@ -1804,7 +1814,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     READB(),
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = interp.Input.charCodeAt(interp.InputPointer++);
-      if (interp.InputPointer >= interp.Input.length) interp.InputPointer = 0;
+      if (interp.InputPointer > interp.Input.length) interp.RegB = 0;
     },
   ],
   [
@@ -1991,7 +2001,7 @@ END
 export function ASMTranspile(code: string) {
   let oldInstrs = INSTRUCTIONS;
   let commands = code.matchAll(
-    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim
   );
   let usedInstructions: string[] = [];
   for (let c of commands) {
@@ -2007,7 +2017,7 @@ export function ASMTranspile(code: string) {
   }
 
   commands = code.matchAll(
-    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim
   );
   let heap: number[] = [];
   let labels: { [label: string]: number } = {};
@@ -2036,7 +2046,7 @@ export function ASMTranspile(code: string) {
 
     if (dbArgs.length > 0) {
       let parsedArgs = dbArgs.matchAll(
-        /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
+        /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,8})|(\d{1,10})|('\\?.')|([a-z_]\w*)),?\s*)/gim
       );
       for (let a of parsedArgs) {
         let stringBody = a[1] ?? "";
@@ -2126,6 +2136,10 @@ export function ASMTranspile(code: string) {
   return s;
 }
 
+function hexPad(value: number, amount: number = 2) {
+  return ("0".repeat(amount) + value.toString(16).toUpperCase()).slice(-amount);
+}
+
 export class ASMInterpreter {
   Code: string;
   Heap: number[] = [];
@@ -2138,16 +2152,16 @@ export class ASMInterpreter {
   Input: string = "";
   InputPointer: number = 0;
   Output: string = "";
-  LineMap: { [instruction: number]: number } = {};
   Labels: { [label: string]: number } = {};
   ASMMap: number[] = [];
+  CodeLines: string[] = [];
 
   constructor(code: string | string[]) {
     if (typeof code === "string") {
       this.Code = code;
       let t = Date.now();
       let commands = code.matchAll(
-        /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,4}|\d{1,3}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,5})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,4})))?))?$/gim
+        /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim
       );
 
       let heap: number[] = [];
@@ -2170,7 +2184,7 @@ export class ASMInterpreter {
           labels[label] = l;
           if (waitingLabels[label]) {
             waitingLabels[label].forEach((i: number) => {
-              heap[i] = l & 65535;
+              heap[i] = (l & 0xffffffff) >>> 0;
             });
             delete waitingLabels[label];
           }
@@ -2178,7 +2192,7 @@ export class ASMInterpreter {
 
         if (dbArgs.length > 0) {
           let parsedArgs = dbArgs.matchAll(
-            /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,4})|(\d{1,5})|('\\?.')|([a-z_]\w*)),?\s*)/gim
+            /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,8})|(\d{1,10})|('\\?.')|([a-z_]\w*)),?\s*)/gim
           );
           for (let a of parsedArgs) {
             let stringBody = a[1] ?? "";
@@ -2245,7 +2259,7 @@ export class ASMInterpreter {
               waitingLabels[argLabel].push(ptr);
             }
           }
-          heap[ptr++] = argV & 65535;
+          heap[ptr++] = (argV & 0xffffffff) >>> 0;
         }
         commandTimes.push(Date.now() - commandT);
       }
@@ -2266,17 +2280,13 @@ export class ASMInterpreter {
       let commandTimes: number[] = [];
       let ptr = 0;
 
-      let lineMap: { [instruction: number]: number } = {};
-
       for (let i = 0; i < code.length; i++) {
         this.ASMMap[ptr] = i;
-        let lineMarker = code[i].match(/^\s*LINE\s+(\d+)/i);
-        if (lineMarker) {
-          lineMap[ptr] = +lineMarker[1];
-          continue;
-        }
+        if (code[i].match(/^\s*LINE/i)) continue;
+
+        if (code[i].match(/^\s*FILE/i)) continue;
         let codel = code[i].match(
-          /^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?$/im
+          /^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?\s*$/im
         );
         if (!codel) {
           console.log(`No match: ${code[i]}`);
@@ -2295,7 +2305,7 @@ export class ASMInterpreter {
           labels[label] = l;
           if (waitingLabels[label]) {
             waitingLabels[label].forEach((i: number) => {
-              heap[i] = l & 65535;
+              heap[i] = (l & 0xffffffff) >>> 0;
             });
             delete waitingLabels[label];
           }
@@ -2338,7 +2348,7 @@ export class ASMInterpreter {
               waitingLabels[argLabel].push(ptr);
             }
           }
-          heap[ptr++] = argV & 65535;
+          heap[ptr++] = (argV & 0xffffffff) >>> 0;
         }
         commandTimes.push(Date.now() - commandT);
       }
@@ -2349,9 +2359,9 @@ export class ASMInterpreter {
         console.log("MISSING LABEL: " + name);
       }
       this.Heap = heap;
-      this.LineMap = lineMap;
       this.Labels = labels;
     }
+    this.CodeLines = this.Code.split("\n");
   }
 
   CodeWithPointerHighlight(): string {
@@ -2361,6 +2371,10 @@ export class ASMInterpreter {
       code[
         currentInstruction
       ] = `<span class='pointer'>${code[currentInstruction]}</span>`;
+    for (let i = 0; i < code.length; i++) {
+      var index = this.ASMMap.indexOf(i);
+      code[i] = `${hexPad(index, 8)}: ${code[i]}`;
+    }
     return code.join(`\n`);
   }
 
@@ -2432,7 +2446,12 @@ export class ASMInterpreter {
     let command = this.Heap[this.IP];
     let arg = this.Heap[this.IP + 1];
     this.IP += 2;
-    INSTRUCTIONS[command]?.[2]?.(this, arg);
+    var instructionFunction = INSTRUCTIONS[command];
+    if (instructionFunction) instructionFunction[2](this, arg);
+    else {
+      this.running = false;
+      throw new Error(`Unknown instruction ${command}`);
+    }
   }
 
   RenderBFMemory() {
@@ -2443,26 +2462,91 @@ export class ASMInterpreter {
     return this.ToMeta().RenderBFBMMemory();
   }
 
+  RenderHeap(): string {
+    let heap =
+      "                 0        1        2        3        4        5        6        7        8        9        A        B        C        D        E        F\n";
+    for (let i = 0; i < this.Heap.length; i += 16) {
+      heap += `${hexPad(i, 8)}: `;
+      for (let j = 0; j < 16; j++) {
+        if (this.Heap[i + j] !== undefined) {
+          if (this.IP === i + j || (j === 0 && this.IP + 1 === i + j))
+            heap += "<span class='pointer'>";
+          heap += `${hexPad(this.Heap[i + j], 8)}`;
+          if (this.IP + 1 === i + j || (this.IP === i + j && j === 15))
+            heap += "</span>";
+          heap += " ";
+        } else heap += `     `;
+      }
+      heap += `| `;
+      for (let j = 0; j < 16; j++) {
+        var char: string = " ";
+        if (this.Heap[i + j] !== undefined) {
+          let v = this.Heap[i + j];
+          if (v >= 32 && v < 127) {
+            char = String.fromCharCode(v);
+          } else {
+            char = ".";
+          }
+        }
+        heap += char;
+      }
+      heap += "\n";
+    }
+    return `Heap:<br><div id='heap'>${heap}</div>`;
+  }
+
   RenderBSMemory() {
     let instructionPtr = this.IP;
     let regA = this.RegA;
     let regB = this.RegB;
 
-    let body = `Instruction PTR: ${instructionPtr}<br>
-Instruction: ${
-      "x" +
-      ("0" + (this.Heap[instructionPtr] ?? 0).toString(16).toUpperCase()).slice(
-        -2
-      )
-    } ${INSTRUCTIONS[this.Heap[instructionPtr] ?? 0]?.[0] ?? "???"} ${
-      this.Heap[instructionPtr + 1] ?? 0
-    }<br>
-Register A: ${regA}<br>
-Register B: ${regB}<br><br>
-Heap: ${this.Heap}<br><br>
-Stack1: ${this.StackA}<br>
-Stack2: ${this.StackB}`;
+    let stack1 = "";
+    let stack2 = "";
+    for (let i = 0; i < this.StackA.length; i++)
+      stack1 += hexPad(this.StackA[i], 8) + " ";
+    for (let i = 0; i < this.StackB.length; i++)
+      stack2 += hexPad(this.StackB[i], 8) + " ";
+
+    let body = `File: <span class='reg'>${this.GetFile()}</span><br>
+Line: <span class='reg'>${this.GetLine() + 1}</span><br>
+Instruction PTR: <span class='reg'>${hexPad(instructionPtr, 4)}</span><br>
+Instruction: <span class='reg'>${hexPad(this.Heap[instructionPtr] ?? 0)} ${
+      INSTRUCTIONS[this.Heap[instructionPtr] ?? 0]?.[0] ?? "????"
+    } ${hexPad(this.Heap[instructionPtr + 1] ?? 0, 8)}</span><br>
+Register A: <span class='reg'>${hexPad(regA, 8)}</span><br>
+Register B: <span class='reg'>${hexPad(regB, 8)}</span><br><br>
+Stack1: <span class='reg'>${stack1}</span><br>
+Stack2: <span class='reg'>${stack2}</span><br>`;
     document.querySelector('div.tab[data-target="baMemory"]')!.innerHTML = body;
+  }
+
+  GetLineFrom(IP: number): number {
+    var codel = this.ASMMap[IP];
+    while (codel >= 0) {
+      let m = this.CodeLines[codel].match(/\bline\s*(\d+)/i);
+      if (m) {
+        return +m[1];
+      }
+      codel--;
+    }
+    return 0;
+  }
+  GetFileFroM(IP: number): string {
+    var codel = this.ASMMap[IP];
+    while (codel >= 0) {
+      let m = this.CodeLines[codel].match(/\bfile\s*(.+)/i);
+      if (m) {
+        return m[1];
+      }
+      codel--;
+    }
+    return "main.bc";
+  }
+  GetLine(): number {
+    return this.GetLineFrom(this.IP);
+  }
+  GetFile(): string {
+    return this.GetFileFroM(this.IP);
   }
 
   RenderMemory(style: string) {

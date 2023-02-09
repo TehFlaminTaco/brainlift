@@ -4,30 +4,30 @@ import { VarType } from "./vartype";
 
 export interface Assignable {
   Assign(scope: Scope, anyType: VarType): string[];
-  GetType(scope: Scope): VarType;
+  GetTypes(scope: Scope): VarType[];
 }
 
 export interface Readable {
   Read(scope: Scope): string[];
-  GetType(scope: Scope): VarType;
+  GetTypes(scope: Scope): VarType[];
 }
 
 export interface Referenceable {
   GetPointer(scope: Scope): string[];
-  GetReferenceType(scope: Scope): VarType;
+  GetReferenceTypes(scope: Scope): VarType[];
 }
 
 export function IsAssignable(A: any) {
-  return "Assign" in A && "GetType" in A;
+  return "Assign" in A && "GetTypes" in A;
 }
 export function IsReadable(A: any) {
-  return "Read" in A && "GetType" in A;
+  return "Read" in A && "GetTypes" in A;
 }
 export function IsReadWritable(A: any) {
-  return "Read" in A && "Assign" in A && "GetType" in A;
+  return "Read" in A && "Assign" in A && "GetTypes" in A;
 }
 export function IsReferenceable(A: any) {
-  return "GetPointer" in A && "GetReferenceType" in A;
+  return "GetPointer" in A && "GetReferenceTypes" in A;
 }
 
 export interface ReadWritable extends Assignable, Readable {}
@@ -37,11 +37,14 @@ export class Variable {
   static ReadableClaimers: Function[] = [];
   static ReadWritableClaimers: Function[] = [];
   static ReferenceableClaimers: Function[] = [];
-  static ClaimAssignable(claimer: Claimer): Assignable | null {
+  static ClaimAssignable(
+    claimer: Claimer,
+    allowAny: boolean = false
+  ): Assignable | null {
     var a: Assignable | null = null;
     var i = 0;
     while (a === null && i < Variable.AssignableClaimers.length) {
-      a = Variable.AssignableClaimers[i++](claimer);
+      a = Variable.AssignableClaimers[i++](claimer, allowAny);
     }
     return a;
   }

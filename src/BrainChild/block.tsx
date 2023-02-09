@@ -1,44 +1,59 @@
 import { Claimer } from "./brainchild";
-import { Statement } from "./statement";
+import { Expression } from "./expression";
 import { Scope } from "./Scope";
+import { VarType } from "./vartype";
 
-export class Block extends Statement {
-  Statements: Statement[] = [];
+export class Block extends Expression {
+  Expressions: Expression[] = [];
   static Claim(claimer: Claimer): Block | null {
     var blk = claimer.Claim(/\{/);
     if (!blk.Success) {
       return null;
     }
-    var statements = [];
-    var s = Statement.Claim(claimer);
+    var expressions: Expression[] = [];
+    var s = Expression.Claim(claimer);
     while (s !== null) {
-      statements.push(s);
+      expressions.push(s);
       claimer.Claim(/;/);
-      s = Statement.Claim(claimer);
+      s = Expression.Claim(claimer);
     }
     if (!claimer.Claim(/}/).Success) {
       blk.Fail();
       return null;
     }
     var block = new Block(claimer, blk);
-    block.Statements = statements;
+    block.Expressions = expressions;
     return block;
   }
 
-  Evaluate(scope: Scope): string[] {
+  Evaluate(scope: Scope): [types: VarType[], body: string[]] {
     var subScope = scope.Sub();
     var o = [];
-    for (var i = 0; i < this.Statements.length; i++) {
-      o.push(...this.Statements[i].Evaluate(subScope));
+    var lastTypes: VarType[] = [];
+    for (var i = 0; i < this.Expressions.length; i++) {
+      var res = this.Expressions[i].TryEvaluate(subScope);
+      o.push(...res[1]);
+      if(i < (this.Expressions.length - 1)){
+        for(let j=0; j < res[0].length; j++)o.push(`apop`);
+      }else{
+        lastTypes = res[0];
+      }
     }
-    return o;
+    return [lastTypes, o];
   }
 
   DefinitelyReturns(): boolean {
-    for (let i = 0; i < this.Statements.length; i++) {
-      if (this.Statements[i].DefinitelyReturns()) return true;
+    for (let i = 0; i < this.Expressions.length; i++) {
+      if (this.Expressions[i].DefinitelyReturns()) return true;
     }
     return false;
   }
+  
+  GetTypes(scope: Scope): VarType[] {
+    var subScope = scope.Sub();
+    if(this.Expressions.length === 0)return [];
+    var res = this.Expressions[this.Expressions.length-1].GetTypes(subScope);
+    return res;
+  }
 }
-Statement.Register(Block.Claim);
+Expression.Register(Block.Claim);
