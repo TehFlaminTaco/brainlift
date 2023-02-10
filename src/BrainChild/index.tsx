@@ -14,6 +14,7 @@ export class Index
   Precedence: number = 17;
   LeftRightAssociative: boolean = true;
   Curry: boolean = false;
+  Generics: VarType[] = [];
 
   static Claim(claimer: Claimer): Index | null {
     var flg = claimer.Flag();
@@ -26,18 +27,63 @@ export class Index
   }
 
   static RightClaim(left: Expression, claimer: Claimer): Index | null {
+    let generics: VarType[] = [];
+    let f = claimer.Flag();
+    if (claimer.Claim(/</).Success) {
+      while (true) {
+        let t = VarType.Claim(claimer);
+        if (t === null) {
+          generics = [];
+          f.Fail();
+          break;
+        }
+        generics.push(t);
+        if (!claimer.Claim(/,/).Success) {
+          break;
+        }
+      }
+      if (!claimer.Claim(/>/).Success) {
+        generics = [];
+        f.Fail();
+      }
+    }
     var dot = claimer.Claim(/\./);
-    if (!dot.Success) return null;
+    if (!dot.Success) {
+      f.Fail();
+      return null;
+    }
     var name = Identifier.Claim(claimer);
     var indx = new Index(claimer, left.Claim);
     indx.Left = left;
     indx.Target = name;
+    indx.Generics = generics;
     return indx;
   }
 
   static RightClaimBrack(left: Expression, claimer: Claimer): Index | null {
+    let generics: VarType[] = [];
+    let f = claimer.Flag();
+    if (claimer.Claim(/</).Success) {
+      while (true) {
+        let t = VarType.Claim(claimer);
+        if (t === null) {
+          generics = [];
+          f.Fail();
+          break;
+        }
+        generics.push(t);
+        if (!claimer.Claim(/,/).Success) {
+          break;
+        }
+      }
+      if (!claimer.Claim(/>/).Success) {
+        generics = [];
+        f.Fail();
+      }
+    }
     var lbrack = claimer.Claim(/\[/);
     if (!lbrack.Success) {
+      f.Fail();
       return null;
     }
     var args: Expression[] = [];
@@ -54,6 +100,7 @@ export class Index
     var indx = new Index(claimer, lbrack);
     indx.Left = left;
     indx.Target = args;
+    indx.Generics = generics;
     return indx;
   }
 
@@ -68,7 +115,9 @@ export class Index
       o.push(`apop`);
     }
     var vType = valRes[0][0];
-    var typeDef = vType.GetDefinition();
+    var typeDef = this.Generics.length
+      ? vType.GetDefinition().WithGenerics(this.Generics)
+      : vType.GetDefinition();
     if (this.Target instanceof Identifier) {
       if (this.Curry) {
         o.push(`apopa`, `apusha`, `apusha`);
@@ -87,7 +136,7 @@ export class Index
     } else {
       var indexTypes: VarType[] = [vType];
       for (let i = 0; i < this.Target!.length; i++) {
-        var res = this.Target![i].Evaluate(scope);
+        var res = this.Target![i].TryEvaluate(scope);
         indexTypes.push(...res[0]);
         o.push(...res[1]);
       }
@@ -108,7 +157,9 @@ export class Index
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
     var vType = valRes[0][0];
-    var typeDef = vType.GetDefinition();
+    var typeDef = this.Generics.length
+      ? vType.GetDefinition().WithGenerics(this.Generics)
+      : vType.GetDefinition();
     if (this.Target instanceof Identifier) {
       var targetName = this.Target!.Name;
       var meta = typeDef.GetMetamethod("set_" + targetName, [vType, anyType]);
@@ -138,7 +189,7 @@ export class Index
       }
       var indexTypes: VarType[] = [vType];
       for (let i = 0; i < this.Target!.length; i++) {
-        let res = this.Target![i].Evaluate(scope);
+        let res = this.Target![i].TryEvaluate(scope);
         indexTypes.push(...res[0]);
         o.push(...res[1]);
       }
@@ -167,7 +218,9 @@ export class Index
       o.push(`apop`);
     }
     var vType = valRes[0][0];
-    var typeDef = vType.GetDefinition();
+    var typeDef = this.Generics.length
+      ? vType.GetDefinition().WithGenerics(this.Generics)
+      : vType.GetDefinition();
     if (this.Target instanceof Identifier) {
       var targetName = this.Target!.Name;
       var meta = typeDef.GetMetamethod("get_" + targetName, [vType]);
@@ -182,7 +235,7 @@ export class Index
     } else {
       var indexTypes: VarType[] = [vType];
       for (let i = 0; i < this.Target!.length; i++) {
-        var res = this.Target![i].Evaluate(scope);
+        var res = this.Target![i].TryEvaluate(scope);
         indexTypes.push(...res[0]);
         o.push(...res[1]);
       }
@@ -206,11 +259,13 @@ export class Index
       o.push(`apop`);
     }
     var vType = valRes[0][0];
-    var typeDef = vType.GetDefinition();
+    var typeDef = this.Generics.length
+      ? vType.GetDefinition().WithGenerics(this.Generics)
+      : vType.GetDefinition();
     if (!(this.Target instanceof Identifier)) {
       var indexTypes: VarType[] = [vType];
       for (let i = 0; i < this.Target!.length; i++) {
-        var res = this.Target![i].Evaluate(scope);
+        var res = this.Target![i].TryEvaluate(scope);
         indexTypes.push(...res[0]);
         o.push(...res[1]);
       }
@@ -236,7 +291,9 @@ export class Index
   GetReferenceTypes(scope: Scope): VarType[] {
     if (!(this.Target instanceof Identifier)) {
       var vType = this.Left!.GetTypes(scope)[0];
-      var typeDef = vType.GetDefinition();
+      var typeDef = this.Generics.length
+        ? vType.GetDefinition().WithGenerics(this.Generics)
+        : vType.GetDefinition();
       var indexTypes: VarType[] = [vType];
       for (let i = 0; i < this.Target!.length; i++) {
         indexTypes.push(...this.Target![i].GetTypes(scope));

@@ -2475,7 +2475,7 @@ export class ASMInterpreter {
           if (this.IP + 1 === i + j || (this.IP === i + j && j === 15))
             heap += "</span>";
           heap += " ";
-        } else heap += `     `;
+        } else heap += `         `;
       }
       heap += `| `;
       for (let j = 0; j < 16; j++) {

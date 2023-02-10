@@ -5,38 +5,38 @@ export function GenerateReadOnlys() {
   generated = true;
   GenerateReadOnly(
     "array.bc",
-    `class Array {
+    `class Array<T> {
     int Length;
-    @void Data;
+    @T Data;
     metamethod Array(int l){
         this.Data = alloc(l);
         this.Length = l;
     }
     
-    metamethod getindex(array this, int i) -> void{
+    metamethod getindex(Array<T> this, int i) -> T{
         return *(this.Data+i%this.Length);
     }
-    metamethod setindex(array this, int i, void v){
+    metamethod setindex(Array<T> this, int i, T v){
         *(this.Data+i%this.Length) = v;
     }
-    metamethod ptrindex(array this, int i) -> @void{
+    metamethod ptrindex(Array<T> this, int i) -> @T{
         return this.Data+i%this.Length;
     }
-    function ReplaceV(func(void)->void over){
+    function ReplaceV(func(T)->T over){
         int i = 0;
         while(i < this.Length){
             this[i] = over(this[i]);
             i++;
         }
     }
-    function ReplaceK(func(int)->void over){
+    function ReplaceK(func(int)->T over){
         int i = 0;
         while(i < this.Length){
             this[i] = over(i);
             i++;
         }
     }
-    function ReplaceKV(func(int)->void over){
+    function ReplaceKV(func(int,T)->T over){
         int i = 0;
         while(i < this.Length){
             this[i] = over(i, this[i]);
@@ -269,10 +269,10 @@ function rand() -> int{
   );
   GenerateReadOnly(
     "stack.bc",
-    `class Stack {
+    `class Stack<T> {
     int Capacity;
     int Length;
-    @void Data;
+    @T Data;
     
     metamethod Stack(){
         this.Capacity = 8;
@@ -284,44 +284,44 @@ function rand() -> int{
         this.Data = alloc(cap);
     }
     
-    function Push(void v){
+    function Push(T v){
         if(this.Length == this.Capacity){
-            @void newBuff = alloc(this.Capacity * 2);
+            @T newBuff = alloc(this.Capacity * 2);
             int i = 0;
             while(i < this.Length){
                 *(newBuff + i) = *(this.Data + i);
                 i++;
             }
             this.Capacity = this.Capacity * 2;
-            @void oldData = this.Data;
+            @T oldData = this.Data;
             this.Data = newBuff;
             free(oldData);
         };
         *(this.Data + this.Length) = v;
         this.Length++;
     }
-    function Pop() -> void {
+    function Pop() -> T {
         if(this.Length){
             this.Length--;
             return *(this.Data + this.Length);
         }
-        return 0;
+        return (0 -> T);
     }
-    function Peek() -> void {
+    function Peek() -> T {
         if(this.Length) return *(this.Data + this.Length - 1);
-        return 0;
+        return (0 -> T);
     }
     function Has() -> int {
         if this.Length return 1;
         return 0;
     }
-    metamethod getindex(Stack this, int i) -> void{
+    metamethod getindex(Stack<T> this, int i) -> T{
         return *(this.Data+i%this.Length);
     }
-    metamethod setindex(Stack this, int i, void v){
+    metamethod setindex(Stack<T> this, int i, T v){
         *(this.Data+i%this.Length) = v;
     }
-    metamethod ptrindex(Stack this, int i) -> @void{
+    metamethod ptrindex(Stack<T> this, int i) -> @T{
         return this.Data+i%this.Length;
     }
 }`
@@ -346,12 +346,12 @@ function charwrite(int c){
          writea }
 }
 
-class String : Array {
+class String : Array<int> {
     metamethod String(int l, @int d){
         this.Length = l;
         this.Data = d;
     }
-    function Write() -> string{
+    function Write() -> String{
         var l = this.Length;
         var d = this.Data;
         while(l--){
@@ -359,17 +359,17 @@ class String : Array {
         }
         return this;
     }
-    function Upper() -> string{
+    function Upper() -> String{
         this.ReplaceV(charupper);
         return this;
     }
-    function Lower() -> string{
+    function Lower() -> String{
         this.ReplaceV(charlower);
         return this;
     }
-    static string ZERO;
+    static String ZERO;
     
-    static function From(int i) -> string {
+    static function From(int i) -> String {
         if(i == 0)return String.ZERO;
         @int buffer = alloc(5);
         int l = 0;
@@ -489,7 +489,7 @@ abstract class Term {
             int i = 0;
             if(r == 1){
                 while(i < Term.Click.Length){
-                    (Term.Click[i++] -> func(int,int))(low, high)
+                    Term.Click[i++](low, high)
                 }
             }else if (r == 2){
                 while(i < Term.KeyDown.Length){
@@ -509,10 +509,10 @@ abstract class Term {
     
     
     
-    static Stack KeyDown;
-    static Stack KeyUp;
-    static Stack Click;
-    static Stack Frame;
+    static Stack<func(int,int)> KeyDown;
+    static Stack<func(int,int)> KeyUp;
+    static Stack<func(int,int)> Click;
+    static Stack<func()> Frame;
 }
 
 Term.KeyDown = new Stack(1);
@@ -583,22 +583,22 @@ Term.Cursor = new __Cursor();`
     `include stack.bc;
 void NULL;
 
-class Branch {
-    @Branch Anchor;
-    Branch Left;
+class Branch<T> {
+    @Branch<T> Anchor;
+    Branch<T> Left;
     int High;
     int Key;
-    void Value;
-    Branch Right;
+    T Value;
+    Branch<T> Right;
     
-    metamethod Branch(@Branch Anchor, int High, int Key, void Value){
+    metamethod Branch(@Branch<T> Anchor, int High, int Key, T Value){
         this.Anchor = Anchor;
         this.High = High;
         this.Key = Key;
         this.Value = Value;
     }
     
-    function FillStack(Stack s){
+    function FillStack(Stack<Branch> s){
         if(this.Left)this.Left.FillStack(s);
         s.Push(this);
         if(this.Right)this.Right.FillStack(s);
@@ -649,13 +649,13 @@ class Branch {
         }
     }
     
-    function Each(func(int, void) method){
+    function Each(func(int, T) method){
         if(this.Left)this.Left.Each(method);
         method(this.Key, this.Value);
         if(this.Right)this.Right.Each(method);
     }
     
-    function Get(int key) -> void {
+    function Get(int key) -> T {
         if(key == this.Key){
             return this.Value;
         }
@@ -666,7 +666,7 @@ class Branch {
         if(!this.Right)return NULL;
         return this.Right.Get(key);
     }
-    function Set(int key, void val) {
+    function Set(int key, T val) {
         if(key == this.Key){
             return this.Value = val;
         }
@@ -681,17 +681,17 @@ class Branch {
     metamethod truthy(Branch this) -> int { (this -> int) }
 }
 
-class Tree {
-    Branch Root;
+class Tree<T> {
+    Branch<T> Root;
     
-    function ToStack() -> Stack {
-        Stack s = new Stack();
+    function ToStack() -> Stack<Branch<T>> {
+        Stack<Branch<T>> s = new Stack();
         if(this.Root)this.Root.FillStack(s);
         return s;
     }
     
-    function Rebalance() {
-        Stack s = this.ToStack();
+    function Rebalance() { 
+        Stack<Branch<T>> s = this.ToStack(); 
         int middle = s.Length/2;
         this.Root = NULL;
         this[(s[middle] -> Branch).Key] = (s[middle] -> Branch).Value;
@@ -703,7 +703,7 @@ class Tree {
         }
     }
     
-    function Fill(Stack s, int low, int high){
+    function Fill(Stack<Branch<T>> s, int low, int high){
         if(high > low){
             int m = ((high - low)/2) + low;
             this[(s[m] -> Branch).Key] = (s[m] -> Branch).Value;
@@ -716,16 +716,16 @@ class Tree {
         }
     }
     
-    function Each(func(int,int) method){
+    function Each(func(int,T) method){
         if(this.Root)this.Root.Each(method);
     }
     
-    metamethod getindex(Tree this, int i) -> void{
+    metamethod getindex(Tree<T> this, int i) -> T{
         if(this.Root)return this.Root.Get(i);
         return NULL;
     }
     
-    metamethod setindex(Tree this, int i, void v){
+    metamethod setindex(Tree<T> this, int i, T v){
         if(this.Root)return this.Root.Set(i, v);
         this.Root = new Branch(&this.Root, 1, i, v);
     }

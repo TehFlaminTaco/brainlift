@@ -261,10 +261,10 @@ class TokenType extends MDesc {
     let l = this.Name!.toLowerCase();
     if (["expression", "assignable", "number"].includes(l)) {
       if (l === "expression") return left.toString();
-      if (l === "assignable") return IsAssignable(left) ? left.toString() : null;
+      if (l === "assignable")
+        return IsAssignable(left) ? left.toString() : null;
       if (l === "number")
-        if (IsSimplifyable(left))
-          return (left as any).Simplify()?.toString()
+        if (IsSimplifyable(left)) return (left as any).Simplify()?.toString();
     }
     return null;
   }
@@ -586,7 +586,7 @@ export class Macrod extends Expression {
         this.Unpacked = exp;
       }
 
-      let res = this.Unpacked.Evaluate(scope);
+      let res = this.Unpacked.TryEvaluate(scope);
       MacroDepth--;
       return res;
     } catch (e) {

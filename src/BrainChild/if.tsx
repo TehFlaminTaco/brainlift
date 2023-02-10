@@ -55,9 +55,9 @@ export class If extends Expression implements Simplifyable {
       if (res !== null) {
         res = res & 0xffff;
         if (res) {
-          return this.Body!.Evaluate(scope);
+          return this.Body!.TryEvaluate(scope);
         } else if (this.Else) {
-          return this.Else!.Evaluate(scope);
+          return this.Else!.TryEvaluate(scope);
         } else {
           return [[], []];
         }

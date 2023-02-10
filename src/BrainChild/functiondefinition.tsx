@@ -32,6 +32,28 @@ export class FunctionDefinition extends Expression {
       fnc.Fail();
       return null;
     }
+    let oldGenericTypes = VarType.CurrentGenericArgs;
+    VarType.CurrentGenericArgs = {};
+    for (let o in oldGenericTypes) {
+      VarType.CurrentGenericArgs[o] = oldGenericTypes[o];
+    }
+
+    let generics: string[] = [];
+    let genArgNum = 0;
+    if (claimer.Claim(/</).Success) {
+      let arg = Identifier.Claim(claimer);
+      while (arg !== null) {
+        generics.push(arg.Name);
+        VarType.CurrentGenericArgs[arg.Name] = "$$" + genArgNum++;
+        if (!claimer.Claim(/,/).Success) break;
+        arg = Identifier.Claim(claimer);
+      }
+      if (!claimer.Claim(/>/).Success) {
+        VarType.CurrentGenericArgs = oldGenericTypes;
+        fnc.Fail();
+        return null;
+      }
+    }
 
     if (!claimer.Claim(/\(/).Success) {
       fnc.Fail();
@@ -46,6 +68,7 @@ export class FunctionDefinition extends Expression {
     }
     if (!claimer.Claim(/\)/).Success) {
       fnc.Fail();
+      VarType.CurrentGenericArgs = oldGenericTypes;
       return null;
     }
     var retTypes = [];
@@ -60,6 +83,7 @@ export class FunctionDefinition extends Expression {
     }
 
     var body = Expression.Claim(claimer);
+    VarType.CurrentGenericArgs = oldGenericTypes;
     if (body === null) {
       fnc.Fail();
       return null;
@@ -148,6 +172,27 @@ export class FunctionDefinition extends Expression {
       fnc.Fail();
       return null;
     }
+    let oldGenericTypes = VarType.CurrentGenericArgs;
+    VarType.CurrentGenericArgs = {};
+    for (let o in oldGenericTypes) {
+      VarType.CurrentGenericArgs[o] = oldGenericTypes[o];
+    }
+    let generics: string[] = [];
+    let genArgNum = 0;
+    if (claimer.Claim(/</).Success) {
+      let arg = Identifier.Claim(claimer);
+      while (arg !== null) {
+        generics.push(arg.Name);
+        VarType.CurrentGenericArgs[arg.Name] = "$$" + genArgNum++;
+        if (!claimer.Claim(/,/).Success) break;
+        arg = Identifier.Claim(claimer);
+      }
+      if (!claimer.Claim(/>/).Success) {
+        VarType.CurrentGenericArgs = {};
+        fnc.Fail();
+        return null;
+      }
+    }
 
     if (!claimer.Claim(/\(/).Success) {
       fnc.Fail();
@@ -162,6 +207,7 @@ export class FunctionDefinition extends Expression {
     }
     if (!claimer.Claim(/\)/).Success) {
       fnc.Fail();
+      VarType.CurrentGenericArgs = oldGenericTypes;
       return null;
     }
     var retTypes = [];
@@ -176,6 +222,7 @@ export class FunctionDefinition extends Expression {
     }
 
     var body = Expression.Claim(claimer);
+    VarType.CurrentGenericArgs = oldGenericTypes;
     if (body === null) {
       fnc.Fail();
       return null;
@@ -243,9 +290,14 @@ export class FunctionDefinition extends Expression {
       o.push(`  ret`);
     }
     scope.Assembly.push(...o);
-    let name = this.Target+"";
-    if(this.Target instanceof Identifier)name = this.Target.Name;
-    scope.AllVars[this.Label] = [funcType, name, scope.CurrentFile, scope.CurrentFunction];
+    let name = this.Target + "";
+    if (this.Target instanceof Identifier) name = this.Target.Name;
+    scope.AllVars[this.Label] = [
+      funcType,
+      name,
+      scope.CurrentFile,
+      scope.CurrentFunction,
+    ];
     if (this.IsMeta) return [[], []];
     if (this.Target === null)
       return [[funcType], [this.GetLine(), `apush ${label}`]];

@@ -20,7 +20,7 @@ export class Assignment extends Expression implements LeftDonor, RightDonor {
     while (true) {
       if (!claimer.Claim(/,/).Success) break;
       var target: Assignable | null = Variable.ClaimAssignable(claimer, true);
-      if(target === null){
+      if (target === null) {
         flag.Fail();
         return null;
       }
@@ -63,7 +63,7 @@ export class Assignment extends Expression implements LeftDonor, RightDonor {
       o.push(...targs[i].Assign(scope, coaxed[2][i]));
     }
     for (let i = 0; i < targs.length; i++) {
-      o.push(...(targs[i] as unknown as Expression).Evaluate(scope)[1]);
+      o.push(...(targs[i] as unknown as Expression).TryEvaluate(scope)[1]);
     }
     // Redefine them for the purse of `var a = 3`.
     targetTypes = [];

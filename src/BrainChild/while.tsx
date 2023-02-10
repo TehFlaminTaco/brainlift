@@ -51,7 +51,7 @@ export class While extends Expression {
     o.push(`jmp ${afterTrue}`, `${whileTrue}:`);
     let res = this.Body!.TryEvaluate(scope);
     o.push(...res[1].map((c) => `  ${c}`));
-    for (let i = 0; i < res.length; i++) o.push(`apop`);
+    for (let i = 0; i < res[0].length; i++) o.push(`apop`);
     o.push(`jmp ${condition}`, `${afterTrue}:`);
     return [[], o];
   }

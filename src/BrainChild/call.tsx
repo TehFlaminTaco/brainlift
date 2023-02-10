@@ -11,9 +11,31 @@ export class Call extends Expression implements LeftDonor {
   Arguments: Expression[] = [];
   IsFinalExpression: boolean = false;
   TailCall: boolean = false;
+  Generics: VarType[] = [];
   static RightClaim(left: Expression, claimer: Claimer): Call | null {
+    let generics: VarType[] = [];
+    let f = claimer.Flag();
+    if (claimer.Claim(/</).Success) {
+      while (true) {
+        let t = VarType.Claim(claimer);
+        if (t === null) {
+          generics = [];
+          f.Fail();
+          break;
+        }
+        generics.push(t);
+        if (!claimer.Claim(/,/).Success) {
+          break;
+        }
+      }
+      if (!claimer.Claim(/>/).Success) {
+        generics = [];
+        f.Fail();
+      }
+    }
     var lbrack = claimer.Claim(/\(/);
     if (!lbrack.Success) {
+      f.Fail();
       return null;
     }
     var args: Expression[] = [];
@@ -30,6 +52,7 @@ export class Call extends Expression implements LeftDonor {
     var call = new Call(claimer, left.Claim);
     call.Left = left;
     call.Arguments = args;
+    call.Generics = generics;
     return call;
   }
 
@@ -82,16 +105,27 @@ export class Call extends Expression implements LeftDonor {
       callArgumentTypes.push(this.Left.CurryType!);
     }
     var functionMatchesTypes: FuncType[] = functionTypes.filter(
-      (c) => VarType.CanCoax(c.ArgTypes, callArgumentTypes)[0]
+      (c) =>
+        VarType.CanCoax(
+          c.ArgTypes.map((c) => c.WithFunctionGenerics(this.Generics)),
+          callArgumentTypes
+        )[0]
     );
     if (functionMatchesTypes.length === 0)
       throw new Error(
         `Cannot call, argument mismatch. Expected: ${functionTypes[0].ArgTypes} Got: ${callArgumentTypes}`
       );
-    var funcType = functionMatchesTypes[0];
+    var funcType = functionMatchesTypes[0].WithFunctionGenerics(
+      this.Generics
+    ) as FuncType;
     o.push(...VarType.Coax(funcType.ArgTypes, callArgumentTypes)[0]);
     o.push(...resolveTarget[1]);
-    o.push(...VarType.Coax([funcType], resolveTarget[0])[0]);
+    o.push(
+      ...VarType.Coax(
+        [funcType],
+        resolveTarget[0].map((c) => c.WithFunctionGenerics(this.Generics))
+      )[0]
+    );
     if (!this.IsFinalExpression && !this.TailCall)
       o.push(...scope.DumpFunctionVariables());
     o.push(`apopa`, this.TailCall ? `jmpa` : `calla`);

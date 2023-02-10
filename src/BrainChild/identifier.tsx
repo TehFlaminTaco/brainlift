@@ -23,6 +23,10 @@ export class Identifier
 
   Assign(scope: Scope): string[] {
     var res = scope.Get(this.Name);
+    let t = res[0].GetDefinition();
+    if (t.Name.startsWith("type")) {
+      throw new Error("Cannot assign over class");
+    }
     return [`apopb`, `seta ${res[1]}`, `putbptra`];
   }
 
@@ -48,7 +52,8 @@ export class Identifier
   }
 
   GetTypes(scope: Scope): VarType[] {
-    return [scope.Get(this.Name)[0]];
+    let res = scope.Get(this.Name);
+    return [res[0]];
   }
 }
 

@@ -1,69 +1,95 @@
 include term.bc;
 include array.bc;
-
-class array2d : array {
-    int width;
-    int height;
-    
-    metamethod array2d(int w, int h) {
-        this.width = w;
-        this.height = h;
-        
-        this.length = (w * h);
-        this.data = alloc(w * h);
-    }
-    
-    function wrap(int x, int y) -> int, int {
-        return x%this.width, y%this.height;
-    }
-    
-    metamethod get_index(array2d this, int x, int y) -> void {
-        x, y = this.wrap(x,y);
-        return *(this.data + y*this.width + x);
-    }
-    
-    metamethod set_index(array2d this, int x, int y, void v) {
-        x, y = this.wrap(x,y);
-        *(this.data + y*this.width + x) = v;
-    }
-    
-    metamethod ptr_index(array2d this, int x, int y) {
-        x, y = this.wrap(x,y);
-        return (this.data + y*this.width + x);
-    }
-}
+include random.bc;
+include extmacros.bc;
 
 class GOL {
-    array2d Current;
-    array2d Off;
+    Array<Array<int>> Current;
+    Array<Array<int>> Off;
     
     int Width;
     int Height;
     
+    @int stringBuffer;
+    
     metamethod GOL(int w, int h) {
         this.Width = w;
         this.Height = h;
-        this.Current = new array2d(w, h);
-        this.Off = new array2d(w, h);
+        this.Current = new Array(h);
+        this.Off = new Array(h);
+        this.stringBuffer = alloc(w * h);
+        for(int y=0; y < this.Height; y++){
+            this.Current[y] = new Array(w);
+            this.Off[y] = new Array(w);
+            int x = 0;
+            for(int x=0; x < this.Width; x++){
+                this.Current[y][x] = (rand()/63)%2;
+            }
+        } 
+        return this;
+    }
+    
+    function Flip(){
+        int y = 0;
+        for(int y=0; y < this.Height; y++){
+            for(int x=0; x < this.Width; x++){
+                int n = 0;
+                n += this.Current[y-1][x-1];
+                n += this.Current[y-1][x+0];
+                n += this.Current[y-1][x+1];
+                n += this.Current[y+0][x-1];
+                
+                n += this.Current[y+0][x+1];
+                n += this.Current[y+1][x-1];
+                n += this.Current[y+1][x+0];
+                n += this.Current[y+1][x+1];
+                
+                if(this.Current[y][x]){
+                    this.Off[y][x] = (n >= 2)*(n <= 3);
+                }else{
+                    this.Off[y][x] = (n==3);
+                }
+            }
+        }
+        var o = this.Current;
+        this.Current = this.Off;
+        this.Off = o;
     }
     
     function Draw(){
-        int x = 0;
+        var s = this.stringBuffer;
         int y = 0;
-        while(y < this.Height){
-            while(x < this.Width){
-                if (this.Current[x, y] -> int)
-                    Term.writechar('#')
-                else
-                    Term.writechar(' ')
-                x++;
+        for(int y=0; y < this.Height; y++){
+            int x = 0;
+            for(int x=0; x < this.Width; x++){
+                if (this.Current[y][x])
+                    {*s = '#';}
+                else{*s = ' ';}
+                s++;
             }
-            Term.writechar('\n');
-            y++;
         }
+        Term.Clear();
+        Term.Cursor.Reset();
+        Term.Write(this.Width * this.Height, this.stringBuffer);
     }
 }
 
 
-GOL game = new GOL(64, 32);
-game.Draw();
+GOL game;
+Term.PollEvents();
+
+int i = 0;
+Term.Frame.Push(function(){
+    if(!(game -> int)){
+        seed = i;
+        game = new GOL(64, 32);
+    }
+    game.Flip();
+    game.Draw();
+    return;
+});
+
+while(1){
+    i++;
+    Term.PollEvents();
+}

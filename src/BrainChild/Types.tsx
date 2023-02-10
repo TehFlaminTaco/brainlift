@@ -90,9 +90,54 @@ export class TypeDefinition {
   }
 
   IsParent(other: TypeDefinition): boolean {
-    if (other === this) return true;
+    if (other.Name === this.Name) return true;
     if (other.Parent === null) return false;
     return this.IsParent(other.Parent);
+  }
+
+  WithGenerics(genericArgs: VarType[]): TypeDefinition {
+    let t = this.Clone();
+    t.AddGenerics(genericArgs);
+    return t;
+  }
+
+  AddGenerics(genericArgs: VarType[]) {
+    for (let i in this.Children) {
+      if (!this.Children[i]) continue;
+      if (!this.Children[i][0]) continue;
+      this.Children[i][0] = this.Children[i][0].WithGenerics(genericArgs);
+    }
+    for (let m in this.MetaMethods) {
+      let meta = this.MetaMethods[m];
+      for (let j in meta) {
+        meta[j][0] = meta[j][0].map((c) => c.WithGenerics(genericArgs));
+        meta[j][1] = meta[j][1].map((c) => c.WithGenerics(genericArgs));
+      }
+    }
+    if (this.Parent) this.Parent.AddGenerics(genericArgs);
+    if (this.TypeType) this.TypeType.AddGenerics(genericArgs);
+  }
+
+  Clone(): TypeDefinition {
+    let t = new TypeDefinition();
+    for (let i in this.Children) {
+      let child = this.Children[i];
+      t.Children[i] = [child[0], child[1], child[2]];
+    }
+    for (let i in this.MetaMethods) {
+      let meta = this.MetaMethods[i];
+      t.MetaMethods[i] = [];
+      for (let j in meta) {
+        let m = this.MetaMethods[i][j];
+        t.MetaMethods[i][j] = [m[0], m[1], m[2]];
+      }
+    }
+    t.Size = this.Size;
+    if (this.Parent) t.Parent = this.Parent.Clone();
+    if (this.TypeType) t.TypeType = this.TypeType.Clone();
+    t.ClassLabel = this.ClassLabel;
+    t.Name = this.Name;
+    return t;
   }
 }
 

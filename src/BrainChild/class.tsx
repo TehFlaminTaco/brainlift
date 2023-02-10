@@ -62,7 +62,7 @@ export class Class extends Statement {
       let arg = Identifier.Claim(claimer);
       while (arg !== null) {
         generics.push(arg.Name);
-        VarType.CurrentGenericArgs[arg.Name] = genArgNum++;
+        VarType.CurrentGenericArgs[arg.Name] = "$"+genArgNum++;
         if (!claimer.Claim(/,/).Success) break;
         arg = Identifier.Claim(claimer);
       }

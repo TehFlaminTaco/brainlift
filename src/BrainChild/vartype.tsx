@@ -22,8 +22,9 @@ function hexPad(value: number, amount: number = 2) {
 export class VarType extends Token {
   PointerDepth: number = 0;
   TypeName: string = "";
+  Generics: VarType[] = [];
 
-  static CurrentGenericArgs: { [key: string]: number } = {};
+  static CurrentGenericArgs: { [key: string]: string } = {};
 
   static Int: VarType;
   static Void: VarType;
@@ -49,12 +50,33 @@ export class VarType extends Token {
       flag.Fail();
       return null;
     }
-    var vType = new VarType(claimer, flag);
+    let generics: VarType[] = [];
+    let f = claimer.Flag();
+    if (claimer.Claim(/</).Success) {
+      while (true) {
+        let t = VarType.Claim(claimer);
+        if (t === null) {
+          generics = [];
+          f.Fail();
+          break;
+        }
+        generics.push(t);
+        if (!claimer.Claim(/,/).Success) {
+          break;
+        }
+      }
+      if (!claimer.Claim(/>/).Success) {
+        generics = [];
+        f.Fail();
+      }
+    }
+    let vType = new VarType(claimer, flag);
     vType.TypeName = c.Body![0];
     if (VarType.CurrentGenericArgs[vType.TypeName] !== undefined) {
-      vType.TypeName = "$" + VarType.CurrentGenericArgs[vType.TypeName];
+      vType.TypeName = VarType.CurrentGenericArgs[vType.TypeName];
     }
     vType.PointerDepth = depth;
+    vType.Generics = generics;
     return vType;
   }
 
@@ -84,7 +106,7 @@ export class VarType extends Token {
     )
       return true;
     var typeDef = this.GetDefinition();
-    if (typeDef.IsParent(other.GetDefinition())) {
+    if (other.GetDefinition().IsParent(typeDef)) {
       return this.PointerDepth === other.PointerDepth;
     }
     return false;
@@ -129,39 +151,6 @@ export class VarType extends Token {
     return o;
   }
 
-  OldDebug(
-    scope: Scope,
-    bs: ASMInterpreter,
-    label: string,
-    identifier: string,
-    location: number
-  ): string {
-    let val: string = hexPad(bs.Heap[location], 8);
-    for (let id in bs.Labels) {
-      if (bs.Labels[id] === bs.Heap[location]) {
-        val = `${hexPad(bs.Heap[location], 8)} (${id})`;
-        break;
-      }
-    }
-    if (this.PointerDepth > 0) {
-      return `<span class='subtle'>${label}</span><b>${this}</b> ${identifier} = ${val}`;
-    } else if (bs.Heap[location] > 0 && scope.UserTypes[this.TypeName]) {
-      var t = scope.UserTypes[this.TypeName];
-      var s = `<span class='subtle'>${label}</span><b>${this}</b> ${identifier} = (${val}) {<br>`;
-      for (var name in t.Children) {
-        var child = t.Children[name];
-        if (!child || !child[0]) continue;
-        if (child[0] instanceof FuncType) continue;
-        s +=
-          child[0].Debug(scope, bs, "", name, bs.Heap[location] + child[1]) +
-          "<br>";
-      }
-      s += "}";
-      return s;
-    }
-    return `<span class='subtle'>${label}</span><b>${this}</b> ${identifier} = ${val}`;
-  }
-
   Debug(
     scope: Scope,
     bs: ASMInterpreter,
@@ -170,7 +159,7 @@ export class VarType extends Token {
     location: number
   ): string {
     if (scope.DebuggedVals.has(location))
-      return `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${hexPad(
+      return `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${hexPad(
         bs.Heap[location],
         8
       )}`;
@@ -183,7 +172,7 @@ export class VarType extends Token {
       let t = scope.UserTypes[this.TypeName];
       let cls = bs.Heap[bs.Heap[location]];
       let val = hexPad(bs.Heap[location], 8);
-      let s = `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${val} {<br>`;
+      let s = `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${val} {<br>`;
       let childrenByOffset: [VarType, number, string, string][] = [];
       let className = "undefined";
       for (let id in bs.Labels) {
@@ -203,6 +192,7 @@ export class VarType extends Token {
         if (t.IsParent(scope.UserTypes[className]))
           t = scope.UserTypes[className];
       }
+      if (t && this.Generics.length > 0) t = t.WithGenerics(this.Generics);
 
       for (let ident in t.Children) {
         let child = t.Children[ident];
@@ -232,6 +222,13 @@ export class VarType extends Token {
     }
     let val = hexPad(bs.Heap[location], 8);
     return `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${val}`;
+  }
+
+  ToHTML() {
+    return this.toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
 
   static AllEquals(targetStack: VarType[], receivedStack: VarType[]) {
@@ -535,6 +532,12 @@ export class VarType extends Token {
   }
 
   toString(): string {
+    if (this.TypeName.startsWith("$")) {
+    }
+    if (this.Generics.length > 0)
+      return `${"@".repeat(this.PointerDepth)}${this.TypeName}<${
+        this.Generics
+      }>`;
     return `${"@".repeat(this.PointerDepth)}${this.TypeName}`;
   }
 
@@ -542,6 +545,7 @@ export class VarType extends Token {
     var t = new VarType(this.Claimer, this.Claim);
     t.PointerDepth = this.PointerDepth;
     t.TypeName = this.TypeName;
+    t.Generics = this.Generics.concat();
     return t;
   }
 
@@ -560,9 +564,40 @@ export class VarType extends Token {
     }
     if (this.TypeName === "int") return TypeInt;
     if (this.TypeName === "void") return TypeVoid;
+    if (this.TypeName.startsWith("$")) return TypeVoid;
     var userType = Scope.CURRENT.UserTypes[this.TypeName];
     if (!userType) throw new Error(`Undefined type ${this.TypeName}`);
+    if (this.Generics.length > 0) {
+      userType = userType.WithGenerics(this.Generics);
+    }
     return userType;
+  }
+
+  WithGenerics(genericArgs: VarType[], recurse: boolean = true): VarType {
+    if (this.TypeName.startsWith("$") && !this.TypeName.startsWith("$$")) {
+      let v = genericArgs[+this.TypeName.substr(1)].Clone();
+      v.PointerDepth += this.PointerDepth;
+      return v;
+    } else {
+      let v = this.Clone();
+      if (recurse) {
+        for (let i = 0; i < v.Generics.length; i++) {
+          v.Generics[i] = v.Generics[i].WithGenerics(genericArgs, true);
+        }
+      }
+      return v;
+    }
+  }
+  WithFunctionGenerics(genericArgs: VarType[]): VarType {
+    if (this.TypeName.startsWith("$$")) {
+      let v = genericArgs[+this.TypeName.substr(2)].Clone();
+      v.PointerDepth += this.PointerDepth;
+      for (let i = 0; i < v.Generics.length; i++) {
+        v.Generics[i] = v.Generics[i].WithFunctionGenerics(genericArgs);
+      }
+      return v;
+    }
+    return this;
   }
 }
 
@@ -684,6 +719,7 @@ export class FuncType extends VarType {
     t.TypeName = this.TypeName;
     t.ArgTypes = this.ArgTypes.concat();
     t.RetTypes = this.RetTypes.concat();
+    t.Generics = this.Generics;
     return t;
   }
 
@@ -692,6 +728,20 @@ export class FuncType extends VarType {
       return GeneratePointerType(this);
     }
     return GenerateFuncType(this);
+  }
+
+  WithGenerics(genericArgs: VarType[]): VarType {
+    let c = this.Clone();
+    c.ArgTypes = c.ArgTypes.map((c) => c.WithGenerics(genericArgs));
+    c.RetTypes = c.RetTypes.map((c) => c.WithGenerics(genericArgs));
+    return c;
+  }
+
+  WithFunctionGenerics(genericArgs: VarType[]): VarType {
+    let c = this.Clone();
+    c.ArgTypes = c.ArgTypes.map((c) => c.WithFunctionGenerics(genericArgs));
+    c.RetTypes = c.RetTypes.map((c) => c.WithFunctionGenerics(genericArgs));
+    return c;
   }
 }
 

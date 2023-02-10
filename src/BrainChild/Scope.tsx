@@ -382,11 +382,11 @@ free:
     let name = `<b>function</b> ${func}`;
     if (f && f[0] instanceof FuncType) {
       let funcType = f[0] as FuncType;
-      name = `<b>function</b> ${f[1]}(<b>${funcType.ArgTypes.join(
+      name = `<b>function</b> ${f[1]}(<b>${funcType.ArgTypes.map(c=>c.ToHTML()).join(
         "</b>, <b>"
       )}</b>)`;
       if (funcType.RetTypes.length > 0)
-        name += ` -> <b>${funcType.RetTypes.join("</b>, <b>")}</b>`;
+        name += ` -> <b>${funcType.RetTypes.map(c=>c.ToHTML()).join("</b>, <b>")}</b>`;
     }
     let isGlobal = false;
     if (func.length === 0) {
