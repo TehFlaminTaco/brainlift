@@ -207,6 +207,12 @@ export async function Parse(files: { [file: string]: string }): Promise<Scope> {
       console.log(typeDefs);
       typeDefs = typeDefs.filter((c) => !c.TrySetup(scope));
     }
+    if (typeDefs.length > 0) {
+      console.log(typeDefs);
+      throw new Error(
+        `Failed to resolve types: ${typeDefs.map((c) => c.Name).join(", ")}`
+      );
+    }
     waitTimeout = setTimeout(() => {
       try {
         var o: string[] = [];

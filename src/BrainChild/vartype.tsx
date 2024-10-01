@@ -194,6 +194,20 @@ export class VarType extends Token {
       }
       if (t && this.Generics.length > 0) t = t.WithGenerics(this.Generics);
 
+      for (let ident in t.VirtualChildren) {
+        let child = t.VirtualChildren[ident];
+        if (!child) continue;
+        let v = bs.Heap[bs.Heap[location] + child[2]];
+        let expected = +child[2];
+        if (bs.Labels[child[2]]) expected = bs.Labels[child[3]];
+        if (v !== expected)
+          s +=
+            "\t" +
+            child[0]
+              .Debug(scope, bs, "", ident, bs.Heap[location] + child[2])
+              .replace(/<br>(?!$)/g, "<br>\t") +
+            "<br>";
+      }
       for (let ident in t.Children) {
         let child = t.Children[ident];
         childrenByOffset[child[1]] = [child[0], child[1], child[2], ident];

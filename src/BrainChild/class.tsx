@@ -10,6 +10,7 @@ import { FuncType, VarType } from "./vartype";
 export class Class extends Statement {
   Members: (VariableDecleration | FunctionDefinition)[] = [];
   StaticMembers: (VariableDecleration | FunctionDefinition)[] = [];
+  VirtualMembers: (VariableDecleration | FunctionDefinition)[] = [];
   Name: Identifier | null = null;
   Parent: VarType | null = null;
   GenericArgs: string[] = [];
@@ -19,7 +20,7 @@ export class Class extends Statement {
     claimer: Claimer,
     isAbstract: boolean
   ):
-    | [isStatic: boolean, member: VariableDecleration | FunctionDefinition]
+    | [flag: (""|"static"|"virtual"), member: VariableDecleration | FunctionDefinition]
     | null {
     var flg = claimer.Flag();
     var member: VariableDecleration | FunctionDefinition | null;
@@ -33,7 +34,19 @@ export class Class extends Statement {
         flg.Fail();
         return null;
       }
-      return [true, member];
+      return ["static", member];
+    }
+    if (claimer.Claim(/virtual\b/).Success) {
+      member =
+        VariableDecleration.Claim(claimer) ??
+        VariableDecleration.ClaimAbstract(claimer) ??
+        FunctionDefinition.Claim(claimer) ??
+        null;
+      if (member === null) {
+        flg.Fail();
+        return null;
+      }
+      return ["virtual", member];
     }
     member =
       VariableDecleration.Claim(claimer) ??
@@ -42,7 +55,7 @@ export class Class extends Statement {
       FunctionDefinition.Claim(claimer) ??
       null;
     if (member === null) return null;
-    return [false, member];
+    return ["", member];
   }
 
   static Claim(claimer: Claimer): Class | null {
@@ -62,7 +75,7 @@ export class Class extends Statement {
       let arg = Identifier.Claim(claimer);
       while (arg !== null) {
         generics.push(arg.Name);
-        VarType.CurrentGenericArgs[arg.Name] = "$"+genArgNum++;
+        VarType.CurrentGenericArgs[arg.Name] = "$" + genArgNum++;
         if (!claimer.Claim(/,/).Success) break;
         arg = Identifier.Claim(claimer);
       }
@@ -88,15 +101,16 @@ export class Class extends Statement {
     }
     var members: (VariableDecleration | FunctionDefinition)[] = [];
     var staticMembers: (VariableDecleration | FunctionDefinition)[] = [];
+    var virtualMembers: (VariableDecleration | FunctionDefinition)[] = [];
     var member:
-      | [isStatic: boolean, member: VariableDecleration | FunctionDefinition]
+      | [isStatic: (""|"static"|"virtual"), member: VariableDecleration | FunctionDefinition]
       | null = Class.ClaimMember(claimer, abstract);
     while (member !== null) {
       if (member[1] instanceof FunctionDefinition) {
         var fnc = member[1] as FunctionDefinition;
         if (
           (fnc.IsMeta && (fnc.Target as Identifier).Name === className.Name) ||
-          (!fnc.IsMeta && !member[0])
+          (!fnc.IsMeta && member[0]!=="static")
         ) {
           var falseClaimer = new Claimer("");
           var falseFlag = falseClaimer.Flag();
@@ -113,7 +127,17 @@ export class Class extends Statement {
           return null;
         }
       }
-      (member[0] ? staticMembers : members).push(member[1]);
+      switch (member[0]) {
+        case "static":
+          staticMembers.push(member[1]);
+          break;
+        case "virtual":
+          virtualMembers.push(member[1]);
+          break;
+        default:
+          members.push(member[1]);
+          break;
+      }
       claimer.Claim(/;/);
       member = Class.ClaimMember(claimer, abstract);
     }
@@ -126,6 +150,7 @@ export class Class extends Statement {
     var cls = new Class(claimer, flg);
     cls.Members = members;
     cls.StaticMembers = staticMembers;
+    cls.VirtualMembers = virtualMembers;
     cls.Name = className;
     cls.Parent = parent;
     cls.IsAbstract = abstract;
@@ -227,6 +252,37 @@ export class Class extends Statement {
         member instanceof FunctionDefinition ? member.Label : "0",
       ];
     }
+    // Save virtual members statically too
+    for (let i = 0; i < this.VirtualMembers.length; i++) {
+      let member = this.VirtualMembers[i];
+      if (member instanceof FunctionDefinition) {
+        let funcType = member.GetTypes(scope)[0] as FuncType;
+        member.Label = scope.GetSafeName(
+          "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
+        );
+      }
+      let name: Identifier =
+        member instanceof FunctionDefinition
+          ? (member.Target as Identifier)
+          : (member as VariableDecleration).Identifier!;
+      let type: VarType;
+      if (member instanceof FunctionDefinition) {
+        type = member.GetTypes(scope)[0];
+      } else {
+        type = member.Type!;
+      }
+      classType.Children[name.Name] = [
+        type,
+        classType.Size,
+        member instanceof FunctionDefinition ? member.Label : "0",
+      ];
+      objectType.VirtualChildren[name.Name] = [
+        type,
+        classType,
+        classType.Size++,
+        member instanceof FunctionDefinition ? member.Label : "0",
+      ];
+    }
     for (let i = 0; i < this.Members.length; i++) {
       let member = this.Members[i];
       if (member instanceof FunctionDefinition) {
@@ -319,6 +375,14 @@ export class Class extends Statement {
     asm.push(`${classDef.ClassLabel}:`);
     for (var i = 0; i < this.StaticMembers.length; i++) {
       let member = this.StaticMembers[i];
+      if (member instanceof FunctionDefinition) {
+        member.IsMeta = true;
+        member.TryEvaluate(scope);
+      }
+    }
+    // Load Virtual members into the class as well
+    for (let i = 0; i < this.VirtualMembers.length; i++) {
+      let member = this.VirtualMembers[i];
       if (member instanceof FunctionDefinition) {
         member.IsMeta = true;
         member.TryEvaluate(scope);

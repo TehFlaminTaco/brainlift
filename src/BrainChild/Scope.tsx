@@ -447,6 +447,10 @@ free:
         body += `<b>class</b> ${cls[1]} {<br>`;
         let childrenByOffset: [VarType, number, string, string][] = [];
 
+        for (let ident in typeDef.VirtualChildren){
+          let child = typeDef.VirtualChildren[ident];
+          childrenByOffset[child[2]] = [child[0], child[2], child[3], ident];
+        }
         for (let ident in typeDef.Children) {
           let child = typeDef.Children[ident];
           childrenByOffset[child[1]] = [child[0], child[1], child[2], ident];

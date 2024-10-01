@@ -4,17 +4,21 @@ import { Scope } from "./Scope";
 import { ReadWritable, Referenceable, Variable } from "./variable";
 import { VarType } from "./vartype";
 
+const forbiddenClasses = ["int", "void"];
+
 export class Identifier
   extends Expression
   implements ReadWritable, Referenceable
 {
   Name: string = "";
-  static Claim(claimer: Claimer): Identifier | null {
+  static Claim(claimer: Claimer, allowForbiddenClasses: boolean = false): Identifier | null {
     var c = claimer.Claim(/[a-zA-Z_]\w*\b/);
     if (!c.Success) return null;
     if (Keywords.includes(c.Body![0])) {
-      c.Fail();
-      return null;
+      if (!(allowForbiddenClasses && forbiddenClasses.includes(c.Body![0]))){
+        c.Fail();
+        return null;
+      }
     }
     var ident = new Identifier(claimer, c);
     ident.Name = c.Body![0];

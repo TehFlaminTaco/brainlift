@@ -10,6 +10,8 @@ export class TypeDefinition {
   } = {};
   Children: { [id: string]: [type: VarType, offset: number, initial: string] } =
     {};
+  VirtualChildren: { [id: string]: [type: VarType, parent: TypeDefinition, offset: number, initial: string] } =
+    {};
   Size: number = 1;
   Parent: TypeDefinition | null = null;
 
@@ -107,6 +109,11 @@ export class TypeDefinition {
       if (!this.Children[i][0]) continue;
       this.Children[i][0] = this.Children[i][0].WithGenerics(genericArgs);
     }
+    for (let i in this.VirtualChildren) {
+      if (!this.VirtualChildren[i]) continue;
+      if (!this.VirtualChildren[i][0]) continue;
+      this.VirtualChildren[i][0] = this.VirtualChildren[i][0].WithGenerics(genericArgs);
+    }
     for (let m in this.MetaMethods) {
       let meta = this.MetaMethods[m];
       for (let j in meta) {
@@ -123,6 +130,10 @@ export class TypeDefinition {
     for (let i in this.Children) {
       let child = this.Children[i];
       t.Children[i] = [child[0], child[1], child[2]];
+    }
+    for (let i in this.VirtualChildren) {
+      let child = this.VirtualChildren[i];
+      t.VirtualChildren[i] = [child[0], child[1], child[2], child[3]];
     }
     for (let i in this.MetaMethods) {
       let meta = this.MetaMethods[i];
@@ -143,6 +154,7 @@ export class TypeDefinition {
 
 export var TypeInt = new TypeDefinition();
 export var TypeVoid = new TypeDefinition();
+TypeVoid.TypeType = new TypeDefinition();
 
 let simpleAdd: string[] = [`apopb`, `apopa`, `addab`, `apushb`];
 let simpleSub: string[] = [`apopb`, `apopa`, `subba`, `apusha`];
@@ -209,3 +221,4 @@ TypeInt.AddMetamethod("truthy", [VarType.Int], [VarType.Int], []);
 TypeInt.AddMetamethod("not", [VarType.Int], [VarType.Int], simpleNot);
 TypeInt.AddMetamethod("unm", [VarType.Int], [VarType.Int], simpleUnm);
 TypeInt.AddMetamethod("unp", [VarType.Int], [VarType.Int], simpleUnp);
+TypeInt.TypeType = new TypeDefinition();

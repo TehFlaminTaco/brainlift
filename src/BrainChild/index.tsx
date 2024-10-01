@@ -129,6 +129,11 @@ export class Index
         o.push(...meta[2]);
         return [meta[0], o];
       }
+      var virtualChild = typeDef.VirtualChildren[targetName];
+      if (virtualChild) {
+        o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `ptra`, `apusha`);
+        return [[virtualChild[0]], o];
+      }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
       o.push(`apopa`, `adda ${child[1]}`, `ptra`, `apusha`);
@@ -176,6 +181,11 @@ export class Index
       o.push(...valRes[1]);
       for (var i = 1; i < valRes[0].length; i++) {
         o.push(`apop`);
+      }
+      var virtualChild = typeDef.VirtualChildren[targetName];
+      if (virtualChild) {
+        o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `putbptra`);
+        return o;
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
@@ -226,6 +236,11 @@ export class Index
       var meta = typeDef.GetMetamethod("get_" + targetName, [vType]);
       if (meta) {
         o.push(...meta[2]);
+        return o;
+      }
+      var virtualChild = typeDef.VirtualChildren[targetName];
+      if (virtualChild) {
+        o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `ptra`, `apusha`);
         return o;
       }
       var child = typeDef.Children[targetName];
@@ -283,6 +298,11 @@ export class Index
     if (meta) {
       throw new Error("Cannot dereference property.");
     }
+    var virtualChild = typeDef.VirtualChildren[targetName];
+    if (virtualChild) {
+      o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `apusha`);
+      return o;
+    }
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
     o.push(`apopa`, `adda ${child[1]}`, `apusha`);
@@ -337,6 +357,10 @@ export class Index
       var meta = typeDef.GetMetamethod("get_" + targetName, [vType]);
       if (meta) {
         return meta[0];
+      }
+      var virtualChild = typeDef.VirtualChildren[targetName];
+      if (virtualChild) {
+        return [virtualChild[0]];
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
