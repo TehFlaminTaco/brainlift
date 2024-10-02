@@ -2,6 +2,7 @@ import { Assignment } from "./assignment";
 import { Claimer } from "./brainchild";
 import { FunctionDefinition } from "./functiondefinition";
 import { Identifier } from "./identifier";
+import { Reserve } from "./reserve";
 import { Scope } from "./Scope";
 import { IsSimplifyable, Simplifyable } from "./Simplifyable";
 import { Statement } from "./statement";
@@ -317,6 +318,20 @@ export class Class extends Statement {
         classType.Size++,
         member instanceof FunctionDefinition ? member.Label : "0",
       ];
+      // Check for a Assignment baring this name, that assigns to a Reserve
+      if (member instanceof VariableDecleration){
+        this.StaticAssignments.filter(c => c.Left as VariableDecleration === member)
+                              .filter(c => c.Right instanceof Reserve)
+                              .forEach(c => {
+                                let reserve = c.Right as Reserve;
+                                // Try to get the size of the reserve
+                                let size = reserve.GetSize(scope);
+                                if(size === null) throw new Error("Cannot determine size of reserve");
+                                // Increase the size of the object to fit it
+                                classType.Size += size;
+                                reserve.ClassMember = true;
+                              });
+      }
     }
     // Save virtual members statically too
     for (let i = 0; i < this.VirtualMembers.length; i++) {
@@ -380,6 +395,20 @@ export class Class extends Statement {
           member instanceof FunctionDefinition ? member.Label : "0",
         ];
       }
+      // Check for a Assignment baring this name, that assigns to a Reserve
+      if (member instanceof VariableDecleration){
+        this.Assignments.filter(c => c.Left as VariableDecleration === member)
+                        .filter(c => c.Right instanceof Reserve)
+                        .forEach(c => {
+                          let reserve = c.Right as Reserve;
+                          // Try to get the size of the reserve
+                          let size = reserve.GetSize(scope);
+                          if(size === null) throw new Error("Cannot determine size of reserve");
+                          // Increase the size of the object to fit it
+                          objectType.Size += size;
+                          reserve.ClassMember = true;
+                        });
+      }
       if (member instanceof FunctionDefinition) {
         if (classType.Children[name.Name]) {
           classType.Children[name.Name] = [
@@ -412,7 +441,7 @@ export class Class extends Statement {
         0,
       ];
     }
-
+    objectType.Assignments = this.Assignments;
     scope.UserTypes[this.Name!.Name] = objectType;
     scope.UserTypes["type" + this.Name!.Name] = classType;
     return true;

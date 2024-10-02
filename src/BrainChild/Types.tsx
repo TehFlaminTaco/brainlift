@@ -1,3 +1,4 @@
+import { Assignment } from "./assignment";
 import { FuncType, VarType } from "./vartype";
 
 export class TypeDefinition {
@@ -8,6 +9,7 @@ export class TypeDefinition {
       Code: string[]
     ][];
   } = {};*/
+  Assignments: Assignment[] = [];
   Children: { [id: string]: [type: VarType, offset: number, initial: string] } =
     {};
   ConstantChildren: { [id: string]: [type: VarType, value: number] } = {};

@@ -32,6 +32,8 @@ import "./BrainChild/math";
 import "./BrainChild/parenthetical";
 import "./BrainChild/cumulate";
 import "./BrainChild/macrodef";
+import "./BrainChild/sizeof";
+import "./BrainChild/reserve";
 import { TokenError } from "./BrainChild/token";
 import { GenerateReadOnlys } from "./ReadOnlys";
 import { Terminal, Event } from "./Terminal";
