@@ -5,9 +5,43 @@ import { VarType, FuncType } from "./vartype";
 import { ASMInterpreter } from "../brainasm";
 import { Token } from "./token";
 
+// Metamethod stuff //
+let simpleAdd: string[] = [`apopb`, `apopa`, `addab`, `apushb`];
+let simpleSub: string[] = [`apopb`, `apopa`, `subba`, `apusha`];
+let simpleMul: string[] = [`apopb`, `apopa`, `mulab`, `apushb`];
+let simpleDiv: string[] = [`apopb`, `apopa`, `divab`, `apusha`];
+let simpleMod: string[] = [`apopb`, `apopa`, `divab`, `apushb`];
+let simpleDivMod: string[] = [`apopb`, `apopa`, `divab`, `apusha`, `apushb`];
+let simpleLt: string[] = [`apopb`, `apopa`, `cmp`, `apushb`];
+let simpleGt: string[] = [`apopb`, `apopa`, `cmp`, `apusha`];
+let simpleEq: string[] = [`apopb`, `apopa`, `cmp`, `addba`, `nota`, `apusha`];
+let simpleNe: string[] = [`apopb`, `apopa`, `cmp`, `addba`, `apusha`];
+let simpleUnm: string[] = [`apopb`, `seta 0`, `subab`, `apushb`];
+let simpleUnp: string[] = [];
+let simpleNot: string[] = [`apopa`, `nota`, `apusha`];
+
+var simpleOps: [string, string[]][] = [
+  ["add", simpleAdd],
+  ["sub", simpleSub],
+  ["mul", simpleMul],
+  ["div", simpleDiv],
+  ["mod", simpleMod],
+  ["lt", simpleLt],
+  ["gt", simpleGt],
+  ["eq", simpleEq],
+  ["ne", simpleNe],
+];
+// End of Metamethod Stuff //
+
 export class Scope {
   static CURRENT: Scope;
-  Vars: { [Identifier: string]: [Type: VarType, AssembledName: string] } = {};
+  Vars: {
+    [Identifier: string]: [
+      Type: VarType,
+      AssembledName: string,
+      ConstantValue: null | number
+    ];
+  } = {};
   AllVars: {
     [Label: string]: [
       type: VarType,
@@ -21,6 +55,316 @@ export class Scope {
   TakenLabels: { [label: string]: boolean } = {};
   CurrentFile: string = "main.bc";
   CurrentFunction: string = "";
+
+  // Metamethods are By name, and by FuncType.
+  // Collisions are forbidden
+  SoftInitilizedMetamethods: VarType[] = [];
+  MetaMethods: {
+    [name: string]: [
+      ReturnTypes: VarType[],
+      ArgTypes: VarType[],
+      Code: string[],
+      GenericArgs: string[]
+    ][];
+  } = {};
+
+  SetupIntMetamethods() {
+    simpleOps.forEach((c) => {
+      this.AddMetamethodSoft(
+        c[0],
+        [VarType.Int],
+        [VarType.Int, VarType.Int],
+        c[1]
+      );
+    });
+    this.AddMetamethodSoft(
+      "divmod",
+      [VarType.Int, VarType.Int],
+      [VarType.Int, VarType.Int],
+      simpleDivMod
+    );
+    this.AddMetamethodSoft("truthy", [VarType.Int], [VarType.Int], []);
+    this.AddMetamethodSoft("not", [VarType.Int], [VarType.Int], simpleNot);
+    this.AddMetamethodSoft("unm", [VarType.Int], [VarType.Int], simpleUnm);
+    this.AddMetamethodSoft("unp", [VarType.Int], [VarType.Int], simpleUnp);
+  }
+
+  TryFallbacks(
+    name: string,
+    argTypes: VarType[]
+  ): [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]] | null {
+    var inverses = [
+      ["eq", "ne"],
+      ["lt", "ge"],
+      ["gt", "le"],
+      ["truthy", "not"],
+    ];
+    for (let i = 0; i < inverses.length; i++) {
+      let inv = inverses[i];
+      if (name === inv[0]) {
+        try {
+          let other = this.GetMetamethod(inv[1], argTypes, false);
+          if (other !== null) {
+            let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
+            return [other[0], other[1], newMethod];
+          }
+        } catch (e) {
+          return null;
+        }
+      } else if (name === inv[1]) {
+        try {
+          let other = this.GetMetamethod(inv[0], argTypes, false);
+          if (other !== null) {
+            let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
+            return [other[0], other[1], newMethod];
+          }
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  SoftInit(t: VarType) {
+    // Used to register common Metamethods. Ugly hack, (Ofc)
+    if (t.TypeName === "int" && t.PointerDepth === 0) {
+      this.SetupIntMetamethods();
+      return;
+    }
+    if (t instanceof FuncType) {
+      this.AddMetamethodSoft("truthy", [VarType.Int], [t], []);
+      return;
+    }
+    if (t.PointerDepth > 0) {
+      // Same as basic math, but with Pointers.
+      simpleOps.forEach((c) => {
+        this.AddMetamethodSoft(c[0], [t], [t, VarType.Int], c[1]);
+        this.AddMetamethodSoft(c[0], [t], [VarType.Int, t], c[1]);
+        this.AddMetamethodSoft(c[0], [t], [VarType.VoidPtr, t], c[1]);
+        this.AddMetamethodSoft(c[0], [t], [t, VarType.VoidPtr], c[1]);
+      });
+      this.AddMetamethodSoft(
+        "divmod",
+        [t, VarType.Int],
+        [t, VarType.Int],
+        simpleDivMod
+      );
+      this.AddMetamethodSoft(
+        "divmod",
+        [t, VarType.Int],
+        [VarType.Int, t],
+        simpleDivMod
+      );
+      this.AddMetamethodSoft(
+        "divmod",
+        [t, VarType.Int],
+        [VarType.VoidPtr, t],
+        simpleDivMod
+      );
+      this.AddMetamethodSoft(
+        "divmod",
+        [t, VarType.Int],
+        [t, VarType.VoidPtr],
+        simpleDivMod
+      );
+      this.AddMetamethodSoft("truthy", [VarType.Int], [t], []);
+      this.AddMetamethodSoft("not", [VarType.Int], [t], simpleNot);
+      this.AddMetamethodSoft("unm", [t], [t], simpleUnm);
+      this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
+
+      return;
+    }
+  }
+
+  RemapGenericMetamethod(
+    mm: [
+      ReturnTypes: VarType[],
+      ArgTypes: VarType[],
+      Code: string[],
+      GenericArgs: string[]
+    ],
+    inTypes: VarType[],
+    exactly: boolean
+  ): [
+    ReturnTypes: VarType[],
+    ArgTypes: VarType[],
+    Code: string[],
+    GenericArgs: string[]
+  ] {
+    if (mm[3].length === 0) return mm;
+    var genericifiedMap: { [generic: string]: VarType } = {};
+    let failed: boolean = false;
+    let argTypes: VarType[] = [];
+    let returnTypes: VarType[] = [];
+    // Iterate through inTypes, if the metamethod ArgTypes is a generic, and the inType is a specific type, replace the generic with the specific type and add it to the map
+    // If it's already in the map, check that one coaxes into the other, and simplify if possible
+    // If they don't coax, fail.
+    // Recurse through the generic arguments of each type as well.
+    // Finally, apply the same mapping to the metamethod's ReturnTypes
+    // And return the modified metamethod.
+    let trySwap = function (inMM: VarType, inType: VarType): VarType {
+      if (failed) return inMM;
+      if (mm[3].includes(inMM.TypeName)) {
+        // If inMM pointerDepth is greater than 0, then this will 'mess' with our mapping. So we have to adjust the map according.
+        // Check if it's already in the map
+        if (inMM.TypeName in genericifiedMap) {
+          let mapped = genericifiedMap[inMM.TypeName].WithDeltaPointerDepth(
+            inMM.PointerDepth
+          );
+          // If we can coax/equal to directly to what's in the map, return that
+          if (
+            exactly
+              ? mapped.Equals(inType)
+              : VarType.CanCoax([mapped], [inType])
+          ) {
+            return mapped;
+          }
+          // If what's in the map can coax/equal to what we have, update the map and return the new type
+          // Frustratingly, I think we have to do 2 passes to ensure all the casts are called correctly later.
+          if (
+            exactly
+              ? inType.Equals(mapped)
+              : VarType.CanCoax([inType], [mapped])
+          ) {
+            genericifiedMap[inMM.TypeName] = inType.WithDeltaPointerDepth(
+              -inMM.PointerDepth
+            );
+            return inType;
+          }
+          failed = true;
+          return inMM;
+        }
+        // Otherwise, we're adding it to the map
+        genericifiedMap[inMM.TypeName] = inType.WithDeltaPointerDepth(
+          -inMM.PointerDepth
+        );
+        return inType;
+      }
+
+      // Check that a is b to the precision of exactly
+      if (
+        !(exactly ? inMM.Equals(inType) : VarType.CanCoax([inMM], [inType]))
+      ) {
+        failed = true;
+        return inMM;
+      }
+      // Recurse through the generic arguments of each type as well.
+      if (inMM.Generics.length > 0) {
+        let newGenericArgs: VarType[] = [];
+        for (
+          let i = 0;
+          i < Math.min(inMM.Generics.length, inType.Generics.length);
+          i++
+        ) {
+          newGenericArgs.push(trySwap(inMM.Generics[i], inType.Generics[i]));
+        }
+        return inMM.WithGenerics(newGenericArgs);
+      }
+      return inMM;
+    };
+    // Used to modify returnTypes after the fact
+    let forceSwap = function (inMM: VarType): VarType {
+      if (mm[3].includes(inMM.TypeName)) {
+        if (inMM.TypeName in genericifiedMap) {
+          return genericifiedMap[inMM.TypeName].WithDeltaPointerDepth(
+            inMM.PointerDepth
+          );
+        }
+      }
+      if (inMM.Generics.length > 0) {
+        let newGenericArgs: VarType[] = [];
+        for (let i = 0; i < inMM.Generics.length; i++) {
+          newGenericArgs.push(forceSwap(inMM.Generics[i]));
+        }
+        return inMM.WithGenerics(newGenericArgs);
+      }
+      return inMM;
+    };
+    if (mm[1].length !== inTypes.length) {
+      failed = true;
+      return mm;
+    }
+    // The first loop is done to ensure all types are mapped to their least-generic form.
+    for (let i = 0; i < mm[1].length; i++) {
+      trySwap(mm[1][i], inTypes[i]);
+      if (failed) return mm;
+    }
+    // This loop generates argTypes
+    for (let i = 0; i < mm[1].length; i++) {
+      argTypes.push(trySwap(mm[1][i], inTypes[i]));
+      if (failed)
+        // Impossible?
+        return mm;
+    }
+    // This loop generates returnTypes
+    for (let i = 0; i < mm[0].length; i++) {
+      returnTypes.push(forceSwap(mm[0][i]));
+    }
+    return [returnTypes, argTypes, mm[2], []];
+  }
+
+  GetMetamethod(
+    name: string,
+    argTypes: VarType[],
+    canFallback: boolean = true,
+    exactly: boolean = false
+  ): [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]] | null {
+    // Check all ArgTypes for SoftInitilizedMetamethods, if they aren't there yet, add them and run SoftInit on the type
+    argTypes
+      .filter((c: VarType) => !this.SoftInitilizedMetamethods.includes(c))
+      .forEach((c: VarType) => {
+        this.SoftInit(c);
+        this.SoftInitilizedMetamethods.push(c);
+      });
+    var mm = this.MetaMethods[name];
+    if (mm === undefined)
+      return canFallback ? this.TryFallbacks(name, argTypes) : null;
+    mm = mm.map((c) => this.RemapGenericMetamethod(c, argTypes, exactly));
+    mm = mm.filter((c) => c[3].length === 0); // Anything with generics failed to map
+    mm = mm.filter((c) =>
+      exactly
+        ? VarType.AllEquals(c[1], argTypes)
+        : VarType.CanCoax(c[1], argTypes)[0]
+    );
+    if (mm.length === 0)
+      return canFallback ? this.TryFallbacks(name, argTypes) : null;
+    mm.sort(
+      (a, b) =>
+        VarType.CountMatches(b[1], argTypes) -
+        VarType.CountMatches(a[1], argTypes)
+    );
+    var bestMatch = VarType.CountMatches(mm[0][1], argTypes);
+    mm = mm.filter((c) => VarType.CountMatches(c[1], argTypes) === bestMatch);
+    if (mm.length > 1)
+      throw new Error(
+        `Ambiguous Metamethod: ${name} Received: ${argTypes} Options: ${mm
+          .map((c) => "[" + c[0].join(",") + "]")
+          .join("m")}`
+      );
+    return [mm[0][0], mm[0][1], mm[0][2]];
+  }
+  AddMetamethodSoft(
+    name: string,
+    retTypes: VarType[],
+    argTypes: VarType[],
+    code: string[]
+  ) {
+    this.MetaMethods[name] = this.MetaMethods[name] ?? [];
+    // Check if any metamethod already exists with this signature
+    for (let i = 0; i < this.MetaMethods[name].length; i++) {
+      if (
+        VarType.AllEquals(this.MetaMethods[name][i][1], argTypes) &&
+        (name === "cast"
+          ? VarType.AllEquals(this.MetaMethods[name][i][0], retTypes)
+          : true)
+      ) {
+        return;
+      }
+    }
+    this.MetaMethods[name].push([retTypes, argTypes, code, []]);
+  }
+
   private CurrentRequiredReturns: VarType[] | null = [];
   IsFunctionScope: boolean = false;
   UserTypes: { [name: string]: TypeDefinition } = {};
@@ -226,7 +570,7 @@ free:
   }
 
   GetSafeName(name: string) {
-    name = name.replace(/[^a-zA-Z]+/g, "");
+    name = name.replace(/[^a-zA-Z_]+/g, "");
     let newName = name;
     while (this.TakenLabels[newName]) {
       newName = `${name}_${Guid.newGuid().toString().substr(0, 8)}`;
@@ -235,7 +579,9 @@ free:
     return newName;
   }
 
-  Get(Identifier: string): [Type: VarType, AssembledName: string] {
+  Get(
+    Identifier: string
+  ): [Type: VarType, AssembledName: string, ConstantValue: number | null] {
     var o = this.Vars[Identifier] ?? this.Parent?.Get(Identifier);
     if (!o) {
       throw new Error(`Unknown identifier ${Identifier}`);
@@ -245,7 +591,7 @@ free:
 
   Set(Identifier: string, Type: VarType, setup: boolean = true): string {
     var name = this.GetSafeName(`var${Type}${Identifier}`);
-    this.Vars[Identifier] = [Type, name];
+    this.Vars[Identifier] = [Type, name, null];
     if (setup) this.Assembly.push(`${name}: db 0`);
     this.AllVars[name] = [
       Type,
@@ -254,6 +600,28 @@ free:
       this.CurrentFunction,
     ];
     return name;
+  }
+
+  SetConstant(
+    Identifier: string,
+    Type: VarType | null,
+    val: number,
+    force: boolean
+  ): boolean {
+    if (force) {
+      if (Type === null)
+        throw new Error("Must provide type when setting constant");
+      let name = this.GetSafeName(`var${Type}${Identifier}`);
+      this.Vars[Identifier] = [Type, name, val];
+      return true;
+    }
+    if (Identifier in this.Vars) {
+      let v = this.Vars[Identifier];
+      if (v[2] === null) return false; // Cannot override non-constant
+      v[2] = val;
+      return true;
+    }
+    return this.Parent?.SetConstant(Identifier, Type, val, force) ?? false;
   }
 
   Sub(): Scope {
@@ -268,6 +636,8 @@ free:
     subScope.TypeInformation = this.TypeInformation;
     subScope.CurrentFunction = this.CurrentFunction;
     subScope.CurrentFile = this.CurrentFile;
+    subScope.MetaMethods = this.MetaMethods;
+    subScope.SoftInitilizedMetamethods = this.SoftInitilizedMetamethods;
     return subScope;
   }
 
@@ -382,11 +752,13 @@ free:
     let name = `<b>function</b> ${func}`;
     if (f && f[0] instanceof FuncType) {
       let funcType = f[0] as FuncType;
-      name = `<b>function</b> ${f[1]}(<b>${funcType.ArgTypes.map(c=>c.ToHTML()).join(
-        "</b>, <b>"
-      )}</b>)`;
+      name = `<b>function</b> ${f[1]}(<b>${funcType.ArgTypes.map((c) =>
+        c.ToHTML()
+      ).join("</b>, <b>")}</b>)`;
       if (funcType.RetTypes.length > 0)
-        name += ` -> <b>${funcType.RetTypes.map(c=>c.ToHTML()).join("</b>, <b>")}</b>`;
+        name += ` -> <b>${funcType.RetTypes.map((c) => c.ToHTML()).join(
+          "</b>, <b>"
+        )}</b>`;
     }
     let isGlobal = false;
     if (func.length === 0) {
@@ -396,6 +768,7 @@ free:
     body += `${name} {<br>`;
     for (let i in vars) {
       let v = vars[i];
+      if (v[2].startsWith("_")) continue;
       if (isGlobal) {
         if (v[1] instanceof FuncType) continue;
       }
@@ -447,7 +820,7 @@ free:
         body += `<b>class</b> ${cls[1]} {<br>`;
         let childrenByOffset: [VarType, number, string, string][] = [];
 
-        for (let ident in typeDef.VirtualChildren){
+        for (let ident in typeDef.VirtualChildren) {
           let child = typeDef.VirtualChildren[ident];
           childrenByOffset[child[2]] = [child[0], child[2], child[3], ident];
         }

@@ -2,9 +2,19 @@ import { Claimer } from "./brainchild";
 import { Expression, LeftDonor, RightDonor } from "./expression";
 import { Scope } from "./Scope";
 import { VarType } from "./vartype";
-import { Variable, Assignable, IsAssignable } from "./variable";
+import {
+  Variable,
+  Assignable,
+  IsAssignable,
+  IsSimpleAssignable,
+  SimpleAssignable,
+} from "./variable";
+import { IsSimplifyable, Simplifyable } from "./Simplifyable";
 
-export class Assignment extends Expression implements LeftDonor, RightDonor {
+export class Assignment
+  extends Expression
+  implements LeftDonor, RightDonor, Simplifyable
+{
   Left: Expression | null = null;
   Targets: Assignable[] = [];
   Right: Expression | null = null;
@@ -44,7 +54,28 @@ export class Assignment extends Expression implements LeftDonor, RightDonor {
     return ass;
   }
 
+  Simplify(scope: Scope): number | null {
+    if (IsSimpleAssignable(this.Left) && IsSimplifyable(this.Right)) {
+      let n = (this.Right as any as Simplifyable).Simplify(scope);
+      if (n === null) return null;
+      if ((this.Left as any as SimpleAssignable).AssignSimple(scope, n))
+        return n;
+    }
+    return null;
+  }
+
   Evaluate(scope: Scope): [VarType[], string[]] {
+    if (IsSimpleAssignable(this.Left) && IsSimplifyable(this.Right)) {
+      let n = (this.Right as any as Simplifyable).Simplify(scope);
+      if (n !== null) {
+        if ((this.Left as any as SimpleAssignable).AssignSimple(scope, n)) {
+          return [
+            (this.Left as any as Assignable).GetTypes(scope),
+            [`apush ${(n & 0xffffffff) >>> 0}`],
+          ];
+        }
+      }
+    }
     var o: string[] = [this.GetLine()];
     var res = this.Right!.TryEvaluate(scope);
     o.push(...res[1]);

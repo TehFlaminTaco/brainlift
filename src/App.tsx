@@ -161,31 +161,41 @@ function addGutter(file: string) {
     GenerateReadOnlys();
     e.setValue(`include term.bc;
 include extmacros.bc;
-include random.bc;
+include int.bc;
+int seed = 1;
+
+function rand() -> int {
+    seed ~= (seed * 128);
+    seed ~= (seed / 512);
+    seed ~= (seed * 256);
+    return seed;
+}
 
 void discard;
 
+metamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }
+metamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }
+metamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }
+metamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }
+metamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }
 abstract class pVec2 {
     static function Make(int x, int y) -> pVec2 { ((x%0x10000) + (y*0x10000) -> pVec2) }
-    metamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }
-    metamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }
     static function WithX(pVec2 this, int x) -> pVec2 { ((x%0x10000) + (((this->int)/0x10000)*0x10000) -> pVec2) }
     static function WithY(pVec2 this, int y) -> pVec2 { (((this->int)%0x10000)+ (y*0x10000) -> pVec2) }
-    
-    metamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }
-    metamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }
-    metamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }
 }
 
 pVec2 apple = pVec2.Make(0xFF,0xFF);
 
-discard, @int DirectionVectors = "ABCD";
+@int DirectionVectors = "ABCD"+1;
 *(DirectionVectors+0) = 0xFFFF0000;
 *(DirectionVectors+1) = 0x00000001;
 *(DirectionVectors+2) = 0x00010000;
 *(DirectionVectors+3) = 0x0000FFFF;
-discard, @int DirectionHeads = "^>v<";
+@int DirectionHeads = "^>v<"+1;
 
+metamethod truthy(Body this)->int{
+    return (this -> int);
+}
 class Body {
     pVec2 Pos;
     pVec2 LastPos;
@@ -213,18 +223,15 @@ class Body {
         Term.WriteChar('#');
     }
     
-    metamethod Body(pVec2 pos){
+    new (pVec2 pos){
         this.LastPos = pos;
         this.Pos = pos;
-    }
-    metamethod truthy(Body this)->int{
-        return (this -> int);
     }
 }
 
 class Head : Body {
     int Direction;
-    metamethod Head(pVec2 pos){
+    new (pVec2 pos){
         this.Direction = 1;
         this.Pos = pos;
         this.LastPos = pos;

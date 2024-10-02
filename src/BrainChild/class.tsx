@@ -1,7 +1,9 @@
+import { Assignment } from "./assignment";
 import { Claimer } from "./brainchild";
 import { FunctionDefinition } from "./functiondefinition";
 import { Identifier } from "./identifier";
 import { Scope } from "./Scope";
+import { IsSimplifyable, Simplifyable } from "./Simplifyable";
 import { Statement } from "./statement";
 import { TypeDefinition } from "./Types";
 import { VariableDecleration } from "./variabledefinition";
@@ -11,6 +13,11 @@ export class Class extends Statement {
   Members: (VariableDecleration | FunctionDefinition)[] = [];
   StaticMembers: (VariableDecleration | FunctionDefinition)[] = [];
   VirtualMembers: (VariableDecleration | FunctionDefinition)[] = [];
+  Assignments: Assignment[] = [];
+  StaticAssignments: Assignment[] = [];
+  Constants: VariableDecleration[] = [];
+  StaticConstants: VariableDecleration[] = [];
+  Constructors: FunctionDefinition[] = [];
   Name: Identifier | null = null;
   Parent: VarType | null = null;
   GenericArgs: string[] = [];
@@ -18,13 +25,24 @@ export class Class extends Statement {
 
   private static ClaimMember(
     claimer: Claimer,
-    isAbstract: boolean
+    isAbstract: boolean,
+    ofClass: Identifier
   ):
-    | [flag: (""|"static"|"virtual"), member: VariableDecleration | FunctionDefinition]
+    | [
+        flag: "" | "static" | "virtual" | "none",
+        member: VariableDecleration | FunctionDefinition
+      ]
     | null {
     var flg = claimer.Flag();
     var member: VariableDecleration | FunctionDefinition | null;
-    if (claimer.Claim(/static\b/).Success) {
+    if (!isAbstract && claimer.Claim(/new\b/).Success) {
+      member = FunctionDefinition.ClaimConstructor(claimer, ofClass);
+      if (member === null) {
+        flg.Fail();
+        return null;
+      }
+      return ["none", member];
+    } else if (claimer.Claim(/static\b/).Success) {
       member =
         VariableDecleration.Claim(claimer) ??
         VariableDecleration.ClaimAbstract(claimer) ??
@@ -35,8 +53,7 @@ export class Class extends Statement {
         return null;
       }
       return ["static", member];
-    }
-    if (claimer.Claim(/virtual\b/).Success) {
+    } else if (claimer.Claim(/virtual\b/).Success) {
       member =
         VariableDecleration.Claim(claimer) ??
         VariableDecleration.ClaimAbstract(claimer) ??
@@ -51,7 +68,6 @@ export class Class extends Statement {
     member =
       VariableDecleration.Claim(claimer) ??
       VariableDecleration.ClaimAbstract(claimer) ??
-      FunctionDefinition.ClaimMetamethod(claimer) ??
       FunctionDefinition.Claim(claimer) ??
       null;
     if (member === null) return null;
@@ -102,44 +118,75 @@ export class Class extends Statement {
     var members: (VariableDecleration | FunctionDefinition)[] = [];
     var staticMembers: (VariableDecleration | FunctionDefinition)[] = [];
     var virtualMembers: (VariableDecleration | FunctionDefinition)[] = [];
+    let assignments: Assignment[] = [];
+    let staticAssignments: Assignment[] = [];
+    let constants: VariableDecleration[] = [];
+    let staticConstants: VariableDecleration[] = [];
+    let constructors: FunctionDefinition[] = [];
     var member:
-      | [isStatic: (""|"static"|"virtual"), member: VariableDecleration | FunctionDefinition]
-      | null = Class.ClaimMember(claimer, abstract);
+      | [
+          isStatic: "" | "static" | "virtual" | "none",
+          member: VariableDecleration | FunctionDefinition
+        ]
+      | null = Class.ClaimMember(claimer, abstract, className);
     while (member !== null) {
-      if (member[1] instanceof FunctionDefinition) {
-        var fnc = member[1] as FunctionDefinition;
-        if (
-          (fnc.IsMeta && (fnc.Target as Identifier).Name === className.Name) ||
-          (!fnc.IsMeta && member[0]!=="static")
-        ) {
-          var falseClaimer = new Claimer("");
-          var falseFlag = falseClaimer.Flag();
-          var declareThis = new VariableDecleration(falseClaimer, falseFlag);
-          declareThis.Identifier = new Identifier(falseClaimer, falseFlag);
-          declareThis.Identifier.Name = "this";
-          declareThis.Type = new VarType(falseClaimer, falseFlag);
-          declareThis.Type.TypeName = className.Name;
-          fnc.Args.push(declareThis);
+      if (
+        member[1] instanceof VariableDecleration &&
+        member[0] !== "virtual" &&
+        member[0] !== "none"
+      ) {
+        let assignValue = Assignment.RightClaim(member[1], claimer);
+        if (assignValue) {
+          if (member[0] === "static") staticAssignments.push(assignValue);
+          else assignments.push(assignValue);
         }
-        if (!(fnc.Target instanceof Identifier)) {
-          VarType.CurrentGenericArgs = {};
-          flg.Fail();
-          return null;
+      }
+      if (member[0] !== "none") {
+        if (member[1] instanceof FunctionDefinition) {
+          var fnc = member[1] as FunctionDefinition;
+          if (member[0] !== "static") {
+            var falseClaimer = new Claimer("");
+            var falseFlag = falseClaimer.Flag();
+            var declareThis = new VariableDecleration(falseClaimer, falseFlag);
+            declareThis.Identifier = new Identifier(falseClaimer, falseFlag);
+            declareThis.Identifier.Name = "this";
+            declareThis.Type = new VarType(falseClaimer, falseFlag);
+            declareThis.Type.TypeName = className.Name;
+            fnc.Args.push(declareThis);
+          }
+          if (!(fnc.Target instanceof Identifier)) {
+            VarType.CurrentGenericArgs = {};
+            flg.Fail();
+            return null;
+          }
         }
       }
       switch (member[0]) {
         case "static":
-          staticMembers.push(member[1]);
+          if (
+            member[1] instanceof VariableDecleration &&
+            (member[1] as VariableDecleration).IsConstant
+          )
+            staticConstants.push(member[1]);
+          else staticMembers.push(member[1]);
           break;
         case "virtual":
           virtualMembers.push(member[1]);
           break;
-        default:
-          members.push(member[1]);
+        case "":
+          if (
+            member[1] instanceof VariableDecleration &&
+            (member[1] as VariableDecleration).IsConstant
+          )
+            constants.push(member[1]);
+          else members.push(member[1]);
+          break;
+        case "none":
+          constructors.push(member[1] as FunctionDefinition);
           break;
       }
       claimer.Claim(/;/);
-      member = Class.ClaimMember(claimer, abstract);
+      member = Class.ClaimMember(claimer, abstract, className);
     }
 
     VarType.CurrentGenericArgs = {};
@@ -151,6 +198,11 @@ export class Class extends Statement {
     cls.Members = members;
     cls.StaticMembers = staticMembers;
     cls.VirtualMembers = virtualMembers;
+    cls.Assignments = assignments;
+    cls.StaticAssignments = staticAssignments;
+    cls.Constants = constants;
+    cls.StaticConstants = staticConstants;
+    cls.Constructors = constructors;
     cls.Name = className;
     cls.Parent = parent;
     cls.IsAbstract = abstract;
@@ -172,11 +224,28 @@ export class Class extends Statement {
     var childrenByOffset = [];
     for (let id in typeDef.Children) {
       let child = typeDef.Children[id];
-      childrenByOffset[child[1]] = child;
+      childrenByOffset[child[1]] = [id, child];
     }
     for (let i = 0; i < childrenByOffset.length; i++) {
       let child = childrenByOffset[i];
-      if (child) asm.push(`  seta ${child[2]}`, `  putaptrb`);
+      if (child) {
+        // Check if there's a non-static assignment for this child.
+        let possibleAssignments = this.Assignments.filter(
+          (c) => (c.Left as VariableDecleration).Identifier!.Name === child[0]
+        );
+        if (possibleAssignments.length > 0) {
+          if (possibleAssignments.length > 1)
+            throw new Error(`Ambiguous default value for ${child[0]}`);
+          asm.push(`  apushb`);
+          let res = possibleAssignments[0].Right!.Evaluate(scope);
+          asm.push(...res[1]);
+          for (let spare = 1; spare < res[0].length; spare++)
+            asm.push(`    apop`);
+          asm.push(`    apopa`, `    apopb`, `    putaptrb`);
+        } else {
+          asm.push(`  seta ${child[1][2]}`, `  putaptrb`);
+        }
+      }
       if (i < childrenByOffset.length - 1) asm.push(`  incb`);
     }
     asm.push(`  ret`);
@@ -203,9 +272,6 @@ export class Class extends Statement {
       }
       objectType.Parent = parent;
       classType.Parent = classParent;
-      for (var id in parent.MetaMethods) {
-        objectType.MetaMethods[id] = parent.MetaMethods[id].concat();
-      }
       for (let name in parent.Children) {
         if (parent.Children[name][1] !== 0)
           objectType.Children[name] = parent.Children[name];
@@ -286,24 +352,10 @@ export class Class extends Statement {
     for (let i = 0; i < this.Members.length; i++) {
       let member = this.Members[i];
       if (member instanceof FunctionDefinition) {
-        if (member.IsMeta) {
-          let funcType = member.GetTypes(scope)[0] as FuncType;
-          member.Label = scope.GetSafeName(
-            "metamethod_" + funcType.RetTypes + "_" + funcType.ArgTypes
-          );
-          objectType.AddMetamethod(
-            (member.Target as Identifier).Name,
-            funcType.RetTypes,
-            member.Args.map((c) => c.Type) as VarType[],
-            [`seta ${member.Label}`, `calla`]
-          );
-          continue;
-        } else {
-          let funcType = member.GetTypes(scope)[0] as FuncType;
-          member.Label = scope.GetSafeName(
-            "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
-          );
-        }
+        let funcType = member.GetTypes(scope)[0] as FuncType;
+        member.Label = scope.GetSafeName(
+          "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
+        );
       }
       let name: Identifier =
         member instanceof FunctionDefinition
@@ -345,6 +397,22 @@ export class Class extends Statement {
       }
     }
 
+    // Find all const values and set them up.
+    for (let i = 0; i < this.Constants.length; i++) {
+      let c = this.Constants[i];
+      objectType.ConstantChildren[c.Identifier!.Name] = [
+        c.GetTypes(scope)[0],
+        0,
+      ];
+    }
+    for (let i = 0; i < this.StaticConstants.length; i++) {
+      let c = this.StaticConstants[i];
+      classType.ConstantChildren[c.Identifier!.Name] = [
+        c.GetTypes(scope)[0],
+        0,
+      ];
+    }
+
     scope.UserTypes[this.Name!.Name] = objectType;
     scope.UserTypes["type" + this.Name!.Name] = classType;
     return true;
@@ -364,7 +432,7 @@ export class Class extends Statement {
     var t = new VarType(falseClaimer, falseFlag);
     t.TypeName = "type" + this.Name!.Name;
     var typeVarLabel = scope.GetSafeName(`vartype${this.Name!.Name}`);
-    scope.Vars[this.Name!.Name] = [t, typeVarLabel];
+    scope.Vars[this.Name!.Name] = [t, typeVarLabel, null];
     scope.AllVars[typeVarLabel] = [
       t,
       this.Name!.Name,
@@ -388,6 +456,11 @@ export class Class extends Statement {
         member.TryEvaluate(scope);
       }
     }
+    // Evaluate constructors
+    for (let i = 0; i < this.Constructors.length; i++) {
+      var constructor = this.Constructors[i];
+      constructor.TryEvaluate(scope);
+    }
     for (let i = 0; i < this.Members.length; i++) {
       var member = this.Members[i];
       if (member instanceof FunctionDefinition) member.TryEvaluate(scope);
@@ -403,7 +476,47 @@ export class Class extends Statement {
     }
     asm.push(`db ${vars}`);
     scope.Assembly.push(...asm);
-    return [];
+    // Execute all static assignments
+    asm = [];
+    for (let i = 0; i < this.StaticAssignments.length; i++) {
+      let assignment = this.StaticAssignments[i];
+      let declr = assignment.Left as VariableDecleration;
+      if (declr.IsConstant) {
+        // Conveniently also handle constant assignment.
+        if (!IsSimplifyable(assignment.Right))
+          throw new Error("Cannot assign non-constant value to constant");
+        let val = (assignment.Right as any as Simplifyable).Simplify(scope);
+        if (val === null)
+          throw new Error("Cannot assign non-constant value to constant");
+        classDef.ConstantChildren[declr.Identifier!.Name] = [
+          declr.GetTypes(scope)[0],
+          val,
+        ];
+        continue;
+      }
+      // Find which static-child this belongs to.
+      let child = classDef.Children[declr.Identifier!.Name];
+      let res = assignment.TryEvaluate(scope);
+      asm.push(...res[1]);
+      for (let spare = 1; spare < res[0].length; spare++) asm.push(`apop`);
+      asm.push(`setb ${classDef.ClassLabel}`, `addb ${child[1]}`, `putaptrb`);
+    }
+    // Also perform non-static constant assignments
+    for (let i = 0; i < this.Assignments.length; i++) {
+      let assignment = this.Assignments[i];
+      let declr = assignment.Left as VariableDecleration;
+      if (!declr.IsConstant) continue;
+      if (!IsSimplifyable(assignment.Right))
+        throw new Error("Cannot assign non-constant value to constant");
+      let val = (assignment.Right as any as Simplifyable).Simplify(scope);
+      if (val === null)
+        throw new Error("Cannot assign non-constant value to constant");
+      objectDef.ConstantChildren[declr.Identifier!.Name] = [
+        declr.GetTypes(scope)[0],
+        val,
+      ];
+    }
+    return asm;
   }
 
   DefinitelyReturns(): boolean {

@@ -15,7 +15,7 @@ export class StringConstant extends Expression {
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var label = scope.GetSafeName(`str${this.Value}`);
-    var stringDef = `${label}: db `;
+    var stringDef = `${label}: db ${this.Value.length}, `;
     var comma = "";
     for (var i = 0; i < this.Value.length; i++) {
       stringDef += comma + this.Value.charCodeAt(i);
@@ -23,13 +23,13 @@ export class StringConstant extends Expression {
     }
     scope.Assembly.push(stringDef);
     return [
-      [VarType.Int, VarType.IntPtr],
-      [this.GetLine(), `apush ${this.Value.length}`, `apush ${label}`],
+      [VarType.IntPtr],
+      [this.GetLine(), `apush ${label}`],
     ];
   }
 
   GetTypes(scope: Scope): VarType[] {
-    return [VarType.Int, VarType.IntPtr];
+    return [VarType.IntPtr];
   }
 }
 Expression.Register(StringConstant.Claim);

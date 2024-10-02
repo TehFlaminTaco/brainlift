@@ -38,7 +38,7 @@ export class While extends Expression {
       o.push(`apop`);
     }
     var resType = valueRes[0][0];
-    var meta = resType.GetDefinition().GetMetamethod("truthy", [resType]);
+    var meta = scope.GetMetamethod("truthy", [resType]);
     if (meta === null) {
       throw new Error(`Type ${resType} has no truth method`);
     }

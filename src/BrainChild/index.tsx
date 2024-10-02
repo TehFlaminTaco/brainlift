@@ -2,13 +2,57 @@ import { Claimer } from "./brainchild";
 import { Expression, LeftDonor } from "./expression";
 import { Identifier } from "./identifier";
 import { Scope } from "./Scope";
-import { ReadWritable, Referenceable, Variable } from "./variable";
+import { Simplifyable } from "./Simplifyable";
+import {
+  ReadWritable,
+  Referenceable,
+  SimpleAssignable,
+  Variable,
+} from "./variable";
 import { VarType } from "./vartype";
 
 export class Index
   extends Expression
-  implements LeftDonor, ReadWritable, Referenceable
+  implements
+    LeftDonor,
+    ReadWritable,
+    Referenceable,
+    Simplifyable,
+    SimpleAssignable
 {
+  Simplify(scope: Scope): number | null {
+    let valRes = this.Left!.GetTypes(scope);
+    if (valRes.length === 0)
+      throw new Error(`Cannot index expression that does not resolve in value`);
+    let vType = valRes[0];
+    let typeDef = this.Generics.length
+      ? vType.GetDefinition().WithGenerics(this.Generics)
+      : vType.GetDefinition();
+    if (!(this.Target instanceof Identifier)) return null;
+    let targetName = this.Target!.Name;
+    let constChild = typeDef.ConstantChildren[targetName];
+    if (constChild) {
+      return constChild[1];
+    }
+    return null;
+  }
+  AssignSimple(scope: Scope, value: number): boolean {
+    let valRes = this.Left!.GetTypes(scope);
+    if (valRes.length === 0)
+      throw new Error(`Cannot index expression that does not resolve in value`);
+    let vType = valRes[0];
+    let typeDef = this.Generics.length
+      ? vType.GetDefinition().WithGenerics(this.Generics)
+      : vType.GetDefinition();
+    if (!(this.Target instanceof Identifier)) return false;
+    let targetName = this.Target!.Name;
+    let constChild = typeDef.ConstantChildren[targetName];
+    if (constChild) {
+      constChild[1] = value;
+      return true;
+    }
+    return false;
+  }
   Left: Expression | null = null;
   Target: Identifier | Expression[] | null = null;
   Precedence: number = 17;
@@ -124,15 +168,26 @@ export class Index
         this.CurryType = valRes[0][0];
       }
       var targetName = this.Target!.Name;
-      let meta = typeDef.GetMetamethod("get_" + targetName, [vType]);
+      let meta = scope.GetMetamethod("get_" + targetName, [vType]);
       if (meta) {
         o.push(...meta[2]);
         return [meta[0], o];
       }
       var virtualChild = typeDef.VirtualChildren[targetName];
       if (virtualChild) {
-        o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `ptra`, `apusha`);
+        o.push(
+          `apop`,
+          `seta ${virtualChild[1].ClassLabel}`,
+          `adda ${virtualChild[2]}`,
+          `ptra`,
+          `apusha`
+        );
         return [[virtualChild[0]], o];
+      }
+      let constChild = typeDef.ConstantChildren[targetName];
+      if (constChild) {
+        o.push(`apop`, `apush ${(constChild[1] & 0xffffffff) >>> 0}`);
+        return [[constChild[0]], o];
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
@@ -145,7 +200,7 @@ export class Index
         indexTypes.push(...res[0]);
         o.push(...res[1]);
       }
-      let meta = typeDef.GetMetamethod("getindex", indexTypes);
+      let meta = scope.GetMetamethod("getindex", indexTypes);
       if (meta === null) {
         throw new Error(
           `Cannot index Type ${vType} with types (${indexTypes}).`
@@ -167,7 +222,7 @@ export class Index
       : vType.GetDefinition();
     if (this.Target instanceof Identifier) {
       var targetName = this.Target!.Name;
-      var meta = typeDef.GetMetamethod("set_" + targetName, [vType, anyType]);
+      var meta = scope.GetMetamethod("set_" + targetName, [vType, anyType]);
       if (meta) {
         o.push(`apopb`, `bpushb`);
         o.push(...valRes[1]);
@@ -184,8 +239,20 @@ export class Index
       }
       var virtualChild = typeDef.VirtualChildren[targetName];
       if (virtualChild) {
-        o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `putbptra`);
+        o.push(
+          `apopb`,
+          `apop`,
+          `seta ${virtualChild[1].ClassLabel}`,
+          `adda ${virtualChild[2]}`,
+          `putbptra`
+        );
         return o;
+      }
+      let constChild = typeDef.ConstantChildren[targetName];
+      if (constChild) {
+        throw new Error(
+          `Cannon assign non-constant value to constant variable ${targetName}`
+        );
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
@@ -204,7 +271,7 @@ export class Index
         o.push(...res[1]);
       }
       indexTypes.push(anyType);
-      let meta = typeDef.GetMetamethod("setindex", indexTypes);
+      let meta = scope.GetMetamethod("setindex", indexTypes);
       if (meta === null) {
         throw new Error(
           `Cannot set index Type ${vType} with types (${indexTypes.slice(
@@ -233,14 +300,25 @@ export class Index
       : vType.GetDefinition();
     if (this.Target instanceof Identifier) {
       var targetName = this.Target!.Name;
-      var meta = typeDef.GetMetamethod("get_" + targetName, [vType]);
+      var meta = scope.GetMetamethod("get_" + targetName, [vType]);
       if (meta) {
         o.push(...meta[2]);
         return o;
       }
       var virtualChild = typeDef.VirtualChildren[targetName];
       if (virtualChild) {
-        o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `ptra`, `apusha`);
+        o.push(
+          `apop`,
+          `seta ${virtualChild[1].ClassLabel}`,
+          `adda ${virtualChild[2]}`,
+          `ptra`,
+          `apusha`
+        );
+        return o;
+      }
+      let constChild = typeDef.ConstantChildren[targetName];
+      if (constChild) {
+        o.push(`apop`, `apush ${(constChild[1] & 0xffffffff) >>> 0}`);
         return o;
       }
       var child = typeDef.Children[targetName];
@@ -254,7 +332,7 @@ export class Index
         indexTypes.push(...res[0]);
         o.push(...res[1]);
       }
-      let meta = typeDef.GetMetamethod("getindex", indexTypes);
+      let meta = scope.GetMetamethod("getindex", indexTypes);
       if (meta === null) {
         throw new Error(
           `Cannot index Type ${vType} with types (${indexTypes}).`
@@ -284,7 +362,7 @@ export class Index
         indexTypes.push(...res[0]);
         o.push(...res[1]);
       }
-      let meta = typeDef.GetMetamethod("ptrindex", indexTypes);
+      let meta = scope.GetMetamethod("ptrindex", indexTypes);
       if (meta === null) {
         throw new Error(
           `Cannot derefence Type ${vType} with types (${indexTypes}).`
@@ -294,14 +372,23 @@ export class Index
       return o;
     }
     var targetName = this.Target!.Name;
-    var meta = typeDef.GetMetamethod("set_" + targetName, [vType]);
+    var meta = scope.GetMetamethod("set_" + targetName, [vType]);
     if (meta) {
       throw new Error("Cannot dereference property.");
     }
     var virtualChild = typeDef.VirtualChildren[targetName];
     if (virtualChild) {
-      o.push(`apop`, `seta ${virtualChild[1].ClassLabel}`, `adda ${virtualChild[2]}`, `apusha`);
+      o.push(
+        `apop`,
+        `seta ${virtualChild[1].ClassLabel}`,
+        `adda ${virtualChild[2]}`,
+        `apusha`
+      );
       return o;
+    }
+    let constChild = typeDef.ConstantChildren[targetName];
+    if (constChild) {
+      throw new Error(`Cannot get pointer to a constant value ${targetName}`);
     }
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
@@ -311,14 +398,11 @@ export class Index
   GetReferenceTypes(scope: Scope): VarType[] {
     if (!(this.Target instanceof Identifier)) {
       var vType = this.Left!.GetTypes(scope)[0];
-      var typeDef = this.Generics.length
-        ? vType.GetDefinition().WithGenerics(this.Generics)
-        : vType.GetDefinition();
       var indexTypes: VarType[] = [vType];
       for (let i = 0; i < this.Target!.length; i++) {
         indexTypes.push(...this.Target![i].GetTypes(scope));
       }
-      let meta = typeDef.GetMetamethod("ptrindex", indexTypes);
+      let meta = scope.GetMetamethod("ptrindex", indexTypes);
       if (meta === null) {
         throw new Error(
           `Cannot derefence Type ${vType} with types (${indexTypes}).`
@@ -354,13 +438,17 @@ export class Index
     var typeDef = vType.GetDefinition();
     if (this.Target instanceof Identifier) {
       var targetName = this.Target!.Name;
-      var meta = typeDef.GetMetamethod("get_" + targetName, [vType]);
+      var meta = scope.GetMetamethod("get_" + targetName, [vType]);
       if (meta) {
         return meta[0];
       }
       var virtualChild = typeDef.VirtualChildren[targetName];
       if (virtualChild) {
         return [virtualChild[0]];
+      }
+      let constChild = typeDef.ConstantChildren[targetName];
+      if (constChild) {
+        return [constChild[0]];
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
@@ -370,7 +458,7 @@ export class Index
       for (let i = 0; i < this.Target!.length; i++) {
         indexTypes.push(...this.Target![i].GetTypes(scope));
       }
-      let meta = typeDef.GetMetamethod("getindex", indexTypes);
+      let meta = scope.GetMetamethod("getindex", indexTypes);
       if (meta === null) {
         throw new Error(
           `Cannot index Type ${vType} with types (${indexTypes}).`

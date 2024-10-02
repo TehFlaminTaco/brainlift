@@ -29,6 +29,7 @@ export var Keywords = [
   "abstract",
   "asm",
   "class",
+  "const",
   "else",
   "func",
   "function",

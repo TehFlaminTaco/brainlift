@@ -51,9 +51,9 @@ export class If extends Expression implements Simplifyable {
 
   Evaluate(scope: Scope): [VarType[], string[]] {
     if (IsSimplifyable(this.Condition)) {
-      let res = (this.Condition! as unknown as Simplifyable).Simplify();
+      let res = (this.Condition! as unknown as Simplifyable).Simplify(scope);
       if (res !== null) {
-        res = res & 0xffff;
+        res = res & 0xffffffff;
         if (res) {
           return this.Body!.TryEvaluate(scope);
         } else if (this.Else) {
@@ -71,7 +71,7 @@ export class If extends Expression implements Simplifyable {
       o.push(`apop`);
     }
     var resType = valueRes[0][0];
-    var meta = resType.GetDefinition().GetMetamethod("truthy", [resType]);
+    var meta = scope.GetMetamethod("truthy", [resType]);
     if (meta === null) {
       throw new Error(`Type ${resType} has no truth method`);
     }
@@ -106,18 +106,18 @@ export class If extends Expression implements Simplifyable {
       this.Else!.DefinitelyReturns()
     );
   }
-  Simplify(): number | null {
+  Simplify(scope: Scope): number | null {
     if (this.Condition && IsSimplifyable(this.Condition)) {
-      let res = (this.Condition as unknown as Simplifyable).Simplify();
+      let res = (this.Condition as unknown as Simplifyable).Simplify(scope);
       if (res === null) return null;
       if (res) {
         if (!IsSimplifyable(this.Body)) return null;
-        res = (this.Body as unknown as Simplifyable).Simplify();
+        res = (this.Body as unknown as Simplifyable).Simplify(scope);
         return res;
       } else {
         if (!this.Else) return null;
         if (!IsSimplifyable(this.Else)) return null;
-        res = (this.Else as unknown as Simplifyable).Simplify();
+        res = (this.Else as unknown as Simplifyable).Simplify(scope);
         return res;
       }
     }

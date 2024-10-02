@@ -69,7 +69,7 @@ export class New extends Expression {
       argTypes.push(...arg[0]);
     }
     argTypes.push(vType);
-    var constructorMetamethod = objectType.GetMetamethod(
+    var constructorMetamethod = scope.GetMetamethod(
       this.Type!.Name,
       argTypes
     );
