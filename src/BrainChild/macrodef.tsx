@@ -526,7 +526,31 @@ export class Macro extends Statement {
 }
 
 let MacroDepth: number = 0;
-export class Macrod extends Expression {
+export class Macrod extends Expression implements Simplifyable {
+  Simplify(scope: Scope): number | null {
+    if (MacroDepth >= 1001) {
+      throw new Error("Exceeded maximum Macro-depth!");
+    }
+    try {
+      MacroDepth++;
+      if (!this.Unpacked) {
+        let claimer = new Claimer(this.Text, this.Claimer.File);
+        let exp = Expression.Claim(claimer);
+        if (exp === null)
+          throw new Error(
+            `Failed to resolve macro to expression! Expanded: ${this.Text}`
+          );
+        this.Unpacked = exp;
+      }
+
+      if (!IsSimplifyable(this.Unpacked)) return null;
+      return (this.Unpacked as unknown as Simplifyable).Simplify(scope);
+    } catch (e) {
+      if(e instanceof Error && e.message === "Exceeded maximum Macro-depth!") throw e;
+      MacroDepth--;
+      throw e;
+    }
+  }
   Text: string = "";
 
   static Claim(claimer: Claimer): Macrod | null {
@@ -589,6 +613,7 @@ export class Macrod extends Expression {
       MacroDepth--;
       return res;
     } catch (e) {
+      if(e instanceof Error && e.message === "Exceeded maximum Macro-depth!") throw e;
       MacroDepth--;
       throw e;
     }

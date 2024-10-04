@@ -10,6 +10,7 @@ import "./BrainChild/Types";
 import "./BrainChild/vartype";
 import { Parse } from "./BrainChild/brainchild";
 import { Scope } from "./BrainChild/Scope";
+import "./BrainChild/const";
 import "./BrainChild/block";
 import "./BrainChild/include";
 import "./BrainChild/functiondefinition";

@@ -1,9 +1,19 @@
 import { Claimer } from "./brainchild";
 import { Expression } from "./expression";
 import { Scope } from "./Scope";
+import { IsSimplifyable, Simplifyable } from "./Simplifyable";
 import { VarType } from "./vartype";
 
-export class Block extends Expression {
+export class Block extends Expression implements Simplifyable {
+  Simplify(scope: Scope): number | null {
+    if (this.Expressions.some((c) => !IsSimplifyable(c))) return null;
+    let res: number | null = null;
+    for (let i = 0; i < this.Expressions.length; i++) {
+      res = (this.Expressions[i] as any as Simplifyable).Simplify(scope);
+      if (res === null) return null;
+    }
+    return res;
+  }
   Expressions: Expression[] = [];
   static Claim(claimer: Claimer): Block | null {
     var blk = claimer.Claim(/\{/);
@@ -33,9 +43,9 @@ export class Block extends Expression {
     for (var i = 0; i < this.Expressions.length; i++) {
       var res = this.Expressions[i].TryEvaluate(subScope);
       o.push(...res[1]);
-      if(i < (this.Expressions.length - 1)){
-        for(let j=0; j < res[0].length; j++)o.push(`apop`);
-      }else{
+      if (i < this.Expressions.length - 1) {
+        for (let j = 0; j < res[0].length; j++) o.push(`apop`);
+      } else {
         lastTypes = res[0];
       }
     }
@@ -48,11 +58,11 @@ export class Block extends Expression {
     }
     return false;
   }
-  
+
   GetTypes(scope: Scope): VarType[] {
     var subScope = scope.Sub();
-    if(this.Expressions.length === 0)return [];
-    var res = this.Expressions[this.Expressions.length-1].GetTypes(subScope);
+    if (this.Expressions.length === 0) return [];
+    var res = this.Expressions[this.Expressions.length - 1].GetTypes(subScope);
     return res;
   }
 }

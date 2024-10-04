@@ -22,21 +22,21 @@ class Array<T> {
     }
     int Length;
     @T Data;
-    function ReplaceV(func(T)->T over){
+    virtual function ReplaceV(func(T)->T over){
         int i = 0;
         while(i < this.Length){
             this[i] = over(this[i]);
             i++;
         }
     }
-    function ReplaceK(func(int)->T over){
+    virtual function ReplaceK(func(int)->T over){
         int i = 0; 
         while(i < this.Length){
             this[i] = over(i);
             i++;
         }
     }
-    function ReplaceKV(func(int,T)->T over){
+    virtual function ReplaceKV(func(int,T)->T over){
         int i = 0;
         while(i < this.Length){
             this[i] = over(i, this[i]);
@@ -170,7 +170,7 @@ abstract class u8  {}
 abstract class s32 {}
 abstract class s16 {}
 abstract class s8  {}`
-  )
+  );
   GenerateReadOnly(
     "stack.bc",
     `metamethod getindex(Stack<T> this, int i) -> T{
@@ -198,7 +198,7 @@ class Stack<T> {
         this.Data = alloc(cap);
     }
      
-    function Push(T v){
+    virtual function Push(T v){
         if(this.Length == this.Capacity){
             @T newBuff = alloc(this.Capacity * 2);
             int i = 0;
@@ -214,18 +214,18 @@ class Stack<T> {
         *(this.Data + this.Length) = v;
         this.Length++;
     }
-    function Pop() -> T {
+    virtual function Pop() -> T {
         if(this.Length){
             this.Length--;
             return *(this.Data + this.Length);
         }
         return (0 -> T);
     }
-    function Peek() -> T {
+    virtual function Peek() -> T {
         if(this.Length) return *(this.Data + this.Length - 1);
         return (0 -> T);
     }
-    function Has() -> int {
+    virtual function Has() -> int {
         if this.Length return 1;
         return 0;
     }
@@ -419,9 +419,9 @@ abstract class Term {
     
     
     
-    static Stack<func(int,int)> KeyDown;
-    static Stack<func(int,int)> KeyUp;
-    static Stack<func(int,int)> Click;
+    static Stack<func(int,int)> KeyDown = reserve Stack(1);
+    static Stack<func(int,int)> KeyUp = reserve Stack(1);
+    static Stack<func(int,int)> Click = reserve Stack(1);
     static Stack<func()> Frame;
 }
 
