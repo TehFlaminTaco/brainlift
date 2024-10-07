@@ -23,6 +23,7 @@ export class Class extends Statement {
   Parent: VarType | null = null;
   GenericArgs: string[] = [];
   IsAbstract: boolean = false;
+  FromFile: string = "";
 
   private static ClaimMember(
     claimer: Claimer,
@@ -207,6 +208,7 @@ export class Class extends Statement {
     cls.Name = className;
     cls.Parent = parent;
     cls.IsAbstract = abstract;
+    cls.FromFile = claimer.File;
     return cls;
   }
 
@@ -319,18 +321,21 @@ export class Class extends Statement {
         member instanceof FunctionDefinition ? member.Label : "0",
       ];
       // Check for a Assignment baring this name, that assigns to a Reserve
-      if (member instanceof VariableDecleration){
-        this.StaticAssignments.filter(c => c.Left as VariableDecleration === member)
-                              .filter(c => c.Right instanceof Reserve)
-                              .forEach(c => {
-                                let reserve = c.Right as Reserve;
-                                // Try to get the size of the reserve
-                                let size = reserve.GetSize(scope);
-                                if(size === null) throw new Error("Cannot determine size of reserve");
-                                // Increase the size of the object to fit it
-                                classType.Size += size;
-                                reserve.ClassMember = true;
-                              });
+      if (member instanceof VariableDecleration) {
+        this.StaticAssignments.filter(
+          (c) => (c.Left as VariableDecleration) === member
+        )
+          .filter((c) => c.Right instanceof Reserve)
+          .forEach((c) => {
+            let reserve = c.Right as Reserve;
+            // Try to get the size of the reserve
+            let size = reserve.GetSize(scope);
+            if (size === null)
+              throw new Error("Cannot determine size of reserve");
+            // Increase the size of the object to fit it
+            classType.Size += size;
+            reserve.ClassMember = true;
+          });
       }
     }
     // Save virtual members statically too
@@ -396,18 +401,21 @@ export class Class extends Statement {
         ];
       }
       // Check for a Assignment baring this name, that assigns to a Reserve
-      if (member instanceof VariableDecleration){
-        this.Assignments.filter(c => c.Left as VariableDecleration === member)
-                        .filter(c => c.Right instanceof Reserve)
-                        .forEach(c => {
-                          let reserve = c.Right as Reserve;
-                          // Try to get the size of the reserve
-                          let size = reserve.GetSize(scope);
-                          if(size === null) throw new Error("Cannot determine size of reserve");
-                          // Increase the size of the object to fit it
-                          objectType.Size += size;
-                          reserve.ClassMember = true;
-                        });
+      if (member instanceof VariableDecleration) {
+        this.Assignments.filter(
+          (c) => (c.Left as VariableDecleration) === member
+        )
+          .filter((c) => c.Right instanceof Reserve)
+          .forEach((c) => {
+            let reserve = c.Right as Reserve;
+            // Try to get the size of the reserve
+            let size = reserve.GetSize(scope);
+            if (size === null)
+              throw new Error("Cannot determine size of reserve");
+            // Increase the size of the object to fit it
+            objectType.Size += size;
+            reserve.ClassMember = true;
+          });
       }
       if (member instanceof FunctionDefinition) {
         if (classType.Children[name.Name]) {
@@ -503,7 +511,7 @@ export class Class extends Statement {
       var child = classDef.Children[id];
       vars[child[1]] = child[2];
     }
-    asm.push(`db ${vars}`);
+    asm.push(`db ${vars}`.replace(/,(?=,)/gm, ",0"));
     scope.Assembly.push(...asm);
     // Execute all static assignments
     asm = [];
@@ -526,9 +534,10 @@ export class Class extends Statement {
       // Find which static-child this belongs to.
       let child = classDef.Children[declr.Identifier!.Name];
       let res = assignment.TryEvaluate(scope);
+      asm.push(`setb ${classDef.ClassLabel}`, `addb ${child[1]}`, `apushb`);
       asm.push(...res[1]);
       for (let spare = 1; spare < res[0].length; spare++) asm.push(`apop`);
-      asm.push(`setb ${classDef.ClassLabel}`, `addb ${child[1]}`, `putaptrb`);
+      asm.push(`apopa`, `apopb`, `putaptrb`);
     }
     // Also perform non-static constant assignments
     for (let i = 0; i < this.Assignments.length; i++) {

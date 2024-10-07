@@ -325,7 +325,7 @@ ${IF(
   STACK1,
   `POP ${STACK1}
 ${truthy}
-PUT ${STACK1} 0`,
+PUT ${STACK1} 0`
 )}
 POP ${STACK1}
 `;
@@ -349,7 +349,7 @@ let HEAP_MOVE = function () {
 ${REG.Right()}
 ${WHILESHORT(
   REG,
-  REG.DecShort() + REG.Left() + REG.IncShort() + REG.Right() + HEAP.Right(),
+  REG.DecShort() + REG.Left() + REG.IncShort() + REG.Right() + HEAP.Right()
 )}
 ${REG.Left()}
 `;
@@ -485,7 +485,7 @@ ${REG.Right()}
 ${REG.Right()}
 ${REG.AddShort(
   REG.Left() + REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.Left()}
 ${REG.Left()}
@@ -520,7 +520,7 @@ ${REG.Right()}
 ${REG.Right()}
 ${REG.AddShort(
   REG.Left() + REG.Left() + REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.Left()}
 ${REG.Left()}
@@ -560,7 +560,7 @@ CPY ${REG.RightStack} ${STACK1}
 ${REG.Left()}
 ${REG.AddShort(
   REG.Left() + REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.Left()}
 ${REG.Left()}
@@ -586,7 +586,7 @@ CPY ${REG.RightStack} ${STACK1}
 ${REG.Right()}
 ${REG.AddShort(
   REG.Left() + REG.Left() + REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.Left()}
 ${REG.Left()}
@@ -624,7 +624,7 @@ ${REG.Right()}
 ${REG.Right()}
 ${REG.AddShort(
   REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.Left()}
 ${REG.Left()}
@@ -644,7 +644,7 @@ ${REG.Right()}
 ${REG.Right()}
 ${REG.AddShort(
   REG.Left() + REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.Left()}
 ${REG.Left()}
@@ -760,7 +760,7 @@ ${REG.Right()}
 ${REG.Right()}
 ${REG.CpyShort(
   REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.Right()}
 CPY ${REG.LeftStack} ${STACK2}
@@ -789,7 +789,7 @@ ${REG.Right()}
 ${REG.Right()}
 ${REG.CpyShort(
   REG.Left() + REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right() + REG.Right()
 )}
 CPY ${REG.LeftStack} ${STACK2}
 CPY ${REG.RightStack} ${STACK2}
@@ -1012,7 +1012,7 @@ ${WHILESHORT(
   CPY ${REG.RightStack} ${STACK1}
   ${REG.AddShort(REG.Right(), REG.Left())}
   ${REG.Left()}
-`,
+`
 )}
 POP ${STACK1}
 POP ${STACK1}
@@ -1050,7 +1050,7 @@ ${WHILESHORT(
   ${REG.AddShort(REG.Left(), REG.Right())}
   ${REG.Left()}
   ${REG.Left()}
-`,
+`
 )}
 POP ${STACK1}
 POP ${STACK1}
@@ -1098,7 +1098,7 @@ ${WHILESHORT(
     ZER ${STACK2}
   END
   POP ${STACK2}
-  ${REG.Left()}`,
+  ${REG.Left()}`
 )}
 ${REG.Right()}
 ${REG.Right()}
@@ -1108,7 +1108,7 @@ ${REG.ZerShort()}
 ${REG.Right()}
 ${REG.CpyShort(
   REG.Left() + REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.ZerShort()}
 ${REG.Left()}
@@ -1158,19 +1158,19 @@ ${WHILESHORT(
     ZER ${STACK2}
   END
   POP ${STACK2}
-  ${REG.Right()}`,
+  ${REG.Right()}`
 )}
 ${REG.Right()}
 ${REG.Right()}
 ${REG.CpyShort(
   REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.ZerShort()}
 ${REG.Right()}
 ${REG.CpyShort(
   REG.Left() + REG.Left() + REG.Left(),
-  REG.Right() + REG.Right() + REG.Right(),
+  REG.Right() + REG.Right() + REG.Right()
 )}
 ${REG.ZerShort()}
 ${REG.Left()}
@@ -1957,7 +1957,7 @@ ${instr[1]}
 PUT ${STACK1} 0
 ${REG.Right()}
 ${REG.Right()}
-${REG.Right()}`,
+${REG.Right()}`
 )}
 POP ${STACK1}
 DEC ${REG.LeftStack}`;
@@ -2005,7 +2005,7 @@ END
 export function ASMTranspile(code: string) {
   let oldInstrs = INSTRUCTIONS;
   let commands = code.matchAll(
-    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim,
+    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim
   );
   let usedInstructions: string[] = [];
   for (let c of commands) {
@@ -2021,7 +2021,7 @@ export function ASMTranspile(code: string) {
   }
 
   commands = code.matchAll(
-    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim,
+    /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim
   );
   let heap: number[] = [];
   let labels: { [label: string]: number } = {};
@@ -2050,7 +2050,7 @@ export function ASMTranspile(code: string) {
 
     if (dbArgs.length > 0) {
       let parsedArgs = dbArgs.matchAll(
-        /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,8})|(\d{1,10})|('\\?.')|([a-z_]\w*)),?\s*)/gim,
+        /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,8})|(\d{1,10})|('\\?.')|([a-z_]\w*)),?\s*)/gim
       );
       for (let a of parsedArgs) {
         let stringBody = a[1] ?? "";
@@ -2094,7 +2094,7 @@ export function ASMTranspile(code: string) {
       }
     } else if (command.length > 0) {
       let commandIndex = INSTRUCTIONS.findIndex(
-        (i) => i[0] === command.toUpperCase(),
+        (i) => i[0] === command.toUpperCase()
       );
       if (commandIndex < 0) {
         console.log(`UNKNOWN COMMAND: ${command}`);
@@ -2165,7 +2165,7 @@ export class ASMInterpreter {
       this.Code = code;
       let t = Date.now();
       let commands = code.matchAll(
-        /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim,
+        /^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim
       );
 
       let heap: number[] = [];
@@ -2196,7 +2196,7 @@ export class ASMInterpreter {
 
         if (dbArgs.length > 0) {
           let parsedArgs = dbArgs.matchAll(
-            /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,8})|(\d{1,10})|('\\?.')|([a-z_]\w*)),?\s*)/gim,
+            /(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,8})|(\d{1,10})|('\\?.')|([a-z_]\w*)),?\s*)/gim
           );
           for (let a of parsedArgs) {
             let stringBody = a[1] ?? "";
@@ -2215,7 +2215,7 @@ export class ASMInterpreter {
                 v = 32;
               } else {
                 v = JSON.parse(charBody.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
-                  0,
+                  0
                 );
               }
               heap[ptr++] = v;
@@ -2236,7 +2236,7 @@ export class ASMInterpreter {
           }
         } else if (command.length > 0) {
           let commandIndex = INSTRUCTIONS.findIndex(
-            (i) => i[0] === command.toUpperCase(),
+            (i) => i[0] === command.toUpperCase()
           );
           if (commandIndex < 0) {
             console.log(`UNKNOWN COMMAND: ${command}`);
@@ -2250,7 +2250,7 @@ export class ASMInterpreter {
               argV = 32;
             } else {
               argV = JSON.parse(argChar.replace(/'(\\?.)'/, '"$1"')).charCodeAt(
-                0,
+                0
               );
             }
           } else if (argLabel.length > 0) {
@@ -2290,7 +2290,7 @@ export class ASMInterpreter {
 
         if (code[i].match(/^\s*FILE/i)) continue;
         let codel = code[i].match(
-          /^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?\s*$/im,
+          /^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?\s*$/im
         );
         if (!codel) {
           console.log(`No match: ${code[i]}`);
@@ -2334,7 +2334,7 @@ export class ASMInterpreter {
           }
         } else if (command.length > 0) {
           let commandIndex = INSTRUCTIONS.findIndex(
-            (i) => i[0] === command.toUpperCase(),
+            (i) => i[0] === command.toUpperCase()
           );
           if (commandIndex < 0) {
             console.log(`UNKNOWN COMMAND: ${command}`);
@@ -2372,8 +2372,9 @@ export class ASMInterpreter {
     var code = this.Code.split(`\n`);
     var currentInstruction = this.ASMMap[this.IP];
     if (currentInstruction)
-      code[currentInstruction] =
-        `<span class='pointer'>${code[currentInstruction]}</span>`;
+      code[
+        currentInstruction
+      ] = `<span class='pointer'>${code[currentInstruction]}</span>`;
     for (let i = 0; i < code.length; i++) {
       var index = this.ASMMap.indexOf(i);
       code[i] = `${hexPad(index, 8)}: ${code[i]}`;
@@ -2392,7 +2393,7 @@ export class ASMInterpreter {
         let args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g))
           .map((c) => c[1])
           .map((c) =>
-            c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c,
+            c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c
           );
         let a: number = GetStackIndex(args[0]);
         interp.WhileStack.push([i, a]);

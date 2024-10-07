@@ -20,8 +20,12 @@ export class Identifier
     return scope.SetConstant(this.Name, null, value, false);
   }
   Simplify(scope: Scope): number | null {
-    var res = scope.Get(this.Name);
-    return res?.[2] ?? null;
+    try {
+      var res = scope.Get(this.Name);
+      return res[2] ?? null;
+    } catch {
+      return null;
+    }
   }
   Name: string = "";
   static Claim(

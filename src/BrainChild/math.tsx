@@ -146,31 +146,31 @@ export class MathExp
       if (left !== null && right !== null) {
         switch (this.Operator) {
           case "mul":
-            return left * right;
+            return ((left * right) & 0xffffffff) >>> 0;
           case "div":
-            return left / right;
+            return ((left / right) & 0xffffffff) >>> 0;
           case "mod":
-            return left % right;
+            return (left % right & 0xffffffff) >>> 0;
           case "add":
-            return left + right;
+            return ((left + right) & 0xffffffff) >>> 0;
           case "sub":
-            return left - right;
+            return ((left - right) & 0xffffffff) >>> 0;
           case "le":
-            return left <= right ? 1 : 0;
+            return ((left <= right ? 1 : 0) & 0xffffffff) >>> 0;
           case "ge":
-            return left >= right ? 1 : 0;
+            return ((left >= right ? 1 : 0) & 0xffffffff) >>> 0;
           case "lt":
-            return left < right ? 1 : 0;
+            return ((left < right ? 1 : 0) & 0xffffffff) >>> 0;
           case "gt":
-            return left > right ? 1 : 0;
+            return ((left > right ? 1 : 0) & 0xffffffff) >>> 0;
           case "eq":
-            return left === right ? 1 : 0;
+            return ((left === right ? 1 : 0) & 0xffffffff) >>> 0;
           case "ne":
-            return left !== right ? 1 : 0;
+            return ((left !== right ? 1 : 0) & 0xffffffff) >>> 0;
           case "and":
-            return left && right;
+            return ((left && right) & 0xffffffff) >>> 0;
           case "or":
-            return left || right;
+            return ((left || right) & 0xffffffff) >>> 0;
         }
       }
     }

@@ -3,15 +3,23 @@ import { Expression } from "./expression";
 import { Scope } from "./Scope";
 import { IsSimplifyable, Simplifyable } from "./Simplifyable";
 import { VarType } from "./vartype";
+import { While } from "./while";
 
 export class Block extends Expression implements Simplifyable {
+  SimplifiesTo: Map<string, number | null> = new Map();
   Simplify(scope: Scope): number | null {
+    if (
+      this.SimplifiesTo.has(While.SimpleHash) &&
+      this.SimplifiesTo.get(While.SimpleHash) !== null
+    )
+      return this.SimplifiesTo.get(While.SimpleHash)!;
     if (this.Expressions.some((c) => !IsSimplifyable(c))) return null;
     let res: number | null = null;
     for (let i = 0; i < this.Expressions.length; i++) {
       res = (this.Expressions[i] as any as Simplifyable).Simplify(scope);
       if (res === null) return null;
     }
+    this.SimplifiesTo.set(While.SimpleHash, res);
     return res;
   }
   Expressions: Expression[] = [];
@@ -37,6 +45,12 @@ export class Block extends Expression implements Simplifyable {
   }
 
   Evaluate(scope: Scope): [types: VarType[], body: string[]] {
+    let simpleRes = this.Simplify(scope);
+    if (simpleRes !== null)
+      return [
+        this.GetTypes(scope),
+        [`apush ${(simpleRes & 0xffffffff) >>> 0}`],
+      ];
     var subScope = scope.Sub();
     var o = [];
     var lastTypes: VarType[] = [];
