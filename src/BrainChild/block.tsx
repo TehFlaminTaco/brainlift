@@ -7,6 +7,8 @@ import { While } from "./while";
 
 export class Block extends Expression implements Simplifyable {
   SimplifiesTo: Map<string, number | null> = new Map();
+  KnownScope: Scope | null = null;
+  SubScope: Scope | null = null;
   Simplify(scope: Scope): number | null {
     if (
       this.SimplifiesTo.has(While.SimpleHash) &&
@@ -14,9 +16,10 @@ export class Block extends Expression implements Simplifyable {
     )
       return this.SimplifiesTo.get(While.SimpleHash)!;
     if (this.Expressions.some((c) => !IsSimplifyable(c))) return null;
+    let subScope = this.GetSubScope(scope);
     let res: number | null = null;
     for (let i = 0; i < this.Expressions.length; i++) {
-      res = (this.Expressions[i] as any as Simplifyable).Simplify(scope);
+      res = this.Expressions[i].TrySimplify(subScope);
       if (res === null) return null;
     }
     this.SimplifiesTo.set(While.SimpleHash, res);
@@ -51,7 +54,7 @@ export class Block extends Expression implements Simplifyable {
         this.GetTypes(scope),
         [`apush ${(simpleRes & 0xffffffff) >>> 0}`],
       ];
-    var subScope = scope.Sub();
+    var subScope = this.GetSubScope(scope);
     var o = [];
     var lastTypes: VarType[] = [];
     for (var i = 0; i < this.Expressions.length; i++) {
@@ -73,8 +76,17 @@ export class Block extends Expression implements Simplifyable {
     return false;
   }
 
+  GetSubScope(scope: Scope): Scope {
+    if (this.KnownScope !== scope) {
+      this.SubScope = scope.Sub();
+      this.KnownScope = scope;
+    }
+    return this.SubScope!;
+  }
+
   GetTypes(scope: Scope): VarType[] {
-    var subScope = scope.Sub();
+    this.TrySimplify(scope); // Apparently, this matters :\
+    var subScope = this.GetSubScope(scope);
     if (this.Expressions.length === 0) return [];
     var res = this.Expressions[this.Expressions.length - 1].GetTypes(subScope);
     return res;

@@ -54,7 +54,10 @@ async function parseEditor(): Promise<Scope> {
     annotations[id] = [];
   }
   term = new Terminal();
-  document.getElementById("output")!.innerHTML = term.Render();
+  let rendered = term.Render();
+  window.requestAnimationFrame(() => {
+    document.getElementById("output")!.innerHTML = rendered;
+  });
   var scope = await Parse(files);
   scope.TypeInformation.forEach((i) => {
     let t = i[0];
@@ -560,7 +563,10 @@ export default function App() {
           document.getElementById("output")! === document.activeElement;
         term.WriteAll(bsInterp.Output);
         bsInterp.Output = "";
-        document.getElementById("output")!.innerHTML = term.Render();
+        let rendered = term.Render();
+        window.requestAnimationFrame(() => {
+          document.getElementById("output")!.innerHTML = rendered;
+        });
         if (hadFocus) document.getElementById("output")!.focus();
       }
       var codeText = document.getElementById("codeText")!;
@@ -572,7 +578,7 @@ export default function App() {
 
       //codeText.querySelector("span")!.scrollIntoView();
       let span = codeText.querySelector("span")!;
-      codeText.scrollTo(0, span.scrollTop);
+      codeText.scrollTo(0, span.offsetTop - 600);
       Scope.CURRENT!.RenderBSMemory(bsInterp);
       editors[bsInterp.GetFile()].session.addMarker(
         new Range(bsInterp.GetLine(), 0, bsInterp.GetLine(), 1),
@@ -653,7 +659,10 @@ export default function App() {
                   document.getElementById("output")! === document.activeElement;
                 term.WriteAll(bsInterp.Output);
                 bsInterp.Output = "";
-                document.getElementById("output")!.innerHTML = term.Render();
+                let rendered = term.Render();
+                window.requestAnimationFrame(() => {
+                  document.getElementById("output")!.innerHTML = rendered;
+                });
                 if (hadFocus) document.getElementById("output")!.focus();
               }
               if (bsInterp.InputPointer > 0) {
@@ -664,7 +673,7 @@ export default function App() {
               codeText.innerHTML = bsInterp.CodeWithPointerHighlight();
               //codeText.querySelector("span")!.scrollIntoView();
               let span = codeText.querySelector("span")!;
-              codeText.scrollTo(0, span.scrollTop);
+              codeText.scrollTo(0, span.offsetTop - 600);
               asmRunning = false;
               clearInterval(asmRunTimer);
               break;
@@ -676,7 +685,10 @@ export default function App() {
               document.getElementById("output")! === document.activeElement;
             term.WriteAll(bsInterp.Output);
             bsInterp.Output = "";
-            document.getElementById("output")!.innerHTML = term.Render();
+            let rendered = term.Render();
+            window.requestAnimationFrame(() => {
+              document.getElementById("output")!.innerHTML = rendered;
+            });
             if (hadFocus) document.getElementById("output")!.focus();
           }
           if (bsInterp.InputPointer > 0) {
@@ -694,7 +706,7 @@ export default function App() {
             let codeText = document.getElementById("codeText")!;
             codeText.innerHTML = bsInterp.CodeWithPointerHighlight();
             let span = codeText.querySelector("span")!;
-            codeText.scrollTo(0, span.scrollTop);
+            codeText.scrollTo(0, span.offsetTop - 600);
           }
         } else {
           bsInterp = new ASMInterpreter(
@@ -717,7 +729,7 @@ export default function App() {
       codeText.innerHTML = bsInterp.CodeWithPointerHighlight();
       //codeText.querySelector("span")!.scrollIntoView();
       let span = codeText.querySelector("span")!;
-      codeText.scrollTo(0, span.scrollTop);
+      codeText.scrollTo(0, span.offsetTop - 600);
     }
   }
 
@@ -764,7 +776,10 @@ export default function App() {
         document.getElementById("output")! === document.activeElement;
       term.WriteAll(bsInterp.Output);
       bsInterp.Output = "";
-      document.getElementById("output")!.innerHTML = term.Render();
+      let rendered = term.Render();
+      window.requestAnimationFrame(() => {
+        document.getElementById("output")!.innerHTML = rendered;
+      });
       if (hadFocus) document.getElementById("output")!.focus();
     }
     if (bsInterp.InputPointer > 0) {

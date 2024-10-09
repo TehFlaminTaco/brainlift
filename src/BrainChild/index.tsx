@@ -97,6 +97,10 @@ export class Index
       return null;
     }
     var name = Identifier.Claim(claimer);
+    if(name === null){
+      f.Fail();
+      return null;
+    }
     var indx = new Index(claimer, left.Claim);
     indx.Left = left;
     indx.Target = name;

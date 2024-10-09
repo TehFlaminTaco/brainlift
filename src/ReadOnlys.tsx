@@ -60,6 +60,335 @@ macro ( 'for' "(" (expression?) ";" (expression?) ";" (expression?) ")" (express
 `
   );
   GenerateReadOnly(
+    "float.bc",
+    `metamethod get_sign(float this) -> int (this -> int) / 0x80000000;
+metamethod get_exponent(float this) -> int ((this -> int) / 0x800000) % 0x100;
+metamethod get_mantissa(float this) -> int (this -> int) % 0x800000;
+
+const int bias = 127+23;
+metamethod get_integer(float this) -> int {
+    int mantissa = this.mantissa + 0x800000;
+    int exponent = this.exponent;
+    if(exponent == 0xFF){ // MAXINT, Can be NaN but hecc NaN
+        return  if (this.sign)
+                    0x80000000
+                else
+                    0x7fffffff;
+    }
+    while(exponent < bias){
+        exponent ++;
+        mantissa = mantissa / 2;
+    }
+    while(exponent > bias){
+        exponent --;
+        mantissa = mantissa * 2;
+    }
+    if(this.sign == 1){
+        mantissa = 0-mantissa;
+    }
+    return mantissa;
+}
+
+metamethod get_float(int this) -> float {
+    int sign = 0;
+    if (this > 0x7fffffff) {
+        sign = 1;
+        this = 0-this;
+    }
+    int mantissa = this;
+    int exponent = bias;
+    while(mantissa >= 0x1000000){
+        exponent ++;
+        mantissa = mantissa / 2;
+    }
+    while(mantissa < 0x800000){
+        exponent --;
+        mantissa = mantissa * 2;
+    }
+    return ((sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000) -> float);
+}
+
+metamethod unm(float this) -> float {
+    return this.withSign(1 - this.sign);
+}
+
+abstract class float {
+    static const float one = 0x3F800000;
+    static const float zero = 0;
+
+    static function make(int sign, int exponent, int mantissa) -> float
+        ((sign * 0x80000000) + (exponent * 0x800000) + mantissa -> float);
+    virtual function withSign(int sign) -> float
+        float.make(sign, this.exponent, this.mantissa);
+    virtual function withExponent(int exponent) -> float
+        float.make(this.sign, exponent, this.mantissa);
+    virtual function withMantissa(int mantissa) -> float
+        float.make(this.sign, this.exponent, mantissa);
+    static function _sub(float this, float other) -> float {
+        if(this.sign != other.sign){
+            return float._add(this,-other);
+        }
+        if((this -> int) == 0)
+            return -other;
+        if((other -> int) == 0)
+        // Get both mantissas with their implied 1
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // Get both exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        // Shift left the smaller mantissa to match the larger one
+        // We don't actually have bitshift, so we have to manually multiply
+        while(exponentA < exponentB){
+            exponentA ++;
+            mantissaA = mantissaA / 2;
+        }
+        while(exponentB < exponentA){
+            exponentB ++;
+            mantissaB = mantissaB / 2;
+        }
+        // Subtract the mantissas
+        int mantissaC = mantissaA - mantissaB;
+        // Normalize the mantissa
+        while(mantissaC < 0x800000){
+            exponentA --;
+            mantissaC = mantissaC * 2;
+        }
+        // Return the result
+        return float.make(this.sign, exponentA, mantissaC % 0x800000);
+    }
+    static function _add(float this, float other) -> float {
+        if((this -> int) == 0)
+            return other;
+        if((other -> int) == 0)
+            return this;
+        if(this.sign != other.sign){
+            return float._sub(this,-other);
+        }
+        // Get both mantissas with their implied 1
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // Get both exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        // Shift left the smaller mantissa to match the larger one
+        // We don't actually have bitshift, so we have to manually multiply
+        while(exponentA < exponentB){
+            exponentA ++;
+            mantissaA = mantissaA / 2;
+        }
+        while(exponentB < exponentA){
+            exponentB ++;
+            mantissaB = mantissaB / 2;
+        }
+        // Add the mantissas
+        int mantissaC = mantissaA + mantissaB;
+        // Normalize the mantissa
+        while(mantissaC >= 0x1000000){
+            exponentA ++;
+            mantissaC = mantissaC / 2;
+        }
+        // Return the result
+        return float.make(this.sign, exponentA, mantissaC % 0x800000);
+    }
+    static function _mul(float this, float other) -> float {
+        if((this -> int) == 0)
+            return (0 -> float);
+        if((other -> int) == 0)
+            return (0 -> float);
+        // Get both mantissas with their implied 1
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // Get both exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        int exponentC = (exponentA + exponentB) - 134;
+        // Multiply the mantissas
+        int mantissaC = (mantissaA / 0x100) * (mantissaB / 0x100);
+        // Normalize the mantissa
+        while(mantissaC >= 0x1000000){
+            exponentC ++;
+            mantissaC = mantissaC / 2;
+        }
+        // Return the result
+        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);
+    }
+    static function _div(float this, float other) -> float {
+        if((this -> int) == 0)
+            return (0 -> float);
+        if((other -> int) == 0)
+            return (0x7fc00000 -> float);
+        // Floating point Division
+        // Apparently this is just like fancy fixed-point division
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        
+        int mantissaC = 0;
+        int div, int rem = (mantissaA * 0x100) /% mantissaB;
+        mantissaC = div * 0x8000;
+        div, rem = (rem * 0x100) /% mantissaB;
+        mantissaC = mantissaC + (div * 0x80);
+        div, rem = (rem * 0x100) /% mantissaB;
+        mantissaC = mantissaC + (div / 2);
+        int exponentC = (exponentA - exponentB) + 127;
+
+        if(mantissaC == 0){
+            return (0 -> float);
+        }
+        while(mantissaC < 0x800000){
+            exponentC --;
+            mantissaC = mantissaC * 2;
+        }
+        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);
+    }
+    static function _pow(float this, int base) -> float {
+        if (base == 0) {
+            return (0x3F800000 -> float);
+        }
+        if ((this -> int) == 0) {
+            return (0x0 -> float);
+        }
+        // Use simple binary exponentiation
+        float result = (0x3F800000 -> float);
+        while (base > 0) {
+            if (base % 2 == 1) {
+                result = float._mul(result, this);
+            }
+            this = float._mul(this, this);
+            base = base / 2;
+        }
+        return result;
+    }
+    static function _mod(float this, float other) -> float {
+        if((this -> int) == 0)
+            return (0 -> float);
+        if((other -> int) == 0)
+            return (0x7fc00000 -> float);
+        // Get both their mantissas
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // And their exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        // If A has a smaller exponant than B, return A (Because it will never be bigger than B)
+        if(exponentA < exponentB){
+            return this;
+        }
+        // Shift A until it has the same exponant as B
+        while(exponentA > exponentB){
+            exponentA --;
+            mantissaA = mantissaA * 2;
+        }
+        // Perform the modulo on the mantissas
+        int mantissaC = mantissaA % mantissaB;
+        if(mantissaC == 0){
+            return (0 -> float);
+        }
+        // Normalize the mantissa
+        while(mantissaC < 0x800000){
+            exponentA --;
+            mantissaC = mantissaC * 2;
+        }
+        // Return the result
+        return float.make(this.sign, exponentA, mantissaC % 0x800000);
+    }
+}
+
+metamethod sub(float this, float other) -> float
+    float._sub(this, other);
+
+metamethod add(float this, float other) -> float
+    float._add(this, other);
+
+metamethod mul(float this, float other) -> float
+    float._mul(this, other);
+
+metamethod div(float this, float other) -> float
+    float._div(this, other);
+
+metamethod pow(float this, int other) -> float
+    float._pow(this, other);
+
+metamethod mod(float this, float other) -> float
+    float._mod(this, other);
+
+macro ( '__divide_float' (number) ',' (number) ) { const {
+    const int A = $1;
+    const int other = $2;
+    if(A == 0)
+        0
+    else if(other == 0)
+        0x7fc00000
+    else {
+        const int mantissaA = (A%0x800000) + 0x800000;
+        const int mantissaB = (other%0x800000) + 0x800000;
+        const int exponentA = (A/0x800000)%0x100;
+        const int exponentB = (other/0x800000)%0x100; 
+        
+        const int mantissaC = 0;
+        const int div = (mantissaA * 0x100) / mantissaB;
+        const int rem = (mantissaA * 0x100) % mantissaB;
+        const mantissaC = div * 0x8000; 
+        const div = (rem * 0x100) / mantissaB;
+        const rem = (rem * 0x100) % mantissaB;
+        const mantissaC = mantissaC + (div * 0x80);
+        const div = (rem * 0x100) / mantissaB;
+        const rem = (rem * 0x100) % mantissaB;
+        const mantissaC = mantissaC + (div / 2);
+        const int exponentC = (exponentA - exponentB) + 127;
+    
+        const if(mantissaC == 0){
+            0;
+        }else{
+            const while(mantissaC < 0x800000){
+                exponentC = exponentC - 1;
+                mantissaC = mantissaC * 2;
+            }
+            const ((((A/0x80000000) + (other/0x80000000))%2)*0x80000000) + ((exponentC%0x100) * 0x800000) + (mantissaC % 0x800000);
+        }
+    }
+}}
+
+macro ( '__number_to_float' (number) ) { const {
+        const int A = $1;
+        const int sign = 0;
+        const if (A > 0x7fffffff) {
+            sign = 1;
+            A = 0-A; 
+        }else {0}
+        const int mantissa = A;
+        const int exponent = bias;
+        const while(mantissa >= 0x1000000){
+            exponent = exponent + 1;
+            mantissa = mantissa / 2;
+        };
+        const while(mantissa < 0x800000){
+            exponent = exponent - 1;
+            mantissa = mantissa * 2; 
+        };
+        const (sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000); 
+} }
+
+macro ( '__count_digits' /\\d/ (/\\d+/)) {1+__count_digits $1}
+macro ( '__count_digits' /\\d/) {1}
+
+macro ( '__tenth_power' (number) ) {const {
+    const int t = 1;
+    const int i = 1+$1;
+    const while(i=i-1)t = t * 10;
+    t;
+}} 
+
+macro ( (number) '.' (/\\d+/) 'f' ) { (const {
+    const int divisor = (__tenth_power __count_digits $2);
+    const int numerator = $1;
+    numerator = (numerator * divisor) + $2;
+    (__divide_float (__number_to_float numerator) , (__number_to_float divisor));
+} -> float) }`
+  );
+  GenerateReadOnly(
     "int.bc",
     `metamethod pow(int _a, int _b) -> int {
     if(!_b)
@@ -422,13 +751,8 @@ abstract class Term {
     static Stack<func(int,int)> KeyDown = reserve Stack(1);
     static Stack<func(int,int)> KeyUp = reserve Stack(1);
     static Stack<func(int,int)> Click = reserve Stack(1);
-    static Stack<func()> Frame;
+    static Stack<func()> Frame = reserve Stack(1);
 }
-
-Term.KeyDown = new Stack(1);
-Term.KeyUp = new Stack(1);
-Term.Click = new Stack(1);
-Term.Frame = new Stack(1);
 
 metamethod get_Fore(__Style s) -> void{return 0;}
 metamethod get_Back(__Style s) -> void{return 0;}

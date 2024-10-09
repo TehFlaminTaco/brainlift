@@ -56,7 +56,7 @@ export class Assignment
 
   Simplify(scope: Scope): number | null {
     if (IsSimpleAssignable(this.Left) && IsSimplifyable(this.Right)) {
-      let n = (this.Right as any as Simplifyable).Simplify(scope);
+      let n = (this.Right!).TrySimplify(scope);
       if (n === null) return null;
       if ((this.Left as any as SimpleAssignable).AssignSimple(scope, n))
         return n;
@@ -66,7 +66,7 @@ export class Assignment
 
   Evaluate(scope: Scope): [VarType[], string[]] {
     if (IsSimpleAssignable(this.Left) && IsSimplifyable(this.Right)) {
-      let n = (this.Right as any as Simplifyable).Simplify(scope);
+      let n = (this.Right!).TrySimplify(scope);
       if (n !== null) {
         if ((this.Left as any as SimpleAssignable).AssignSimple(scope, n)) {
           return [

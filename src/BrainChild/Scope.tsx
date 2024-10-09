@@ -719,6 +719,13 @@ free:
     return null;
   }
 
+  static SimplyRedundant(line: string): boolean {
+    // If Line is adda 0 or addb 0, it's redundant.
+    if (line.match(/^\s*(adda|addb|suba|subb)\s+0\s*$/)) return true;
+
+    return false;
+  }
+
   static ObliterateRedundancies(
     assembly: string[],
     startFrom: number = 0
@@ -739,7 +746,7 @@ free:
           );
       }
     }
-    return assembly;
+    return assembly.filter(c=>!Scope.SimplyRedundant(c));
   }
 
   RenderFunction(

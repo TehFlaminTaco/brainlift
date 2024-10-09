@@ -151,9 +151,10 @@ export class VariableDecleration
 
   AssignSimple(scope: Scope, val: number): boolean {
     if (!this.IsConstant) return false;
-    if (!this.Label) {
+    if (!this.Label || scope !== this.LastScope) {
       scope.SetConstant(this.Identifier!.Name, this.Type!, val, true);
       this.Label = scope.GetSafeName("constant_" + this.Identifier!.Name);
+      this.LastScope = scope;
     } else {
       let v = scope.Get(this.Identifier!.Name);
       v[2] = val;

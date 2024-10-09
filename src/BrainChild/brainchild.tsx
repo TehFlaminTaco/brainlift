@@ -40,6 +40,7 @@ export var Keywords = [
   "macro",
   "metamethod",
   "new",
+  "params",
   "reserve",
   "return",
   "static",

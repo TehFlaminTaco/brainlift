@@ -108,16 +108,16 @@ export class If extends Expression implements Simplifyable {
   }
   Simplify(scope: Scope): number | null {
     if (this.Condition && IsSimplifyable(this.Condition)) {
-      let res = (this.Condition as unknown as Simplifyable).Simplify(scope);
+      let res = (this.Condition!).TrySimplify(scope);
       if (res === null) return null;
       if (res) {
         if (!IsSimplifyable(this.Body)) return null;
-        res = (this.Body as unknown as Simplifyable).Simplify(scope);
+        res = (this.Body!).TrySimplify(scope);
         return res;
       } else {
         if (!this.Else) return null;
         if (!IsSimplifyable(this.Else)) return null;
-        res = (this.Else as unknown as Simplifyable).Simplify(scope);
+        res = (this.Else!).TrySimplify(scope);
         return res;
       }
     }

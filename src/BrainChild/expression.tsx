@@ -3,6 +3,7 @@ import { ExpressionStatement } from "./expressionstatement";
 import { Scope } from "./Scope";
 import { Token, TokenError } from "./token";
 import { VarType } from "./vartype";
+import { Simplifyable } from "./Simplifyable";
 
 function IsRightDonor(e: Expression | null) {
   if (e === null) return false;
@@ -98,6 +99,27 @@ export abstract class Expression extends Token {
       scope.InformType(this, o[0]);
       return o;
     } catch (e) {
+      if (e instanceof TokenError) {
+        let E = new TokenError(e.CallStack.concat(this), e.message);
+        E.stack = e.stack;
+        E.name = e.name;
+        throw E;
+      }
+      if (e instanceof Error) {
+        let E = new TokenError([this], e.message);
+        E.stack = e.stack;
+        E.name = e.name;
+        throw E;
+      } else {
+        throw new TokenError([this], "" + e);
+      }
+    }
+  }
+  TrySimplify(scope: Scope): number | null {
+    try {
+      let o = (this as any as Simplifyable).Simplify(scope);
+      return o;
+    }catch(e){
       if (e instanceof TokenError) {
         let E = new TokenError(e.CallStack.concat(this), e.message);
         E.stack = e.stack;

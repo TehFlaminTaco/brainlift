@@ -240,7 +240,7 @@ export class Class extends Statement {
           if (possibleAssignments.length > 1)
             throw new Error(`Ambiguous default value for ${child[0]}`);
           asm.push(`  apushb`);
-          let res = possibleAssignments[0].Right!.Evaluate(scope);
+          let res = possibleAssignments[0].Right!.TryEvaluate(scope);
           asm.push(...res[1]);
           for (let spare = 1; spare < res[0].length; spare++)
             asm.push(`    apop`);
@@ -522,7 +522,7 @@ export class Class extends Statement {
         // Conveniently also handle constant assignment.
         if (!IsSimplifyable(assignment.Right))
           throw new Error("Cannot assign non-constant value to constant");
-        let val = (assignment.Right as any as Simplifyable).Simplify(scope);
+        let val = (assignment.Right)!.TrySimplify(scope);
         if (val === null)
           throw new Error("Cannot assign non-constant value to constant");
         classDef.ConstantChildren[declr.Identifier!.Name] = [
@@ -546,7 +546,7 @@ export class Class extends Statement {
       if (!declr.IsConstant) continue;
       if (!IsSimplifyable(assignment.Right))
         throw new Error("Cannot assign non-constant value to constant");
-      let val = (assignment.Right as any as Simplifyable).Simplify(scope);
+      let val = (assignment.Right)!.TrySimplify(scope);
       if (val === null)
         throw new Error("Cannot assign non-constant value to constant");
       objectDef.ConstantChildren[declr.Identifier!.Name] = [

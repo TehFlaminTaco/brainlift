@@ -44,11 +44,50 @@ export class FunctionDefinition extends Expression {
       return null;
     }
     var args: VariableDecleration[] = [];
-    var c = VariableDecleration.Claim(claimer);
+    // Horrifying manual hack for params.
+    var c =
+      claimer.Claim(/params\b/).Success || VariableDecleration.Claim(claimer);
     while (c !== null) {
+      if (c === true) {
+        // parmas int[] j
+        let typ = VarType.Claim(claimer);
+        if (typ === null) {
+          fnc.Fail();
+          return null;
+        }
+        if (!claimer.Claim(/\[/).Success) {
+          fnc.Fail();
+          return null;
+        }
+        let lenIdentifier = Identifier.Claim(claimer);
+        if (lenIdentifier === null) {
+          fnc.Fail();
+          return null;
+        }
+        if (!claimer.Claim(/\]/).Success) {
+          fnc.Fail();
+          return null;
+        }
+        let arrayIdentifier = Identifier.Claim(claimer);
+        if (arrayIdentifier === null) {
+          fnc.Fail();
+          return null;
+        }
+        let fakeClaimer = new Claimer("", "");
+        let fakeClaim = fakeClaimer.Flag();
+        let lengthVD = new VariableDecleration(fakeClaimer, fakeClaim);
+        lengthVD.Type = VarType.Int;
+        lengthVD.Identifier = lenIdentifier;
+        let arrayVD = new VariableDecleration(fakeClaimer, fakeClaim);
+        arrayVD.Type = typ.WithDeltaPointerDepth(1);
+        arrayVD.Identifier = arrayIdentifier;
+        args.push(lengthVD, arrayVD);
+        break;
+      }
       args.push(c);
       if (!claimer.Claim(/,/).Success) break;
-      c = VariableDecleration.Claim(claimer);
+      c =
+        claimer.Claim(/params\b/).Success || VariableDecleration.Claim(claimer);
     }
     if (!claimer.Claim(/\)/).Success) {
       fnc.Fail();
@@ -334,7 +373,11 @@ export class FunctionDefinition extends Expression {
       this.Label.length > 0
         ? this.Label
         : scope.GetSafeName(
-          simpleName + "_" + funcType.RetTypes.join("_") + "_" + funcType.ArgTypes.join("_")
+            simpleName +
+              "_" +
+              funcType.RetTypes.join("_") +
+              "_" +
+              funcType.ArgTypes.join("_")
           );
     if (this.Target instanceof Identifier && !this.IsMeta) {
       scope.Set(this.Target.Name, funcType);
@@ -373,16 +416,27 @@ export class FunctionDefinition extends Expression {
       scope.CurrentFile,
       scope.CurrentFunction,
     ];
-    if (this.IsMeta){
+    if (this.IsMeta) {
       scope.MetaMethods[name] = scope.MetaMethods[name] ?? [];
       // Check if any metamethod already exists with this signature
       for (let i = 0; i < scope.MetaMethods[name].length; i++) {
-        if (VarType.AllEquals(scope.MetaMethods[name][i][1], funcType.ArgTypes) && 
-          (name === "cast" ? VarType.AllEquals(scope.MetaMethods[name][i][0], this.RetTypes) : true)) {
-          throw new Error(`Metamethod ${name} already exists with signature ${funcType.ArgTypes} -> ${scope.MetaMethods[name][i][0]}`);
+        if (
+          VarType.AllEquals(scope.MetaMethods[name][i][1], funcType.ArgTypes) &&
+          (name === "cast"
+            ? VarType.AllEquals(scope.MetaMethods[name][i][0], this.RetTypes)
+            : true)
+        ) {
+          throw new Error(
+            `Metamethod ${name} already exists with signature ${funcType.ArgTypes} -> ${scope.MetaMethods[name][i][0]}`
+          );
         }
       }
-      scope.MetaMethods[name].push([this.RetTypes!, this.Args.map(c => c.Type!), [`call ${label}`], this.GenericArgs]);
+      scope.MetaMethods[name].push([
+        this.RetTypes!,
+        this.Args.map((c) => c.Type!),
+        [`call ${label}`],
+        this.GenericArgs,
+      ]);
       return [[], []];
     }
     if (this.Target === null)
