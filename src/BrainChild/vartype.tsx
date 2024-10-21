@@ -194,6 +194,20 @@ export class VarType extends Token {
       }
       if (t && this.Generics.length > 0) t = t.WithGenerics(this.Generics);
 
+      for (let ident in t.VirtualChildren) {
+        let child = t.VirtualChildren[ident];
+        if (!child) continue;
+        let v = bs.Heap[bs.Heap[location] + child[2]];
+        let expected = +child[2];
+        if (bs.Labels[child[2]]) expected = bs.Labels[child[3]];
+        if (v !== expected)
+          s +=
+            "\t" +
+            child[0]
+              .Debug(scope, bs, "", ident, bs.Heap[location] + child[2])
+              .replace(/<br>(?!$)/g, "<br>\t") +
+            "<br>";
+      }
       for (let ident in t.Children) {
         let child = t.Children[ident];
         childrenByOffset[child[1]] = [child[0], child[1], child[2], ident];
@@ -232,7 +246,7 @@ export class VarType extends Token {
   }
 
   static AllEquals(targetStack: VarType[], receivedStack: VarType[]) {
-    if (targetStack.length != receivedStack.length) return falseClaimer;
+    if (targetStack.length != receivedStack.length) return false;
     for (var i = 0; i < targetStack.length; i++) {
       if (!targetStack[i].Equals(receivedStack[i])) return false;
     }
@@ -284,7 +298,7 @@ export class VarType extends Token {
     targetStack: VarType[],
     receivedStack: VarType[],
     restricted: Set<
-      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
     > = new Set(),
     sticky: boolean = false
   ): [success: boolean, count?: number] {
@@ -306,11 +320,10 @@ export class VarType extends Token {
 
         // Get all metamethods
         var metas: Set<
-          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
         > = new Set();
         for (let t in scope.UserTypes) {
-          var typ = scope.UserTypes[t];
-          typ.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
         }
         let metasArr = [...metas];
         // That are casts to and from
@@ -334,11 +347,11 @@ export class VarType extends Token {
 
         // Score all metas by how good a match they are
         var scoreArr: [
-          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]],
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]],
           score: number
         ][] = metasArr.map((c) => [
           c,
-          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) +
+          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
             VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
         ]);
         scoreArr.sort((a, b) => b[1] - a[1]);
@@ -347,13 +360,9 @@ export class VarType extends Token {
           continue;
         }
         let best = scoreArr[0][1];
-        scoreArr.filter((c) => c[1] >= best);
+        scoreArr = scoreArr.filter((c) => c[1] >= best);
         if (scoreArr.length > 1)
-          throw new Error(
-            `Ambigious casts from ${receivedStack.slice(
-              receivedPtr
-            )} to ${targetStack.slice(targetPtr)} (${scoreArr.length} choices)`
-          );
+          return [false, 0];
         let m = scoreArr[0][0];
         targetPtr += m[0].length;
         let r = new Set(restricted);
@@ -415,7 +424,7 @@ export class VarType extends Token {
     targetStack: VarType[],
     receivedStack: VarType[],
     restricted: Set<
-      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
     > = new Set(),
     cleanup: boolean = true,
     sticky: boolean = false
@@ -450,11 +459,10 @@ export class VarType extends Token {
 
         // Get all metamethods
         var metas: Set<
-          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
         > = new Set();
         for (let t in scope.UserTypes) {
-          var typ = scope.UserTypes[t];
-          typ.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
         }
         let metasArr = [...metas];
         // That are casts to and from
@@ -478,18 +486,18 @@ export class VarType extends Token {
 
         // Score all metas by how good a match they are
         var scoreArr: [
-          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]],
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]],
           score: number
         ][] = metasArr.map((c) => [
           c,
-          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) +
+          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
             VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
         ]);
         scoreArr.sort((a, b) => b[1] - a[1]);
         if (scoreArr.length === 0)
           throw new Error(`Failed to Coax (Missed check?)`);
         let best = scoreArr[0][1];
-        scoreArr.filter((c) => c[1] >= best);
+        scoreArr = scoreArr.filter((c) => c[1] >= best);
         if (scoreArr.length > 1)
           throw new Error(
             `Ambigious casts from ${receivedStack.slice(
@@ -546,6 +554,19 @@ export class VarType extends Token {
     t.PointerDepth = this.PointerDepth;
     t.TypeName = this.TypeName;
     t.Generics = this.Generics.concat();
+    return t;
+  }
+
+  WithPointerDepth(depth: number): VarType {
+    var t = this.Clone();
+    t.PointerDepth = depth;
+    return t;
+  }
+
+  WithDeltaPointerDepth(delta: number): VarType {
+    var t = this.Clone();
+    t.PointerDepth += delta;
+    if (t.PointerDepth < 0) throw new Error(`Pointer depth cannot be negative!`);
     return t;
   }
 

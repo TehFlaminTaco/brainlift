@@ -41,9 +41,12 @@ export class Parenthetical extends Expression implements Simplifyable {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    let v = this.Simplify();
+    let v = this.Simplify(scope);
     if (v !== null)
-      return [[VarType.Int], [this.GetLine(), `apush ${v & 0xffff}`]];
+      return [
+        [VarType.Int],
+        [this.GetLine(), `apush ${(v & 0xffffffff) >>> 0}`],
+      ];
     var receivedTypes: VarType[] = [];
     var o: string[] = [];
 
@@ -74,7 +77,7 @@ export class Parenthetical extends Expression implements Simplifyable {
     return outTypes;
   }
 
-  Simplify(): number | null {
+  Simplify(scope: Scope): number | null {
     if (
       this.Types.length > 0 &&
       (this.Types.length > 1 || !this.Types[0].Equals(VarType.Int))
@@ -82,7 +85,7 @@ export class Parenthetical extends Expression implements Simplifyable {
       return null;
     if (this.Values.length === 0) return null;
     if (IsSimplifyable(this.Values[0]))
-      return (this.Values[0] as unknown as Simplifyable).Simplify();
+      return (this.Values[0] as unknown as Simplifyable).Simplify(scope);
     return null;
   }
 }

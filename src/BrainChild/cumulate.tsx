@@ -61,10 +61,10 @@ export class Cumulate extends Expression implements Donor {
         o.push(`apopa`, `apusha`, `apusha`);
       }
       var metaName = (this.Operator === "add" ? "in" : "de") + `crement`;
-      var meta = t.GetDefinition().GetMetamethod(metaName, [t]);
+      var meta = scope.GetMetamethod(metaName, [t]);
       if (meta === null) {
         // Try the math operator instead
-        meta = t.GetDefinition().GetMetamethod(this.Operator, [t, VarType.Int]);
+        meta = scope.GetMetamethod(this.Operator, [t, VarType.Int]);
         o.push(`apush 1`);
       }
       if (meta === null) {

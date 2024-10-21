@@ -5,38 +5,38 @@ export function GenerateReadOnlys() {
   generated = true;
   GenerateReadOnly(
     "array.bc",
-    `class Array<T> {
-    int Length;
-    @T Data;
-    metamethod Array(int l){
+    `metamethod getindex<T>(Array<T> this, int i) -> T{
+    return *(this.Data+i%this.Length);
+}
+metamethod setindex<T>(Array<T> this, int i, T v){
+    *(this.Data+i%this.Length) = v;
+}
+metamethod ptrindex<T>(Array<T> this, int i) -> @T{
+    return this.Data+i%this.Length;
+}
+
+class Array<T> {
+    new(int l){
         this.Data = alloc(l);
         this.Length = l;
     }
-    
-    metamethod getindex(Array<T> this, int i) -> T{
-        return *(this.Data+i%this.Length);
-    }
-    metamethod setindex(Array<T> this, int i, T v){
-        *(this.Data+i%this.Length) = v;
-    }
-    metamethod ptrindex(Array<T> this, int i) -> @T{
-        return this.Data+i%this.Length;
-    }
-    function ReplaceV(func(T)->T over){
+    int Length;
+    @T Data;
+    virtual function ReplaceV(func(T)->T over){
         int i = 0;
         while(i < this.Length){
             this[i] = over(this[i]);
             i++;
         }
     }
-    function ReplaceK(func(int)->T over){
-        int i = 0;
+    virtual function ReplaceK(func(int)->T over){
+        int i = 0; 
         while(i < this.Length){
             this[i] = over(i);
             i++;
         }
     }
-    function ReplaceKV(func(int,T)->T over){
+    virtual function ReplaceKV(func(int,T)->T over){
         int i = 0;
         while(i < this.Length){
             this[i] = over(i, this[i]);
@@ -47,7 +47,7 @@ export function GenerateReadOnlys() {
   );
   GenerateReadOnly(
     "extmacros.bc",
-    `macro ( (assignable) (/(\\*\\*|[*\\/+-])/) "=" (expression) ) { $1 = $1 $2 $3 }
+    `macro ( (assignable) (/(\\*\\*|[*\\/+~-])/) "=" (expression) ) { $1 = $1 $2 $3 }
 macro ( 'for' "(" (expression?) ";" (expression?) ";" (expression?) ")" (expression) ) {
     {
         $1;
@@ -61,230 +61,473 @@ macro ( 'for' "(" (expression?) ";" (expression?) ";" (expression?) ")" (express
   );
   GenerateReadOnly(
     "float.bc",
-    `//!DEPRECATED
-function pow(int a, int b) -> int{
-    if(b == 1)return a;
-    if(b == 0)return 1;
-    if(b%2 == 1)return pow(a, b-1)*a;
-    int v = pow(a, b/2);
-    return v * v;
+    `metamethod get_sign(float this) -> int (this -> int) / 0x80000000;
+metamethod get_exponent(float this) -> int ((this -> int) / 0x800000) % 0x100;
+metamethod get_mantissa(float this) -> int (this -> int) % 0x800000;
+
+const int bias = 127+23;
+metamethod get_integer(float this) -> int {
+    int mantissa = this.mantissa + 0x800000;
+    int exponent = this.exponent;
+    if(exponent == 0xFF){ // MAXINT, Can be NaN but hecc NaN
+        return  if (this.sign)
+                    0x80000000
+                else
+                    0x7fffffff;
+    }
+    while(exponent < bias){
+        exponent ++;
+        mantissa = mantissa / 2;
+    }
+    while(exponent > bias){
+        exponent --;
+        mantissa = mantissa * 2;
+    }
+    if(this.sign == 1){
+        mantissa = 0-mantissa;
+    }
+    return mantissa;
 }
 
-abstract class sint7 {
-    metamethod get_sign(sint7 this) -> int {
-        return (this -> int) / 64;
+metamethod get_float(int this) -> float {
+    int sign = 0;
+    if (this > 0x7fffffff) {
+        sign = 1;
+        this = 0-this;
     }
-    metamethod get_value(sint7 this) -> int {
-        return (this -> int) % 64;
+    int mantissa = this;
+    int exponent = bias;
+    while(mantissa >= 0x1000000){
+        exponent ++;
+        mantissa = mantissa / 2;
     }
-    static function withSign(sint7 s, int sign) {
-        return (s.value + (sign * 64) -> sint7);
+    while(mantissa < 0x800000){
+        exponent --;
+        mantissa = mantissa * 2;
     }
-    static function withVal(sint7 s, int v) -> sint7 {
-        return (v + s.sign*64 -> sint7);
-    }
-    metamethod add(sint7 a, sint7 b) -> sint7 {
-        return (((a->int) + (b->int))%128 -> sint7);
-    }
-    metamethod sub(sint7 a, sint7 b) -> sint7 {
-        return (((a->int) - (b->int))%128 -> sint7);
-    }
-    metamethod increment(sint7 a) -> sint7 {
-        return (((a->int)+1)%128 -> sint7);
-    }
-    metamethod decrement(sint7 a) -> sint7 {
-        return (((a->int)-1)%128 -> sint7);
-    }
-    metamethod gt(sint7 a, sint7 b) -> int {
-        int as = a.sign;
-        int bs = b.sign;
-        if(as > bs)return bs;
-        if(bs > as)return as;
-        return a.value > b.value;
-    }
-    metamethod lt(sint7 a, sint7 b) -> int {
-        int as = a.sign;
-        int bs = b.sign;
-        if(as > bs)return as;
-        if(bs > as)return bs;
-        return a.value < b.value;
-    }
-    metamethod eq(sint7 a, sint7 b) -> int {
-        return (a -> int) == (b -> int);
-    }
-    metamethod cast(int i) -> sint7 {
-        return (i%64 -> sint7);
-    }
+    return ((sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000) -> float);
+}
+
+metamethod unm(float this) -> float {
+    return this.withSign(1 - this.sign);
 }
 
 abstract class float {
-    static function fromParts(int fract, sint7 exp, int sign) -> float {
-        return ( fract + ((exp -> int) + sign * 128)*256 -> float);
-    }
+    static const float one = 0x3F800000;
+    static const float zero = 0;
 
-    metamethod get_high(float f) -> int {
-        return (f->int)/256;
+    static function make(int sign, int exponent, int mantissa) -> float
+        ((sign * 0x80000000) + (exponent * 0x800000) + mantissa -> float);
+    virtual function withSign(int sign) -> float
+        float.make(sign, this.exponent, this.mantissa);
+    virtual function withExponent(int exponent) -> float
+        float.make(this.sign, exponent, this.mantissa);
+    virtual function withMantissa(int mantissa) -> float
+        float.make(this.sign, this.exponent, mantissa);
+    static function _sub(float this, float other) -> float {
+        if(this.sign != other.sign){
+            return float._add(this,-other);
+        }
+        if((this -> int) == 0)
+            return -other;
+        if((other -> int) == 0)
+        // Get both mantissas with their implied 1
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // Get both exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        // Shift left the smaller mantissa to match the larger one
+        // We don't actually have bitshift, so we have to manually multiply
+        while(exponentA < exponentB){
+            exponentA ++;
+            mantissaA = mantissaA / 2;
+        }
+        while(exponentB < exponentA){
+            exponentB ++;
+            mantissaB = mantissaB / 2;
+        }
+        // Subtract the mantissas
+        int mantissaC = mantissaA - mantissaB;
+        // Normalize the mantissa
+        while(mantissaC < 0x800000){
+            exponentA --;
+            mantissaC = mantissaC * 2;
+        }
+        // Return the result
+        return float.make(this.sign, exponentA, mantissaC % 0x800000);
     }
-    metamethod get_sign(float f) -> int {
-        return f.high/128;
+    static function _add(float this, float other) -> float {
+        if((this -> int) == 0)
+            return other;
+        if((other -> int) == 0)
+            return this;
+        if(this.sign != other.sign){
+            return float._sub(this,-other);
+        }
+        // Get both mantissas with their implied 1
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // Get both exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        // Shift left the smaller mantissa to match the larger one
+        // We don't actually have bitshift, so we have to manually multiply
+        while(exponentA < exponentB){
+            exponentA ++;
+            mantissaA = mantissaA / 2;
+        }
+        while(exponentB < exponentA){
+            exponentB ++;
+            mantissaB = mantissaB / 2;
+        }
+        // Add the mantissas
+        int mantissaC = mantissaA + mantissaB;
+        // Normalize the mantissa
+        while(mantissaC >= 0x1000000){
+            exponentA ++;
+            mantissaC = mantissaC / 2;
+        }
+        // Return the result
+        return float.make(this.sign, exponentA, mantissaC % 0x800000);
     }
-    metamethod get_exp(float f) -> sint7 {
-        return ( f.high%128 -> sint7 );
+    static function _mul(float this, float other) -> float {
+        if((this -> int) == 0)
+            return (0 -> float);
+        if((other -> int) == 0)
+            return (0 -> float);
+        // Get both mantissas with their implied 1
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // Get both exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        int exponentC = (exponentA + exponentB) - 134;
+        // Multiply the mantissas
+        int mantissaC = (mantissaA / 0x100) * (mantissaB / 0x100);
+        // Normalize the mantissa
+        while(mantissaC >= 0x1000000){
+            exponentC ++;
+            mantissaC = mantissaC / 2;
+        }
+        // Return the result
+        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);
     }
-    metamethod get_fract(float f) -> int {
-        return (f->int)%256;
+    static function _div(float this, float other) -> float {
+        if((this -> int) == 0)
+            return (0 -> float);
+        if((other -> int) == 0)
+            return (0x7fc00000 -> float);
+        // Floating point Division
+        // Apparently this is just like fancy fixed-point division
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        
+        int mantissaC = 0;
+        int div, int rem = (mantissaA * 0x100) /% mantissaB;
+        mantissaC = div * 0x8000;
+        div, rem = (rem * 0x100) /% mantissaB;
+        mantissaC = mantissaC + (div * 0x80);
+        div, rem = (rem * 0x100) /% mantissaB;
+        mantissaC = mantissaC + (div / 2);
+        int exponentC = (exponentA - exponentB) + 127;
+
+        if(mantissaC == 0){
+            return (0 -> float);
+        }
+        while(mantissaC < 0x800000){
+            exponentC --;
+            mantissaC = mantissaC * 2;
+        }
+        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);
     }
-    metamethod get_parts(float f) -> int, sint7, int {
-        return f.fract, f.exp, f.sign;
-    }
-    
-    static function withHigh(float f, int h) -> float {
-        return ( f.sign + (h * 256) -> float );
-    }
-    static function withSign(float f, int sign) -> float {
-        return float.fromParts(f.fract, f.exp, sign);
-    }
-    static function withExp(float f, sint7 exp) -> float {
-        return float.fromParts(f.fract, exp, f.sign);
-    }
-    
-    static function shiftExp(float f, sint7 amount) -> float {
-        int ff, sint7 fe, int fs = f.parts;
-        if(amount < 0){
-            while(amount!=0){
-                ff = ff * 2;
-                amount++;
-                fe--;
+    static function _pow(float this, int base) -> float {
+        if (base == 0) {
+            return (0x3F800000 -> float);
+        }
+        if ((this -> int) == 0) {
+            return (0x0 -> float);
+        }
+        // Use simple binary exponentiation
+        float result = (0x3F800000 -> float);
+        while (base > 0) {
+            if (base % 2 == 1) {
+                result = float._mul(result, this);
             }
+            this = float._mul(this, this);
+            base = base / 2;
+        }
+        return result;
+    }
+    static function _mod(float this, float other) -> float {
+        if((this -> int) == 0)
+            return (0 -> float);
+        if((other -> int) == 0)
+            return (0x7fc00000 -> float);
+        // Get both their mantissas
+        int mantissaA = this.mantissa + 0x800000;
+        int mantissaB = other.mantissa + 0x800000;
+        // And their exponents
+        int exponentA = this.exponent;
+        int exponentB = other.exponent;
+        // If A has a smaller exponant than B, return A (Because it will never be bigger than B)
+        if(exponentA < exponentB){
+            return this;
+        }
+        // Shift A until it has the same exponant as B
+        while(exponentA > exponentB){
+            exponentA --;
+            mantissaA = mantissaA * 2;
+        }
+        // Perform the modulo on the mantissas
+        int mantissaC = mantissaA % mantissaB;
+        if(mantissaC == 0){
+            return (0 -> float);
+        }
+        // Normalize the mantissa
+        while(mantissaC < 0x800000){
+            exponentA --;
+            mantissaC = mantissaC * 2;
+        }
+        // Return the result
+        return float.make(this.sign, exponentA, mantissaC % 0x800000);
+    }
+}
+
+metamethod sub(float this, float other) -> float
+    float._sub(this, other);
+
+metamethod add(float this, float other) -> float
+    float._add(this, other);
+
+metamethod mul(float this, float other) -> float
+    float._mul(this, other);
+
+metamethod div(float this, float other) -> float
+    float._div(this, other);
+
+metamethod pow(float this, int other) -> float
+    float._pow(this, other);
+
+metamethod mod(float this, float other) -> float
+    float._mod(this, other);
+
+macro ( '__divide_float' (number) ',' (number) ) { const {
+    const int A = $1;
+    const int other = $2;
+    if(A == 0)
+        0
+    else if(other == 0)
+        0x7fc00000
+    else {
+        const int mantissaA = (A%0x800000) + 0x800000;
+        const int mantissaB = (other%0x800000) + 0x800000;
+        const int exponentA = (A/0x800000)%0x100;
+        const int exponentB = (other/0x800000)%0x100; 
+        
+        const int mantissaC = 0;
+        const int div = (mantissaA * 0x100) / mantissaB;
+        const int rem = (mantissaA * 0x100) % mantissaB;
+        const mantissaC = div * 0x8000; 
+        const div = (rem * 0x100) / mantissaB;
+        const rem = (rem * 0x100) % mantissaB;
+        const mantissaC = mantissaC + (div * 0x80);
+        const div = (rem * 0x100) / mantissaB;
+        const rem = (rem * 0x100) % mantissaB;
+        const mantissaC = mantissaC + (div / 2);
+        const int exponentC = (exponentA - exponentB) + 127;
+    
+        const if(mantissaC == 0){
+            0;
         }else{
-            while(amount!=0){
-                ff = ff / 2;
-                amount--;
-                fe++;
+            const while(mantissaC < 0x800000){
+                exponentC = exponentC - 1;
+                mantissaC = mantissaC * 2;
             }
+            const ((((A/0x80000000) + (other/0x80000000))%2)*0x80000000) + ((exponentC%0x100) * 0x800000) + (mantissaC % 0x800000);
         }
-        ff = ff % 256;
-        return float.fromParts(ff, fe, fs);
     }
-    
-    metamethod get_neg(float f) -> float {
-        return float.withSign(f, 1 - f.sign);
-    }
-    
-    metamethod add(float a, float b) -> float {
-        int as = a.sign;
-        int bs = b.sign;
-        if(bs != as)return a - b.neg;
-        sint7 ae = a.exp;
-        sint7 be = b.exp;
-        sint7 e = ae;
-        if(be > ae)e = be;
-        a = float.shiftExp(a, e - ae);
-        b = float.shiftExp(b, e - be);
-        int af = a.fract;
-        int bf = b.fract;
-        int f = af + bf;
-        while(f >= 256){
-            f = f / 2;
-            e = e + 1;
-        }
-        return float.fromParts(f, e, as);
-    }
-    metamethod sub(float a, float b) -> float {
-        int as = a.sign;
-        int bs = b.sign;
-        if(bs != as)return a - b.neg;
-        sint7 ae = a.exp;
-        sint7 be = b.exp;
-        sint7 e = ae;
-        if(be > ae)e = be;
-        a = float.shiftExp(a, e - ae);
-        b = float.shiftExp(b, e - be);
-        int af = a.fract;
-        int bf = b.fract;
-        int f = (af - bf)%256;
-        if(bf > af){
-            f = (bf - af)%256;
-            as = 1 - as;
-        }
-        return float.fromParts(f, e, as);
-    }
-    metamethod mul(float a, float b) -> float {
-        int as = a.sign;
-        int bs = b.sign
-        int s = as != bs;
-        sint7 ae = a.exp;
-        sint7 be = b.exp;
-        sint7 e = ae;
-        if(ae < be){a = float.shiftExp(a, be - ae); e = be}
-        else b = float.shiftExp(b, ae - be);
-        
-        int af = a.fract;
-        int bf = b.fract;
-        int f = af * bf;
-        while(f >= 256){
-            f = f / 2;
-            e++;
-        }
-        return float.fromParts(f, e, s);
-    }
-    metamethod div(float a, float b) -> float {
-        int as = a.sign;
-        int bs = b.sign;
-        int s = as != bs;
-        sint7 ae = a.exp;
-        sint7 be = b.exp;
-        sint7 e = ae;
-        if(ae < be){a = float.shiftExp(a, be - ae); e = be}
-        else b = float.shiftExp(b, ae - be);
-        
-        int af = a.fract;
-        int bf = b.fract;
-        int f, int m = af /% bf;
-        m = m * (256 / bf);
-        int leadingZeroes = 0;
-        while((leadingZeroes < 8) * (m%pow(2,leadingZeroes) == 0)){
-            leadingZeroes++;
-        }
-        while((leadingZeroes < 8) * (f < 128)){
-            f = f * 2;
-            m = m * 2;
-            f = f + (m/256);
-            m = m % 256;
-            e--;
-            leadingZeroes++;
-        }
-        return float.fromParts(f, e, s);
-    }
-}`
+}}
+
+macro ( '__number_to_float' (number) ) { const {
+        const int A = $1;
+        const int sign = 0;
+        const if (A > 0x7fffffff) {
+            sign = 1;
+            A = 0-A; 
+        }else {0}
+        const int mantissa = A;
+        const int exponent = bias;
+        const while(mantissa >= 0x1000000){
+            exponent = exponent + 1;
+            mantissa = mantissa / 2;
+        };
+        const while(mantissa < 0x800000){
+            exponent = exponent - 1;
+            mantissa = mantissa * 2; 
+        };
+        const (sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000); 
+} }
+
+macro ( '__count_digits' /\\d/ (/\\d+/)) {1+__count_digits $1}
+macro ( '__count_digits' /\\d/) {1}
+
+macro ( '__tenth_power' (number) ) {const {
+    const int t = 1;
+    const int i = 1+$1;
+    const while(i=i-1)t = t * 10;
+    t;
+}} 
+
+macro ( (number) '.' (/\\d+/) 'f' ) { (const {
+    const int divisor = (__tenth_power __count_digits $2);
+    const int numerator = $1;
+    numerator = (numerator * divisor) + $2;
+    (__divide_float (__number_to_float numerator) , (__number_to_float divisor));
+} -> float) }`
   );
   GenerateReadOnly(
-    "random.bc",
-    `int seed = 1;
+    "int.bc",
+    `metamethod pow(int _a, int _b) -> int {
+    if(!_b)
+        return 1;
+    if(_b == 1)
+        return _a;
+    int _result = 1;
+    while(_b > 0){
+        if(!(_b%2)){
+            _b = _b / 2;
+            _a = _a * _a;
+        }else{
+            _b = _b - 1
+            _result = _result * _a;
+            _b = _b / 2;
+            _a = _a * _a
+        }
+    }
+    return _result;
+}
+metamethod bshl(int _a, int _b) -> int {
+    return _a * (2 ^ _b);
+}
+metamethod bshr(int _a, int _b) -> int {
+    return _a / (2 ^ _b);
+}
+metamethod band(int _a, int _b) -> int {
+    int _o = 0;
+    int _i = 1;
+    while (_i){
+        _o = _o + ((_a%2)*(_b%2))*_i;
+        _i = _i * 2;
+        _a = _a / 2;
+        _b = _b / 2;
+    }
+    return _o;
+}
+metamethod bor(int _a, int _b) -> int {
+    int _o = 0;
+    int _i = 1;
+    while (_i){
+        _o = _o + !(!(_a%2)*!(_b%2))*_i;
+        _i = _i * 2;
+        _a = _a / 2;
+        _b = _b / 2;
+    }
+    return _o;
+}
+metamethod bxor(int _a, int _b) -> int {
+    int _o = 0;
+    int _i = 1;
+    while (_i){
+        _o = _o + (_a%2!=_b%2)*_i;
+        _i = _i * 2;
+        _a = _a / 2;
+        _b = _b / 2;
+    }
+    return _o;
+}
 
-function rand() -> int{
-    seed = (seed * 128) + seed + 85;
-    return seed;
-}`
+// int can cast to everything implicitely, via modulo
+// Whilst int acts as an insigned value generally, we allow it to be cast to signed values destructively.
+metamethod cast(int _i) -> u32 (_i -> u32);
+metamethod cast(int _i) -> s32 (_i -> s32);
+// Likewise, everything can cast to int implicitly
+metamethod cast(u32 _i) -> int (_i -> int);
+metamethod cast(s32 _i) -> int (_i -> int);
+// u32s can cast to u16 and u8, and so on (Including in reverse)
+metamethod cast(u32 _i) -> u16 ((_i -> int) % 0x10000 -> u16);
+metamethod cast(u32 _i) -> u8  ((_i -> int) % 0x100 -> u8);
+metamethod cast(u16 _i) -> u32 ((_i -> int) -> u32);
+metamethod cast(u16 _i) -> u8  ((_i -> int) % 0x100 -> u8);
+metamethod cast(u8  _i) -> u32 ((_i -> int) -> u32);
+metamethod cast(u8  _i) -> u16 ((_i -> int) -> u16);
+// Same with signed values, although special attention must be paid to the sign bit
+// To go from s32, we take the value % 0x8000, which leaves 15 bits of data and the sign bit
+// We transfer the sign bit by adding (_i / 0x80000000) * 0x8000, Same for the other bits and values
+metamethod cast(s32 _i) -> s16 (
+    ((_i -> int) % 0x8000) + ((_i -> int) / 0x80000000) * 0x8000 -> s16
+);
+metamethod cast(s32 _i) -> s8 (
+    ((_i -> int) % 0x80) + ((_i -> int) / 0x80000000) * 0x80 -> s8
+);
+metamethod cast(s16 _i) -> s32 (
+    ((_i -> int) % 0x8000) + ((_i -> int) / 0x8000) * 0x80000000 -> s32
+);
+metamethod cast(s16 _i) -> s8 (
+    ((_i -> int) % 0x80) + ((_i -> int) / 0x8000) * 0x80 -> s8
+);
+metamethod cast(s8 _i) -> s32 (
+    ((_i -> int) % 0x8000) + ((_i -> int) / 0x80) * 0x80000000 -> s32
+);
+metamethod cast(s8 _i) -> s16 (
+    ((_i -> int) % 0x80) + ((_i -> int) / 0x80) * 0x8000 -> s16
+);
+// Finally, u32 cast to s32 and so on, though without the sign bit
+metamethod get_signed(u32 _i) -> s32 ((_i -> int) % 0x80000000 -> s32);
+metamethod get_unsigned(s32 _i) -> u32 ((_i -> int) % 0x80000000 -> u32);
+
+metamethod lt(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) < ((_b -> int)+0x80000000) ;
+metamethod gt(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) > ((_b -> int)+0x80000000) ;
+metamethod le(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) <= ((_b -> int)+0x80000000) ;
+metamethod ge(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) >= ((_b -> int)+0x80000000) ;
+
+abstract class u32 {}
+abstract class u16 {}
+abstract class u8  {}
+abstract class s32 {}
+abstract class s16 {}
+abstract class s8  {}`
   );
   GenerateReadOnly(
     "stack.bc",
-    `class Stack<T> {
+    `metamethod getindex(Stack<T> this, int i) -> T{
+    return *(this.Data+i%this.Length);
+}
+metamethod setindex(Stack<T> this, int i, T v){
+    *(this.Data+i%this.Length) = v;
+}
+metamethod ptrindex(Stack<T> this, int i) -> @T{
+    return this.Data+i%this.Length;
+}
+
+class Stack<T> {
     int Capacity;
     int Length;
     @T Data;
     
-    metamethod Stack(){
+    new(){
         this.Capacity = 8;
         this.Data = alloc(8);
     }
     
-    metamethod Stack(int cap){
+    new(int cap){
         this.Capacity = cap;
         this.Data = alloc(cap);
     }
-    
-    function Push(T v){
+     
+    virtual function Push(T v){
         if(this.Length == this.Capacity){
             @T newBuff = alloc(this.Capacity * 2);
             int i = 0;
@@ -300,33 +543,24 @@ function rand() -> int{
         *(this.Data + this.Length) = v;
         this.Length++;
     }
-    function Pop() -> T {
+    virtual function Pop() -> T {
         if(this.Length){
             this.Length--;
             return *(this.Data + this.Length);
         }
         return (0 -> T);
     }
-    function Peek() -> T {
+    virtual function Peek() -> T {
         if(this.Length) return *(this.Data + this.Length - 1);
         return (0 -> T);
     }
-    function Has() -> int {
+    virtual function Has() -> int {
         if this.Length return 1;
         return 0;
     }
-    metamethod getindex(Stack<T> this, int i) -> T{
-        return *(this.Data+i%this.Length);
-    }
-    metamethod setindex(Stack<T> this, int i, T v){
-        *(this.Data+i%this.Length) = v;
-    }
-    metamethod ptrindex(Stack<T> this, int i) -> @T{
-        return this.Data+i%this.Length;
-    }
 }`
   );
-  GenerateReadOnly(
+  /*GenerateReadOnly(
     "string.bc",
     `include array.bc;
 
@@ -390,20 +624,20 @@ class String : Array<int> {
 String.ZERO = new String("0");`
   );
 
-  GenerateReadOnly(
+  */ GenerateReadOnly(
     "term.bc",
     `include stack.bc;
 
+metamethod get_R(Color3B c) -> int {
+    return (c->int)%2;
+}
+metamethod get_G(Color3B c) -> int {
+    return ((c->int)/2)%2;
+}
+metamethod get_B(Color3B c) -> int {
+    return ((c->int)/4)%2;
+}
 abstract class Color3B {
-    metamethod get_R(Color3B c) -> int {
-        return (c->int)%2;
-    }
-    metamethod get_G(Color3B c) -> int {
-        return ((c->int)/2)%2;
-    }
-    metamethod get_B(Color3B c) -> int {
-        return ((c->int)/4)%2;
-    }
     static function FromRGB(int r, int g, int b) -> Color3B{
         return ((r%2) + (g%2)*2 + (b%2)*4 -> Color3B);
     }
@@ -418,7 +652,7 @@ Color3B Magenta = (5 -> Color3B);
 Color3B Cyan    = (6 -> Color3B);
 Color3B White   = (7 -> Color3B);
 
-int _, @int numBuffer = "00000";
+@int numBuffer = ("00000")+1;
 abstract class Term {
     static function WriteChar(int n){
         asm { seta [n]
@@ -434,7 +668,12 @@ abstract class Term {
         return n;
     }
     
-    static function Write(int length, @int data){
+    static function Write(@int data){
+        int length = data++;
+        while(length--)Term.WriteChar(data++);
+    }
+    
+    static function WriteLen(int length, @int data){
         while(length--)Term.WriteChar(data++);
     }
     
@@ -446,7 +685,7 @@ abstract class Term {
             *((numBuffer+4)-l) = '0' + m;
             l++;
         }
-        Term.Write(l, (numBuffer+5)-l);
+        Term.WriteLen(l, (numBuffer+5)-l);
     }
     
     static function smethod(int c){
@@ -489,7 +728,7 @@ abstract class Term {
             int i = 0;
             if(r == 1){
                 while(i < Term.Click.Length){
-                    Term.Click[i++](low, high)
+                    (Term.Click[i++] -> func(int,int))(low, high)
                 }
             }else if (r == 2){
                 while(i < Term.KeyDown.Length){
@@ -509,76 +748,66 @@ abstract class Term {
     
     
     
-    static Stack<func(int,int)> KeyDown;
-    static Stack<func(int,int)> KeyUp;
-    static Stack<func(int,int)> Click;
-    static Stack<func()> Frame;
+    static Stack<func(int,int)> KeyDown = reserve Stack(1);
+    static Stack<func(int,int)> KeyUp = reserve Stack(1);
+    static Stack<func(int,int)> Click = reserve Stack(1);
+    static Stack<func()> Frame = reserve Stack(1);
 }
 
-Term.KeyDown = new Stack(1);
-Term.KeyUp = new Stack(1);
-Term.Click = new Stack(1);
-Term.Frame = new Stack(1);
+metamethod get_Fore(__Style s) -> void{return 0;}
+metamethod get_Back(__Style s) -> void{return 0;}
+metamethod get_Bold(__Style s) -> void{return 0;}
+metamethod get_Italic(__Style s) -> void{return 0;}
+metamethod get_Underline(__Style s) -> void{return 0;}
+metamethod get_Striked(__Style s) -> void{return 0;}
 
-class __Style {
-    metamethod get_Fore(__Style s) -> void{return 0;}
-    metamethod get_Back(__Style s) -> void{return 0;}
-    metamethod get_Bold(__Style s) -> void{return 0;}
-    metamethod get_Italic(__Style s) -> void{return 0;}
-    metamethod get_Underline(__Style s) -> void{return 0;}
-    metamethod get_Striked(__Style s) -> void{return 0;}
-    
-    metamethod set_Fore(__Style s, Color3B col){
-        return Term.format(30 + (col -> int));
-    }
-    metamethod set_Back(__Style s, Color3B col){
-        return Term.format(40 + (col -> int));
-    }
-    metamethod set_Bold(__Style s, int b){
-        if(b)Term.format(1)
-        else Term.format(22);
-    }
-    metamethod set_Italic(__Style s, int b){
-        if(b)Term.format(3)
-        else Term.format(23);
-    }
-    metamethod set_Underline(__Style s, int b){
-        if(b)Term.format(4)
-        else Term.format(24);
-    }
-    metamethod set_Striked(__Style s, int b){
-        if(b)Term.format(9)
-        else Term.format(29);
-    }
-    metamethod __Style(){};
+metamethod set_Fore(__Style s, Color3B col){
+    return Term.format(30 + (col -> int));
+}
+metamethod set_Back(__Style s, Color3B col){
+    return Term.format(40 + (col -> int));
+}
+metamethod set_Bold(__Style s, int b){
+    if(b)Term.format(1)
+    else Term.format(22);
+}
+metamethod set_Italic(__Style s, int b){
+    if(b)Term.format(3)
+    else Term.format(23);
+}
+metamethod set_Underline(__Style s, int b){
+    if(b)Term.format(4)
+    else Term.format(24);
+}
+metamethod set_Striked(__Style s, int b){
+    if(b)Term.format(9)
+    else Term.format(29);
+}
+abstract class __Style {
 }
 
-class __Cursor {
-    metamethod get_X(__Cursor c) -> void {return 0};
-    metamethod get_Y(__Cursor c) -> void {return 0};
-    metamethod get_Up(__Cursor c) -> void {return 0};
-    metamethod get_Down(__Cursor c) -> void {return 0};
-    metamethod get_Left(__Cursor c) -> void {return 0};
-    metamethod get_Right(__Cursor c) -> void {return 0};
-    
-    metamethod set_X(__Cursor c, int x){ return Term.method(x, 'G') }
-    metamethod set_Y(__Cursor c, int y){ return Term.method(y, 'H') }
-    function Up(int n){ return Term.method(n, 'A') }
-    function Down(int n){ return Term.method(n, 'B') }
-    function Left(int n){ return Term.method(n, 'D') }
-    function Right(int n){ return Term.method(n, 'C') }
-    function Push(){ return Term.smethod('s') }
-    function Pop(){ return Term.smethod('u') }
-    function Reset(){ return Term.smethod('H') }
-    function NextLine(){ return Term.method(1, 'E') }
-    function PrevLine(){ return Term.method(1, 'F') }
-    metamethod __Cursor(){};
-}
+metamethod get_X(__Cursor c) -> void {return 0};
+metamethod get_Y(__Cursor c) -> void {return 0};
+metamethod get_Up(__Cursor c) -> void {return 0};
+metamethod get_Down(__Cursor c) -> void {return 0};
+metamethod get_Left(__Cursor c) -> void {return 0};
+metamethod get_Right(__Cursor c) -> void {return 0};
 
-Term.Style = new __Style();
-Term.Cursor = new __Cursor();`
+metamethod set_X(__Cursor c, int x){ return Term.method(x, 'G') }
+metamethod set_Y(__Cursor c, int y){ return Term.method(y, 'H') }
+abstract class __Cursor {
+    virtual function Up(int n){ return Term.method(n, 'A') }
+    virtual function Down(int n){ return Term.method(n, 'B') }
+    virtual function Left(int n){ return Term.method(n, 'D') }
+    virtual function Right(int n){ return Term.method(n, 'C') }
+    virtual function Push(){ return Term.smethod('s') }
+    virtual function Pop(){ return Term.smethod('u') }
+    virtual function Reset(){ return Term.smethod('H') }
+    virtual function NextLine(){ return Term.method(1, 'E') }
+    virtual function PrevLine(){ return Term.method(1, 'F') }
+}`
   );
-  GenerateReadOnly(
+  /* GenerateReadOnly(
     "tree.bc",
     `include stack.bc;
 void NULL;
@@ -732,5 +961,5 @@ class Tree<T> {
     
     metamethod Tree(){}
 }`
-  );
+  );*/
 }

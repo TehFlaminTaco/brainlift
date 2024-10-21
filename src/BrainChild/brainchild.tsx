@@ -29,6 +29,7 @@ export var Keywords = [
   "abstract",
   "asm",
   "class",
+  "const",
   "else",
   "func",
   "function",
@@ -39,6 +40,8 @@ export var Keywords = [
   "macro",
   "metamethod",
   "new",
+  "params",
+  "reserve",
   "return",
   "static",
   "var",
@@ -202,10 +205,27 @@ export async function Parse(files: { [file: string]: string }): Promise<Scope> {
     }
 
     var curLength = 0;
+    console.log(typeDefs.map((c) => c.Name!.Name));
     while (typeDefs.length > 0 && typeDefs.length !== curLength) {
       curLength = typeDefs.length;
+      let unparsed: Set<string> = new Set();
+      typeDefs.forEach((j) => unparsed.add(j.FromFile));
+      console.log(typeDefs, Include.Includes, unparsed);
+      typeDefs = typeDefs.filter((c) => {
+        console.log(c.FromFile, c.Name!.Name);
+        if (
+          Include.Includes[c.FromFile] !== undefined &&
+          [...Include.Includes[c.FromFile]].some((j) => unparsed.has(j))
+        )
+          return true;
+        return !c.TrySetup(scope);
+      });
+    }
+    if (typeDefs.length > 0) {
       console.log(typeDefs);
-      typeDefs = typeDefs.filter((c) => !c.TrySetup(scope));
+      throw new Error(
+        `Failed to resolve types: ${typeDefs.map((c) => c.Name).join(", ")}`
+      );
     }
     waitTimeout = setTimeout(() => {
       try {

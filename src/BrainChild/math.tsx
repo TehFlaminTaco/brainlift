@@ -10,12 +10,15 @@ export let operators: [
   Precedence: number,
   LeftRightAssociative: boolean
 ][] = [
+  [/\^/, "pow", 13, false],
   [/\*/, "mul", 12, true],
   [/\/%/, "divmod", 12, true],
   [/\//, "div", 12, true],
   [/%/, "mod", 12, true],
   [/\+/, "add", 11, true],
   [/-/, "sub", 11, true],
+  [/<</, "bshl", 10, true],
+  [/>>/, "bshr", 10, true],
   [/<=/, "le", 9, true],
   [/>=/, "ge", 9, true],
   [/</, "lt", 9, true],
@@ -24,6 +27,10 @@ export let operators: [
   [/!=/, "ne", 8, true],
   [/&&/, "and", 4, true],
   [/\|\|/, "or", 3, true],
+
+  [/&/, "band", 7, true],
+  [/~/, "bxor", 6, true],
+  [/\|/, "bor", 5, true],
 ];
 
 export let unaryOperators: [Match: RegExp, Meta: string, Precedence: number][] =
@@ -31,6 +38,7 @@ export let unaryOperators: [Match: RegExp, Meta: string, Precedence: number][] =
     [/!/, "not", 14],
     [/-/, "unm", 14],
     [/\+/, "unp", 14],
+    [/~/, "bnot", 14],
   ];
 
 export class MathExp
@@ -67,9 +75,12 @@ export class MathExp
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    let v = this.Simplify();
+    let v = this.Simplify(scope);
     if (v !== null)
-      return [[VarType.Int], [this.GetLine(), `apush ${v & 0xffff}`]];
+      return [
+        [VarType.Int],
+        [this.GetLine(), `apush ${(v & 0xffffffff) >>> 0}`],
+      ];
     let o: string[] = [this.GetLine()];
     if (this.Operator === "and") {
       throw new Error("TODO");
@@ -90,14 +101,7 @@ export class MathExp
     let metamethod:
       | [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
       | null = null;
-    for (let i = 0; i < bothArgs.length; i++) {
-      metamethod = bothArgs[i]
-        .GetDefinition()
-        .GetMetamethod(this.Operator, bothArgs);
-      if (metamethod !== null) {
-        break;
-      }
-    }
+    metamethod = scope.GetMetamethod(this.Operator, bothArgs);
     if (metamethod === null) {
       throw new Error(
         `No method for operator '${this.Operator}' for types ${bothArgs}`
@@ -109,7 +113,7 @@ export class MathExp
   }
 
   GetTypes(scope: Scope): VarType[] {
-    if (this.Simplify() !== null) return [VarType.Int];
+    if (this.Simplify(scope) !== null) return [VarType.Int];
     if (this.Operator === "and") {
       throw new Error("TODO");
     }
@@ -126,14 +130,7 @@ export class MathExp
     let metamethod:
       | [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
       | null = null;
-    for (let i = 0; i < bothArgs.length; i++) {
-      metamethod = bothArgs[i]
-        .GetDefinition()
-        .GetMetamethod(this.Operator, bothArgs);
-      if (metamethod !== null) {
-        break;
-      }
-    }
+    metamethod = scope.GetMetamethod(this.Operator, bothArgs);
     if (metamethod === null) {
       throw new Error(
         `No method for operator '${this.Operator}' for types ${bothArgs}`
@@ -142,38 +139,38 @@ export class MathExp
     return metamethod[0];
   }
 
-  Simplify(): number | null {
+  Simplify(scope: Scope): number | null {
     if (IsSimplifyable(this.Left) && IsSimplifyable(this.Right)) {
-      let left = (this.Left as unknown as Simplifyable).Simplify();
-      let right = (this.Right as unknown as Simplifyable).Simplify();
+      let left = (this.Left as unknown as Simplifyable).Simplify(scope);
+      let right = (this.Right as unknown as Simplifyable).Simplify(scope);
       if (left !== null && right !== null) {
         switch (this.Operator) {
           case "mul":
-            return left * right;
+            return ((left * right) & 0xffffffff) >>> 0;
           case "div":
-            return left / right;
+            return ((left / right) & 0xffffffff) >>> 0;
           case "mod":
-            return left % right;
+            return (left % right & 0xffffffff) >>> 0;
           case "add":
-            return left + right;
+            return ((left + right) & 0xffffffff) >>> 0;
           case "sub":
-            return left - right;
+            return ((left - right) & 0xffffffff) >>> 0;
           case "le":
-            return left <= right ? 1 : 0;
+            return ((left <= right ? 1 : 0) & 0xffffffff) >>> 0;
           case "ge":
-            return left >= right ? 1 : 0;
+            return ((left >= right ? 1 : 0) & 0xffffffff) >>> 0;
           case "lt":
-            return left < right ? 1 : 0;
+            return ((left < right ? 1 : 0) & 0xffffffff) >>> 0;
           case "gt":
-            return left > right ? 1 : 0;
+            return ((left > right ? 1 : 0) & 0xffffffff) >>> 0;
           case "eq":
-            return left === right ? 1 : 0;
+            return ((left === right ? 1 : 0) & 0xffffffff) >>> 0;
           case "ne":
-            return left !== right ? 1 : 0;
+            return ((left !== right ? 1 : 0) & 0xffffffff) >>> 0;
           case "and":
-            return left && right;
+            return ((left && right) & 0xffffffff) >>> 0;
           case "or":
-            return left || right;
+            return ((left || right) & 0xffffffff) >>> 0;
         }
       }
     }
@@ -212,9 +209,12 @@ export class UnaryMathExp
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    let v = this.Simplify();
+    let v = this.Simplify(scope);
     if (v !== null)
-      return [[VarType.Int], [this.GetLine(), `apush ${v & 0xffff}`]];
+      return [
+        [VarType.Int],
+        [this.GetLine(), `apush ${(v & 0xffffffff) >>> 0}`],
+      ];
     let o: string[] = [this.GetLine()];
     if (this.Operator === "and") {
       throw new Error("TODO");
@@ -230,14 +230,7 @@ export class UnaryMathExp
     let metamethod:
       | [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
       | null = null;
-    for (let i = 0; i < bothArgs.length; i++) {
-      metamethod = bothArgs[i]
-        .GetDefinition()
-        .GetMetamethod(this.Operator, bothArgs);
-      if (metamethod !== null) {
-        break;
-      }
-    }
+    metamethod = scope.GetMetamethod(this.Operator, bothArgs);
     if (metamethod === null) {
       throw new Error(
         `No method for operator '${this.Operator}' for types ${bothArgs}`
@@ -249,7 +242,7 @@ export class UnaryMathExp
   }
 
   GetTypes(scope: Scope): VarType[] {
-    if (this.Simplify() !== null) return [VarType.Int];
+    if (this.Simplify(scope) !== null) return [VarType.Int];
     let bothArgs = [];
     let right = this.Right!.GetTypes(scope);
     bothArgs.push(...right);
@@ -257,14 +250,7 @@ export class UnaryMathExp
     let metamethod:
       | [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]
       | null = null;
-    for (let i = 0; i < bothArgs.length; i++) {
-      metamethod = bothArgs[i]
-        .GetDefinition()
-        .GetMetamethod(this.Operator, bothArgs);
-      if (metamethod !== null) {
-        break;
-      }
-    }
+    metamethod = scope.GetMetamethod(this.Operator, bothArgs);
     if (metamethod === null) {
       throw new Error(
         `No method for operator '${this.Operator}' for types ${bothArgs}`
@@ -273,9 +259,9 @@ export class UnaryMathExp
     return metamethod[0];
   }
 
-  Simplify(): number | null {
+  Simplify(scope: Scope): number | null {
     if (IsSimplifyable(this.Right)) {
-      let right = (this.Right as unknown as Simplifyable).Simplify();
+      let right = (this.Right as unknown as Simplifyable).Simplify(scope);
       if (right !== null) {
         switch (this.Operator) {
           case "not":

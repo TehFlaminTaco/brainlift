@@ -24,7 +24,7 @@ ace.define(
 
     var BrainChildHighlightRules = function () {
       var keywords =
-        "abstract|asm|class|else|func|function|if|int|label|macro|metamethod|new|return|static|var|void|while";
+        "abstract|asm|class|const|else|func|function|if|int|label|macro|metamethod|new|params|reserve|return|static|var|void|while|virtual";
 
       var functions =
         // builtinFunctions

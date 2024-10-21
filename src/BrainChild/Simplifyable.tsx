@@ -1,5 +1,7 @@
+import { Scope } from "./Scope";
+
 export interface Simplifyable {
-  Simplify(): number | null;
+  Simplify(scope: Scope): number | null;
 }
 
 export function IsSimplifyable(a: any) {

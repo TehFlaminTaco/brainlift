@@ -10,6 +10,7 @@ import "./BrainChild/Types";
 import "./BrainChild/vartype";
 import { Parse } from "./BrainChild/brainchild";
 import { Scope } from "./BrainChild/Scope";
+import "./BrainChild/const";
 import "./BrainChild/block";
 import "./BrainChild/include";
 import "./BrainChild/functiondefinition";
@@ -32,6 +33,8 @@ import "./BrainChild/math";
 import "./BrainChild/parenthetical";
 import "./BrainChild/cumulate";
 import "./BrainChild/macrodef";
+import "./BrainChild/sizeof";
+import "./BrainChild/reserve";
 import { TokenError } from "./BrainChild/token";
 import { GenerateReadOnlys } from "./ReadOnlys";
 import { Terminal, Event } from "./Terminal";
@@ -51,7 +54,10 @@ async function parseEditor(): Promise<Scope> {
     annotations[id] = [];
   }
   term = new Terminal();
-  document.getElementById("output")!.innerHTML = term.Render();
+  let rendered = term.Render();
+  window.requestAnimationFrame(() => {
+    document.getElementById("output")!.innerHTML = rendered;
+  });
   var scope = await Parse(files);
   scope.TypeInformation.forEach((i) => {
     let t = i[0];
@@ -161,31 +167,41 @@ function addGutter(file: string) {
     GenerateReadOnlys();
     e.setValue(`include term.bc;
 include extmacros.bc;
-include random.bc;
+include int.bc;
+int seed = 1;
+
+function rand() -> int {
+    seed ~= (seed * 128);
+    seed ~= (seed / 512);
+    seed ~= (seed * 256);
+    return seed;
+}
 
 void discard;
 
+metamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }
+metamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }
+metamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }
+metamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }
+metamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }
 abstract class pVec2 {
     static function Make(int x, int y) -> pVec2 { ((x%0x10000) + (y*0x10000) -> pVec2) }
-    metamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }
-    metamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }
     static function WithX(pVec2 this, int x) -> pVec2 { ((x%0x10000) + (((this->int)/0x10000)*0x10000) -> pVec2) }
     static function WithY(pVec2 this, int y) -> pVec2 { (((this->int)%0x10000)+ (y*0x10000) -> pVec2) }
-    
-    metamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }
-    metamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }
-    metamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }
 }
 
 pVec2 apple = pVec2.Make(0xFF,0xFF);
 
-discard, @int DirectionVectors = "ABCD";
+@int DirectionVectors = "ABCD"+1;
 *(DirectionVectors+0) = 0xFFFF0000;
 *(DirectionVectors+1) = 0x00000001;
 *(DirectionVectors+2) = 0x00010000;
 *(DirectionVectors+3) = 0x0000FFFF;
-discard, @int DirectionHeads = "^>v<";
+@int DirectionHeads = "^>v<"+1;
 
+metamethod truthy(Body this)->int{
+    return (this -> int);
+}
 class Body {
     pVec2 Pos;
     pVec2 LastPos;
@@ -213,18 +229,15 @@ class Body {
         Term.WriteChar('#');
     }
     
-    metamethod Body(pVec2 pos){
+    new (pVec2 pos){
         this.LastPos = pos;
         this.Pos = pos;
-    }
-    metamethod truthy(Body this)->int{
-        return (this -> int);
     }
 }
 
 class Head : Body {
     int Direction;
-    metamethod Head(pVec2 pos){
+    new (pVec2 pos){
         this.Direction = 1;
         this.Pos = pos;
         this.LastPos = pos;
@@ -550,7 +563,10 @@ export default function App() {
           document.getElementById("output")! === document.activeElement;
         term.WriteAll(bsInterp.Output);
         bsInterp.Output = "";
-        document.getElementById("output")!.innerHTML = term.Render();
+        let rendered = term.Render();
+        window.requestAnimationFrame(() => {
+          document.getElementById("output")!.innerHTML = rendered;
+        });
         if (hadFocus) document.getElementById("output")!.focus();
       }
       var codeText = document.getElementById("codeText")!;
@@ -562,7 +578,7 @@ export default function App() {
 
       //codeText.querySelector("span")!.scrollIntoView();
       let span = codeText.querySelector("span")!;
-      codeText.scrollTo(0, span.scrollTop);
+      codeText.scrollTo(0, span.offsetTop - 600);
       Scope.CURRENT!.RenderBSMemory(bsInterp);
       editors[bsInterp.GetFile()].session.addMarker(
         new Range(bsInterp.GetLine(), 0, bsInterp.GetLine(), 1),
@@ -643,7 +659,10 @@ export default function App() {
                   document.getElementById("output")! === document.activeElement;
                 term.WriteAll(bsInterp.Output);
                 bsInterp.Output = "";
-                document.getElementById("output")!.innerHTML = term.Render();
+                let rendered = term.Render();
+                window.requestAnimationFrame(() => {
+                  document.getElementById("output")!.innerHTML = rendered;
+                });
                 if (hadFocus) document.getElementById("output")!.focus();
               }
               if (bsInterp.InputPointer > 0) {
@@ -654,7 +673,7 @@ export default function App() {
               codeText.innerHTML = bsInterp.CodeWithPointerHighlight();
               //codeText.querySelector("span")!.scrollIntoView();
               let span = codeText.querySelector("span")!;
-              codeText.scrollTo(0, span.scrollTop);
+              codeText.scrollTo(0, span.offsetTop - 600);
               asmRunning = false;
               clearInterval(asmRunTimer);
               break;
@@ -666,7 +685,10 @@ export default function App() {
               document.getElementById("output")! === document.activeElement;
             term.WriteAll(bsInterp.Output);
             bsInterp.Output = "";
-            document.getElementById("output")!.innerHTML = term.Render();
+            let rendered = term.Render();
+            window.requestAnimationFrame(() => {
+              document.getElementById("output")!.innerHTML = rendered;
+            });
             if (hadFocus) document.getElementById("output")!.focus();
           }
           if (bsInterp.InputPointer > 0) {
@@ -684,7 +706,7 @@ export default function App() {
             let codeText = document.getElementById("codeText")!;
             codeText.innerHTML = bsInterp.CodeWithPointerHighlight();
             let span = codeText.querySelector("span")!;
-            codeText.scrollTo(0, span.scrollTop);
+            codeText.scrollTo(0, span.offsetTop - 600);
           }
         } else {
           bsInterp = new ASMInterpreter(
@@ -707,7 +729,7 @@ export default function App() {
       codeText.innerHTML = bsInterp.CodeWithPointerHighlight();
       //codeText.querySelector("span")!.scrollIntoView();
       let span = codeText.querySelector("span")!;
-      codeText.scrollTo(0, span.scrollTop);
+      codeText.scrollTo(0, span.offsetTop - 600);
     }
   }
 
@@ -754,7 +776,10 @@ export default function App() {
         document.getElementById("output")! === document.activeElement;
       term.WriteAll(bsInterp.Output);
       bsInterp.Output = "";
-      document.getElementById("output")!.innerHTML = term.Render();
+      let rendered = term.Render();
+      window.requestAnimationFrame(() => {
+        document.getElementById("output")!.innerHTML = rendered;
+      });
       if (hadFocus) document.getElementById("output")!.focus();
     }
     if (bsInterp.InputPointer > 0) {

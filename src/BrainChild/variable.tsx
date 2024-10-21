@@ -7,6 +7,10 @@ export interface Assignable {
   GetTypes(scope: Scope): VarType[];
 }
 
+export interface SimpleAssignable {
+  AssignSimple(scope: Scope, value: number): boolean;
+}
+
 export interface Readable {
   Read(scope: Scope): string[];
   GetTypes(scope: Scope): VarType[];
@@ -19,6 +23,9 @@ export interface Referenceable {
 
 export function IsAssignable(A: any) {
   return "Assign" in A && "GetTypes" in A;
+}
+export function IsSimpleAssignable(A: any) {
+  return "AssignSimple" in A;
 }
 export function IsReadable(A: any) {
   return "Read" in A && "GetTypes" in A;

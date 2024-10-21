@@ -119,9 +119,13 @@ Subtract the argument from Register B
 
 SUBAB:
 Subtract the value of Register A from Register B into Register B. Sets Register A to 0
+B=B-A
+A=0
 
 SUBBA:
 Subtract the value of Register B from Register A into Register A. Sets Register B to 0
+A=A-B
+B=0
 
 MULAB:
 Multiply the value of Register A by Register B into Regsiter B. Sets Register A to 0
