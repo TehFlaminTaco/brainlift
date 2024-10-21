@@ -132,6 +132,8 @@ export class Class extends Statement {
         ]
       | null = Class.ClaimMember(claimer, abstract, className);
     while (member !== null) {
+      if (member[1] instanceof VariableDecleration && (member[1] as VariableDecleration).Type?.TypeName === "discard")
+        throw new Error(`Cannot declare discard type variable in class ${(member[1] as VariableDecleration).Identifier!.Name}`);
       if (
         member[1] instanceof VariableDecleration &&
         member[0] !== "virtual" &&

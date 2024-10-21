@@ -38,11 +38,98 @@ import "./BrainChild/reserve";
 import { TokenError } from "./BrainChild/token";
 import { GenerateReadOnlys } from "./ReadOnlys";
 import { Terminal, Event } from "./Terminal";
+const pako = require("pako");
+
+export const AllReadOnlys: {[name: string]: string} = {};
 
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;
 let editors: { [path: string]: Ace.Editor } = {};
 let term: Terminal;
+
+var base64abc = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "/"];
+  
+/*
+// This constant can also be computed with the following algorithm:
+const l = 256, base64codes = new Uint8Array(l);
+for (let i = 0; i < l; ++i) {
+  base64codes[i] = 255; // invalid character
+}
+base64abc.forEach((char, index) => {
+  base64codes[char.charCodeAt(0)] = index;
+});
+base64codes["=".charCodeAt(0)] = 0; // ignored anyway, so we just need to prevent an error
+*/
+var base64codes = [255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 62, 255, 255, 255, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 255, 255, 255, 0, 255, 255, 255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 255, 255, 255, 255, 255, 255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51];
+function getBase64Code(charCode: number) {
+  if (charCode >= base64codes.length) {
+    throw new Error("Unable to parse base64 string.");
+  }
+  var code = base64codes[charCode];
+  if (code === 255) {
+    throw new Error("Unable to parse base64 string.");
+  }
+  return code;
+}
+function bytesToBase64(bytes: Uint8Array) {
+  var result = "",
+    i,
+    l = bytes.length;
+  for (i = 2; i < l; i += 3) {
+    result += base64abc[bytes[i - 2] >> 2];
+    result += base64abc[(bytes[i - 2] & 0x03) << 4 | bytes[i - 1] >> 4];
+    result += base64abc[(bytes[i - 1] & 0x0f) << 2 | bytes[i] >> 6];
+    result += base64abc[bytes[i] & 0x3f];
+  }
+  if (i === l + 1) {
+    // 1 octet yet to write
+    result += base64abc[bytes[i - 2] >> 2];
+    result += base64abc[(bytes[i - 2] & 0x03) << 4];
+    result += "==";
+  }
+  if (i === l) {
+    // 2 octets yet to write
+    result += base64abc[bytes[i - 2] >> 2];
+    result += base64abc[(bytes[i - 2] & 0x03) << 4 | bytes[i - 1] >> 4];
+    result += base64abc[(bytes[i - 1] & 0x0f) << 2];
+    result += "=";
+  }
+  return result;
+}
+function base64ToBytes(str: string) {
+  if (str.length % 4 !== 0) {
+    throw new Error("Unable to parse base64 string.");
+  }
+  var index = str.indexOf("=");
+  if (index !== -1 && index < str.length - 2) {
+    throw new Error("Unable to parse base64 string.");
+  }
+  var missingOctets = str.endsWith("==") ? 2 : str.endsWith("=") ? 1 : 0,
+    n = str.length,
+    result = new Uint8Array(3 * (n / 4)),
+    buffer;
+  for (var i = 0, j = 0; i < n; i += 4, j += 3) {
+    buffer = getBase64Code(str.charCodeAt(i)) << 18 | getBase64Code(str.charCodeAt(i + 1)) << 12 | getBase64Code(str.charCodeAt(i + 2)) << 6 | getBase64Code(str.charCodeAt(i + 3));
+    result[j] = buffer >> 16;
+    result[j + 1] = buffer >> 8 & 0xff;
+    result[j + 2] = buffer & 0xff;
+  }
+  return result.subarray(0, result.length - missingOctets);
+}
+function base64encode(str: Uint8Array) {
+  return bytesToBase64(str);
+}
+function base64decode(str: string) {
+  return base64ToBytes(str);
+}
+function compress(str: string) {
+  return base64encode(pako.deflate(str, {
+    level: 3
+  }));
+}
+function decompress(str: string) {
+  return pako.inflate(base64decode(str));
+}
 
 async function parseEditor(): Promise<Scope> {
   var files: { [name: string]: string } = {};
@@ -115,6 +202,17 @@ function handleChange() {
   waitTimeout = setTimeout(async () => {
     waitTimeout = undefined;
     try {
+      if('history'in window){
+        let userFiles: {[key:string]:string} = {};
+        for(let file in editors){
+          if (file in AllReadOnlys) continue;
+          userFiles[file] = editors[file].getValue();
+        }
+        let codeParam = compress(JSON.stringify(userFiles));
+        let url = new URL(window.location as any as string);
+        url.searchParams.set("code", codeParam);
+        window.history.pushState(null, "", url);
+      }
       console.log("compiling...");
       var t = Date.now();
       try {
@@ -165,169 +263,20 @@ function handleChange() {
 function addGutter(file: string) {
   return function (e: Ace.Editor) {
     GenerateReadOnlys();
-    e.setValue(`include term.bc;
-include extmacros.bc;
-include int.bc;
-int seed = 1;
-
-function rand() -> int {
-    seed ~= (seed * 128);
-    seed ~= (seed / 512);
-    seed ~= (seed * 256);
-    return seed;
-}
-
-void discard;
-
-metamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }
-metamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }
-metamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }
-metamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }
-metamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }
-abstract class pVec2 {
-    static function Make(int x, int y) -> pVec2 { ((x%0x10000) + (y*0x10000) -> pVec2) }
-    static function WithX(pVec2 this, int x) -> pVec2 { ((x%0x10000) + (((this->int)/0x10000)*0x10000) -> pVec2) }
-    static function WithY(pVec2 this, int y) -> pVec2 { (((this->int)%0x10000)+ (y*0x10000) -> pVec2) }
-}
-
-pVec2 apple = pVec2.Make(0xFF,0xFF);
-
-@int DirectionVectors = "ABCD"+1;
-*(DirectionVectors+0) = 0xFFFF0000;
-*(DirectionVectors+1) = 0x00000001;
-*(DirectionVectors+2) = 0x00010000;
-*(DirectionVectors+3) = 0x0000FFFF;
-@int DirectionHeads = "^>v<"+1;
-
-metamethod truthy(Body this)->int{
-    return (this -> int);
-}
-class Body {
-    pVec2 Pos;
-    pVec2 LastPos;
-    Body Tail;
-    
-    function Move(pVec2 pos){
-        this.LastPos = this.Pos;
-        if(this.Tail)this.Tail.Move(this.Pos);
-        this.Pos = pos;
+    let search = new URL(window.location as any as string).searchParams;
+    if (search.has("code")) {
+      var decompressed = new TextDecoder().decode(decompress(search.get("code")!));
+      console.log(decompressed);
+      var unrolled = JSON.parse(decompressed);
+      e.setValue(unrolled["main.bc"]);
+      for (let file in unrolled) {
+        if (file === "main.bc") continue;
+        new CustomTab(file, unrolled[file]);
+      }
+    } else {
+      e.setValue("include term.bc;\ninclude extmacros.bc;\ninclude int.bc;\nint seed = 1;\n\nfunction rand() -> int {\n    seed ~= (seed * 128);\n    seed ~= (seed / 512);\n    seed ~= (seed * 256);\n    return seed;\n}\n\nmetamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }\nmetamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }\nmetamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }\nmetamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }\nmetamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }\nabstract class pVec2 {\n    static function Make(int x, int y) -> pVec2 { ((x%0x10000) + (y*0x10000) -> pVec2) }\n    static function WithX(pVec2 this, int x) -> pVec2 { ((x%0x10000) + (((this->int)/0x10000)*0x10000) -> pVec2) }\n    static function WithY(pVec2 this, int y) -> pVec2 { (((this->int)%0x10000)+ (y*0x10000) -> pVec2) }\n}\n\npVec2 apple = pVec2.Make(0xFF,0xFF);\n\n@int DirectionVectors = new pVec2[] {\n    (0xFFFF0000 -> pVec2),\n    (0x00000001 -> pVec2),\n    (0x00010000 -> pVec2),\n    (0x0000FFFF -> pVec2)\n};\n@int DirectionHeads = new int[]{'^','>','v','<'}\n\nmetamethod truthy(Body this)->int{\n    return (this -> int);\n}\nclass Body {\n    pVec2 Pos;\n    pVec2 LastPos;\n    Body Tail;\n    \n    function Move(pVec2 pos){\n        this.LastPos = this.Pos;\n        if(this.Tail)this.Tail.Move(this.Pos);\n        this.Pos = pos;\n    }\n    \n    function MoveBy(pVec2 amount){\n        this.Move(this.Pos + amount);\n    }\n    \n    function Grow(){\n        if(this.Tail)return this.Tail.Grow();\n        this.Tail = new Body(this.LastPos);\n    }\n    \n    function Draw(){\n        if(this.Tail)this.Tail.Draw();\n        Term.Cursor.X = this.Pos.X;\n        Term.Cursor.Y = this.Pos.Y;\n        putchar('#');\n    }\n    \n    new (pVec2 pos){\n        this.LastPos = pos;\n        this.Pos = pos;\n    }\n}\n\nclass Head : Body {\n    int Direction;\n    new (pVec2 pos){\n        this.Direction = 1;\n        this.Pos = pos;\n        this.LastPos = pos;\n    }\n    function Draw(){\n        if(this.Tail)this.Tail.Draw();\n        Term.Cursor.X = this.Pos.X;\n        Term.Cursor.Y = this.Pos.Y;\n        putchar(DirectionHeads + this.Direction);\n    }\n}\n\nint score = 0;\nfunction GameOver(){\n    Term.Clear();\n    Term.Style.Fore = Red;\n    Term.Style.Bold = 1;\n    Term.Cursor.X = 27;\n    Term.Cursor.Y = 15;\n    Term.Write(\"GAME  OVER\");\n    Term.Cursor.X = 28;\n    Term.Cursor.Y = 16;\n    Term.Write(\"SCORE: \");\n    Term.WriteNum(score);\n    asm {halt}\n}\n\nHead snake = new Head(pVec2.Make(32, 16));\nsnake.Grow();\nsnake.Grow();\nsnake.Grow();\n\nint frame = 0;\nint counter = 0;\nint grace = 3;\nTerm.PollEvents();\nTerm.Frame.Push(()=>{\n    seed += counter;\n    rand();\n    if(apple.X > 63){\n        var a = (rand() -> pVec2);\n        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));\n    }\n    if(frame++ >= 2 + (2*!(snake.Direction%2))){\n        snake.MoveBy((*(DirectionVectors + snake.Direction) -> pVec2));\n        frame = 0;\n    }\n    if(snake.Pos == apple){\n        score++;\n        snake.Grow();\n        var a = (rand() -> pVec2);\n        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));\n    }\n    if(grace)grace--\n    else{\n        var b = snake.Tail;\n        while(b){\n            if(snake.Pos == b.Pos){\n                GameOver();\n            }\n            b = b.Tail;\n        }\n    }\n    if(snake.Pos.X > 63){GameOver();}\n    if(snake.Pos.Y > 31){GameOver();}\n    if(snake.Pos.Y < 1){GameOver();}\n    Term.Clear();\n    Term.Cursor.Reset();\n    Term.Style.Back = White;\n    Term.Style.Fore = Black;\n    Term.Write(\"                                                                \");\n    Term.Cursor.Reset();\n    Term.Write(\"SCORE: \");\n    Term.WriteNum(score);\n    Term.Style.Back = Black;\n    Term.Style.Fore = White;\n    Term.Cursor.X = apple.X;\n    Term.Cursor.Y = apple.Y;\n    putchar('a');\n    snake.Draw();\n});\n\nTerm.KeyDown.Push(function(int h, int l){\n    if(h=='w')if(1 == snake.Direction%2)return snake.Direction = 0;\n    if(h=='d')if(0 == snake.Direction%2)return snake.Direction = 1;\n    if(h=='s')if(1 == snake.Direction%2)return snake.Direction = 2;\n    if(h=='a')if(0 == snake.Direction%2)return snake.Direction = 3;\n})\n\nwhile(1){counter++;Term.PollEvents();}");
     }
-    
-    function MoveBy(pVec2 amount){
-        this.Move(this.Pos + amount);
-    }
-    
-    function Grow(){
-        if(this.Tail)return this.Tail.Grow();
-        this.Tail = new Body(this.LastPos);
-    }
-    
-    function Draw(){
-        if(this.Tail)this.Tail.Draw();
-        Term.Cursor.X = this.Pos.X;
-        Term.Cursor.Y = this.Pos.Y;
-        Term.WriteChar('#');
-    }
-    
-    new (pVec2 pos){
-        this.LastPos = pos;
-        this.Pos = pos;
-    }
-}
 
-class Head : Body {
-    int Direction;
-    new (pVec2 pos){
-        this.Direction = 1;
-        this.Pos = pos;
-        this.LastPos = pos;
-    }
-    function Draw(){
-        if(this.Tail)this.Tail.Draw();
-        Term.Cursor.X = this.Pos.X;
-        Term.Cursor.Y = this.Pos.Y;
-        Term.WriteChar(DirectionHeads + this.Direction);
-    }
-}
-
-int score = 0;
-function GameOver(){
-    Term.Clear();
-    Term.Style.Fore = Red;
-    Term.Style.Bold = 1;
-    Term.Cursor.X = 27;
-    Term.Cursor.Y = 15;
-    Term.Write("GAME  OVER");
-    Term.Cursor.X = 28;
-    Term.Cursor.Y = 16;
-    Term.Write("SCORE: ");
-    Term.WriteNum(score);
-    asm {halt}
-}
-
-Head snake = new Head(pVec2.Make(32, 16));
-snake.Grow();
-snake.Grow();
-snake.Grow();
-
-int frame = 0;
-int counter = 0;
-int grace = 3;
-Term.PollEvents();
-Term.Frame.Push(()=>{
-    seed += counter;
-    rand();
-    if(apple.X > 63){
-        var a = (rand() -> pVec2);
-        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));
-    }
-    if(frame++ >= 2 + (2*!(snake.Direction%2))){
-        snake.MoveBy((*(DirectionVectors + snake.Direction) -> pVec2));
-        frame = 0;
-    }
-    if(snake.Pos == apple){
-        score++;
-        snake.Grow();
-        var a = (rand() -> pVec2);
-        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));
-    }
-    if(grace)grace--
-    else{
-        var b = snake.Tail;
-        while(b){
-            if(snake.Pos == b.Pos){
-                GameOver();
-            }
-            b = b.Tail;
-        }
-    }
-    if(snake.Pos.X > 63){GameOver();}
-    if(snake.Pos.Y > 31){GameOver();}
-    if(snake.Pos.Y < 1){GameOver();}
-    Term.Clear();
-    Term.Cursor.Reset();
-    Term.Style.Back = White;
-    Term.Style.Fore = Black;
-    Term.Write("                                                                ");
-    Term.Cursor.Reset();
-    Term.Write("SCORE: ");
-    Term.WriteNum(score);
-    Term.Style.Back = Black;
-    Term.Style.Fore = White;
-    Term.Cursor.X = apple.X;
-    Term.Cursor.Y = apple.Y;
-    Term.WriteChar('a');
-    snake.Draw();
-});
-
-Term.KeyDown.Push(function(int h, int l){
-    if(h=='w')if(1 == snake.Direction%2)return snake.Direction = 0;
-    if(h=='d')if(0 == snake.Direction%2)return snake.Direction = 1;
-    if(h=='s')if(1 == snake.Direction%2)return snake.Direction = 2;
-    if(h=='a')if(0 == snake.Direction%2)return snake.Direction = 3;
-})
-
-while(1){counter++;Term.PollEvents();}`);
     editors[file] = e;
     let editor = e;
     (editor.on as any)("guttermousedown", function (e: any) {
@@ -366,7 +315,7 @@ class CustomTab {
   EditorDiv: HTMLDivElement;
   Editor: Ace.Editor;
   File: string = "";
-  constructor() {
+  constructor(name: string|null = null, code: string|null = null) {
     let newTabButton = document.createElement("button") as HTMLButtonElement;
     newTabButton.onclick = selectETab;
     let inp = document.createElement("input") as HTMLInputElement;
@@ -422,6 +371,13 @@ class CustomTab {
     };
     inp.focus();
     this.EditorDiv = etab;
+    if(name !== null){
+      inp.value = name;
+      this.InputDone();
+    }
+    if (code !== null){
+      this.Editor.setValue(code);
+    }
   }
 
   Destroy() {
@@ -488,6 +444,7 @@ class CustomTab {
 }
 
 export function GenerateReadOnly(name: string, code: string) {
+  AllReadOnlys[name] = code;
   let newTabButton = document.createElement("button") as HTMLButtonElement;
   newTabButton.onclick = selectETab;
   newTabButton.innerText = name;

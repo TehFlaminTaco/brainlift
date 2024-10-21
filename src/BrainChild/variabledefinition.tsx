@@ -96,6 +96,8 @@ export class VariableDecleration
   }
 
   Evaluate(scope: Scope): [VarType[], string[]] {
+    if(this.Type!.TypeName === "discard")
+      return [[VarType.Discard], ['apush 0']];
     if (this.IsConstant) {
       if (!this.Label) {
         scope.SetConstant(this.Identifier!.Name, this.Type!, 0, true);
@@ -115,6 +117,8 @@ export class VariableDecleration
   }
 
   Assign(scope: Scope, anyType: VarType): string[] {
+    if (this.Type!.TypeName === "discard")
+      return ['apop'];
     if (this.IsConstant) {
       throw new Error("Cannot assign non-constant value to constant variable");
     }
@@ -139,6 +143,8 @@ export class VariableDecleration
   }
 
   Simplify(scope: Scope): number | null {
+    if(this.Type!.TypeName === "discard")
+      return 0;
     if (!this.IsConstant) return null;
     if (!this.Label) {
       scope.SetConstant(this.Identifier!.Name, this.Type!, 0, true);
@@ -150,6 +156,7 @@ export class VariableDecleration
   }
 
   AssignSimple(scope: Scope, val: number): boolean {
+    if(this.Type!.TypeName === "discard") return true;
     if (!this.IsConstant) return false;
     if (!this.Label || scope !== this.LastScope) {
       scope.SetConstant(this.Identifier!.Name, this.Type!, val, true);

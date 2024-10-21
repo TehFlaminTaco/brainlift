@@ -10,18 +10,22 @@ import {
 } from "./variable";
 import { VarType } from "./vartype";
 
-const forbiddenClasses = ["int", "void"];
+const forbiddenClasses = ["int", "void", "discard"];
 
 export class Identifier
   extends Expression
   implements ReadWritable, Referenceable, SimpleAssignable, Simplifyable
 {
   AssignSimple(scope: Scope, value: number): boolean {
+    let res = scope.Get(this.Name);
+    if(res[0].TypeName === "discard") return true;
     return scope.SetConstant(this.Name, null, value, false);
   }
   Simplify(scope: Scope): number | null {
     try {
       var res = scope.Get(this.Name);
+      if(res[0].TypeName === "discard")
+        return 0;
       return res[2] ?? null;
     } catch {
       return null;
@@ -48,6 +52,8 @@ export class Identifier
   Assign(scope: Scope): string[] {
     var res = scope.Get(this.Name);
     let t = res[0].GetDefinition();
+    if (res[0].TypeName === "discard")
+      return ["apop"];
     if (res[2] !== null)
       throw new Error(
         "Cannot override constant value with non-constant value!"
@@ -60,12 +66,16 @@ export class Identifier
 
   Read(scope: Scope): string[] {
     var res = scope.Get(this.Name);
+    if(res[0].TypeName === "discard")
+      return ["apush 0"];
     if (res[2] !== null) return [`apush ${(res[2] & 0xffffffff) >>> 0}`];
     return [`seta ${res[1]}`, `ptra`, `apusha`];
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var res = scope.Get(this.Name);
+    if(res[0].TypeName === "discard")
+      return [[VarType.Discard], ["apush 0"]];
     if (res[2] !== null)
       return [[res[0]], [`apush ${(res[2] & 0xffffffff) >>> 0}`]];
     return [[res[0]], [this.GetLine(), `seta ${res[1]}`, `ptra`, `apusha`]];
@@ -73,6 +83,8 @@ export class Identifier
 
   GetPointer(scope: Scope): string[] {
     var res = scope.Get(this.Name);
+    if (res[0].TypeName === "discard")
+      throw new Error("Cannot get pointer to discard value");
     if (res[2] !== null)
       throw new Error("Cannot get pointer to constant value");
     return [`apush ${res[1]}`];

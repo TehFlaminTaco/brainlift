@@ -172,7 +172,9 @@ export class Scope {
       this.AddMetamethodSoft("not", [VarType.Int], [t], simpleNot);
       this.AddMetamethodSoft("unm", [t], [t], simpleUnm);
       this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
-
+      this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int], ["apopa", "apopb", "addab", "ptrb", "apushb"]);
+      this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int, t.WithDeltaPointerDepth(-1)], ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
+      this.AddMetamethodSoft("ptrindex", [t], [t, VarType.Int], simpleAdd);
       return;
     }
   }
@@ -404,7 +406,15 @@ export class Scope {
     this.SetAllocator();
     var asm: string[] = [];
     asm.push(
-      ...`vAllocTable: db 0
+      ...`putchar:
+    apopa
+    writea
+    ret
+getchar:
+    reada
+    apusha
+    ret
+vAllocTable: db 0
 vAllocSize: db 0
 alloc:
     seta vAllocTable
@@ -561,12 +571,24 @@ free:
     var freeType = new FuncType(falseClaimer, falseFlag);
     freeType.ArgTypes = [VarType.VoidPtr];
     freeType.RetTypes = [];
+    let putcharType = new FuncType(falseClaimer, falseFlag);
+    putcharType.ArgTypes = [VarType.Int];
+    putcharType.RetTypes = [];
+    let getcharType = new FuncType(falseClaimer, falseFlag);
+    getcharType.ArgTypes = [];
+    getcharType.RetTypes = [VarType.Int];
     this.Set("alloc", allocType, false);
     this.Set("free", freeType, false);
+    this.Set("putchar", putcharType, false);
+    this.Set("getchar", getcharType, false);
     var allocV = this.Get("alloc");
     var freeV = this.Get("free");
+    var putcharV = this.Get("putchar");
+    var getcharV = this.Get("getchar");
     this.Assembly.push(`${allocV[1]}: db alloc`);
     this.Assembly.push(`${freeV[1]}: db free`);
+    this.Assembly.push(`${putcharV[1]}: db putchar`);
+    this.Assembly.push(`${getcharV[1]}: db getchar`);
   }
 
   GetSafeName(name: string) {
@@ -582,6 +604,8 @@ free:
   Get(
     Identifier: string
   ): [Type: VarType, AssembledName: string, ConstantValue: number | null] {
+    if(Identifier === "_")
+      return [VarType.Discard, "", 0];
     var o = this.Vars[Identifier] ?? this.Parent?.Get(Identifier);
     if (!o) {
       throw new Error(`Unknown identifier ${Identifier}`);
@@ -590,6 +614,7 @@ free:
   }
 
   Set(Identifier: string, Type: VarType, setup: boolean = true): string {
+    if (Type.TypeName === "discard") setup = false;
     var name = this.GetSafeName(`var${Type}${Identifier}`);
     this.Vars[Identifier] = [Type, name, null];
     if (setup) this.Assembly.push(`${name}: db 0`);

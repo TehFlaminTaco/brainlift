@@ -9,6 +9,7 @@ import {
   GeneratePointerType,
   TypeDefinition,
   GenerateFuncType,
+  TypeDiscard,
 } from "./Types";
 
 function hexPad(value: number, amount: number = 2) {
@@ -32,6 +33,8 @@ export class VarType extends Token {
   static VoidPtr: VarType;
   static Any: VarType;
   static Type: VarType;
+  static String: VarType;
+  static Discard: VarType;
 
   static Claim(claimer: Claimer): VarType | null {
     var ftype = FuncType.Claim(claimer);
@@ -40,12 +43,13 @@ export class VarType extends Token {
     let depth = 0;
     let ptr = claimer.Claim(/@+/);
     if (ptr.Success) depth = ptr.Body![0].length;
-    var c = claimer.Claim(/(int|void|[a-zA-Z_]\w*)\b/);
+    var c = claimer.Claim(/(int|void|discard|[a-zA-Z_]\w*)\b/);
     if (!c.Success) return null;
     if (
       Keywords.includes(c.Body![0]) &&
       c.Body![0] !== "int" &&
-      c.Body![0] !== "void"
+      c.Body![0] !== "void" &&
+      c.Body![0] !== "discard"
     ) {
       flag.Fail();
       return null;
@@ -93,6 +97,8 @@ export class VarType extends Token {
 
   CastableFrom(other: VarType): boolean {
     if (this.TypeName === "var") return true;
+    if (this.TypeName === "discard") return true;
+    if (other.TypeName === "discard") return false;
     if (this.TypeName === "void") {
       return this.PointerDepth <= other.PointerDepth;
     }
@@ -114,6 +120,8 @@ export class VarType extends Token {
 
   AssignableFrom(other: VarType): boolean {
     if (this.TypeName === "var") return true;
+    if (this.TypeName === "discard") return true;
+    if (other.TypeName === "discard") return false;
     if (this.TypeName === "void") {
       return this.PointerDepth <= other.PointerDepth;
     }
@@ -158,20 +166,21 @@ export class VarType extends Token {
     identifier: string,
     location: number
   ): string {
+    let valAtLocation = ((bs.Heap[location*4]??0) << 24) + ((bs.Heap[location*4 + 1]??0) << 16) + ((bs.Heap[location*4 + 2]??0) << 8) + ((bs.Heap[location*4 + 3]??0));
     if (scope.DebuggedVals.has(location))
       return `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${hexPad(
-        bs.Heap[location],
+        valAtLocation,
         8
       )}`;
     scope.DebuggedVals.add(location);
     if (
       this.PointerDepth === 0 &&
-      bs.Heap[location] > 0 &&
+      valAtLocation > 0 &&
       scope.UserTypes[this.TypeName]
     ) {
       let t = scope.UserTypes[this.TypeName];
-      let cls = bs.Heap[bs.Heap[location]];
-      let val = hexPad(bs.Heap[location], 8);
+      let cls = bs.Heap[valAtLocation];
+      let val = hexPad(valAtLocation, 8);
       let s = `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${val} {<br>`;
       let childrenByOffset: [VarType, number, string, string][] = [];
       let className = "undefined";
@@ -193,21 +202,6 @@ export class VarType extends Token {
           t = scope.UserTypes[className];
       }
       if (t && this.Generics.length > 0) t = t.WithGenerics(this.Generics);
-
-      for (let ident in t.VirtualChildren) {
-        let child = t.VirtualChildren[ident];
-        if (!child) continue;
-        let v = bs.Heap[bs.Heap[location] + child[2]];
-        let expected = +child[2];
-        if (bs.Labels[child[2]]) expected = bs.Labels[child[3]];
-        if (v !== expected)
-          s +=
-            "\t" +
-            child[0]
-              .Debug(scope, bs, "", ident, bs.Heap[location] + child[2])
-              .replace(/<br>(?!$)/g, "<br>\t") +
-            "<br>";
-      }
       for (let ident in t.Children) {
         let child = t.Children[ident];
         childrenByOffset[child[1]] = [child[0], child[1], child[2], ident];
@@ -221,20 +215,20 @@ export class VarType extends Token {
           s += `\t<b>class</b> = <b>${className}</b><br>`;
           continue;
         }
-        let v = bs.Heap[bs.Heap[location] + child[1]];
+        let v = ((bs.Heap[(valAtLocation + child[1])*4]??0) << 24) + ((bs.Heap[(valAtLocation + child[1])*4 + 1]??0) << 16) + ((bs.Heap[(valAtLocation + child[1])*4 + 2]??0) << 8) + ((bs.Heap[(valAtLocation + child[1])*4 + 3]??0) << 0);
         let expected = +child[2];
         if (bs.Labels[child[2]]) expected = bs.Labels[child[2]];
         if (v !== expected)
           s +=
             "\t" +
             child[0]
-              .Debug(scope, bs, "", child[3], bs.Heap[location] + child[1])
+              .Debug(scope, bs, "", child[3], valAtLocation + child[1])
               .replace(/<br>(?!$)/g, "<br>\t") +
             "<br>";
       }
       return s + "}";
     }
-    let val = hexPad(bs.Heap[location], 8);
+    let val = hexPad(valAtLocation, 8);
     return `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${val}`;
   }
 
@@ -585,6 +579,7 @@ export class VarType extends Token {
     }
     if (this.TypeName === "int") return TypeInt;
     if (this.TypeName === "void") return TypeVoid;
+    if (this.TypeName === "discard") return TypeDiscard;
     if (this.TypeName.startsWith("$")) return TypeVoid;
     var userType = Scope.CURRENT.UserTypes[this.TypeName];
     if (!userType) throw new Error(`Undefined type ${this.TypeName}`);
@@ -780,3 +775,7 @@ VarType.VoidPtr.TypeName = "void";
 VarType.VoidPtr.PointerDepth = 1;
 VarType.Any = new VarType(falseClaimer, falseFlag);
 VarType.Any.TypeName = "var";
+VarType.String = new VarType(falseClaimer, falseFlag);
+VarType.String.TypeName = "string";
+VarType.Discard = new VarType(falseClaimer, falseFlag);
+VarType.Discard.TypeName = "discard";

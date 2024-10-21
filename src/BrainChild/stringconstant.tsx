@@ -23,13 +23,13 @@ export class StringConstant extends Expression {
     }
     scope.Assembly.push(stringDef);
     return [
-      [VarType.IntPtr],
+      [VarType.String],
       [this.GetLine(), `apush ${label}`],
     ];
   }
 
   GetTypes(scope: Scope): VarType[] {
-    return [VarType.IntPtr];
+    return [VarType.String];
   }
 }
 Expression.Register(StringConstant.Claim);
