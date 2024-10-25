@@ -68,7 +68,7 @@ export class If extends Expression implements Simplifyable {
     var valueRes = this.Condition!.TryEvaluate(scope);
     o.push(this.GetLine(), ...valueRes[1]);
     for (var i = 1; i < valueRes[0].length; i++) {
-      o.push(`apop`);
+      o.push(...valueRes[0][i].APop());
     }
     var resType = valueRes[0][0];
     var meta = scope.GetMetamethod("truthy", [resType]);
@@ -87,14 +87,14 @@ export class If extends Expression implements Simplifyable {
       let res = this.Else.TryEvaluate(scope);
       o.push(...res[1].map((c) => `  ${c}`));
       for (let i = resTypes.length; i < res[0].length; i++) {
-        o.push(`apop`);
+        o.push(...res[0][i].APop());
       }
     }
     o.push(`jmp ${afterTrue}`, `${ifTrue}:`);
     let res = this.Body!.TryEvaluate(scope);
     o.push(...res[1].map((c) => `  ${c}`));
     for (let i = resTypes.length; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     o.push(`${afterTrue}:`);
     return [resTypes, o];

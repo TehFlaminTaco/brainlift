@@ -12,10 +12,6 @@
   /* harmony export */ __webpack_require__.d(__webpack_exports__, {
   /* harmony export */   "AllReadOnlys": function() { return /* binding */ AllReadOnlys; },
   /* harmony export */   "GenerateReadOnly": function() { return /* binding */ GenerateReadOnly; },
-  /* harmony export */   "base64ToBytes": function() { return /* binding */ base64ToBytes; },
-  /* harmony export */   "base64decode": function() { return /* binding */ base64decode; },
-  /* harmony export */   "base64encode": function() { return /* binding */ base64encode; },
-  /* harmony export */   "bytesToBase64": function() { return /* binding */ bytesToBase64; },
   /* harmony export */   "default": function() { return /* binding */ App; }
   /* harmony export */ });
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_slicedToArray_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/slicedToArray.js */ "./node_modules/@babel/runtime/helpers/esm/slicedToArray.js");
@@ -121,6 +117,11 @@
   
   
   var pako = __webpack_require__(/*! pako */ "./node_modules/pako/index.js");
+  var AllReadOnlys = {};
+  var bsInterp = undefined;
+  var scope = null;
+  var editors = {};
+  var term;
   var base64abc = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "/"];
   
   /*
@@ -196,10 +197,6 @@
   function base64decode(str) {
     return base64ToBytes(str);
   }
-  var bsInterp = undefined;
-  var scope = null;
-  var editors = {};
-  var term;
   function compress(str) {
     return base64encode(pako.deflate(str, {
       level: 3
@@ -287,43 +284,45 @@
       waitTimeout = undefined;
     }
     waitTimeout = setTimeout( /*#__PURE__*/(0,_project_workspace_node_modules_babel_runtime_helpers_esm_asyncToGenerator_js__WEBPACK_IMPORTED_MODULE_4__["default"])( /*#__PURE__*/(0,_project_workspace_node_modules_babel_runtime_helpers_esm_regeneratorRuntime_js__WEBPACK_IMPORTED_MODULE_3__["default"])().mark(function _callee() {
-      var userFiles, _filename, codeParam, url, t, _scope, parsed, errors, id, _id;
+      var userFiles, _file, codeParam, url, t, _scope, parsed, errors, id, _id;
       return (0,_project_workspace_node_modules_babel_runtime_helpers_esm_regeneratorRuntime_js__WEBPACK_IMPORTED_MODULE_3__["default"])().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
             waitTimeout = undefined;
             _context.prev = 1;
-            // Get all user files into a dictionary
+            if (!('history' in window)) {
+              _context.next = 16;
+              break;
+            }
             userFiles = {};
             _context.t0 = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_regeneratorRuntime_js__WEBPACK_IMPORTED_MODULE_3__["default"])().keys(editors);
-          case 4:
+          case 5:
             if ((_context.t1 = _context.t0()).done) {
-              _context.next = 11;
+              _context.next = 12;
               break;
             }
-            _filename = _context.t1.value;
-            if (!(_filename in AllReadOnlys)) {
-              _context.next = 8;
+            _file = _context.t1.value;
+            if (!(_file in AllReadOnlys)) {
+              _context.next = 9;
               break;
             }
-            return _context.abrupt("continue", 4);
-          case 8:
-            userFiles[_filename] = editors[_filename].getValue();
-            _context.next = 4;
+            return _context.abrupt("continue", 5);
+          case 9:
+            userFiles[_file] = editors[_file].getValue();
+            _context.next = 5;
             break;
-          case 11:
+          case 12:
             codeParam = compress(JSON.stringify(userFiles));
-            if ("history" in window) {
-              url = new URL(window.location);
-              url.searchParams.set("code", codeParam);
-              window.history.pushState(null, "", url);
-            }
+            url = new URL(window.location);
+            url.searchParams.set("code", codeParam);
+            window.history.pushState(null, "", url);
+          case 16:
             console.log("compiling...");
             t = Date.now();
-            _context.prev = 15;
-            _context.next = 18;
+            _context.prev = 18;
+            _context.next = 21;
             return parseEditor();
-          case 18:
+          case 21:
             _scope = _context.sent;
             parsed = _scope.Assembly;
             console.log("parsed in ".concat(Date.now() - t, "ms"));
@@ -335,11 +334,11 @@
             console.log("compiled in ".concat(Date.now() - t, "ms"));
             document.getElementById("codeText").innerHTML = parsed.join("\n");
             _scope.RenderBSMemory(bsInterp);
-            _context.next = 34;
+            _context.next = 37;
             break;
-          case 31:
-            _context.prev = 31;
-            _context.t2 = _context["catch"](15);
+          case 34:
+            _context.prev = 34;
+            _context.t2 = _context["catch"](18);
             if (_context.t2 instanceof _BrainChild_token__WEBPACK_IMPORTED_MODULE_42__.TokenError) {
               // Add errors up the tree
               errors = {};
@@ -362,20 +361,20 @@
             } else {
               document.getElementById("codeText").innerHTML = "<span class='error'>".concat(_context.t2.stack, "</span>");
             }
-          case 34:
-            _context.next = 40;
+          case 37:
+            _context.next = 43;
             break;
-          case 36:
-            _context.prev = 36;
+          case 39:
+            _context.prev = 39;
             _context.t3 = _context["catch"](1);
             console.log(_context.t3);
             return _context.abrupt("return");
-          case 40:
+          case 43:
           case "end":
             return _context.stop();
         }
-      }, _callee, null, [[1, 36], [15, 31]]);
-    })), 1000);
+      }, _callee, null, [[1, 39], [18, 34]]);
+    })), 300);
   }
   function addGutter(file) {
     return function (e) {
@@ -386,9 +385,9 @@
         console.log(decompressed);
         var unrolled = JSON.parse(decompressed);
         e.setValue(unrolled["main.bc"]);
-        for (var _file in unrolled) {
-          if (_file === "main.bc") continue;
-          new CustomTab(_file, unrolled[_file]);
+        for (var _file2 in unrolled) {
+          if (_file2 === "main.bc") continue;
+          new CustomTab(_file2, unrolled[_file2]);
         }
       } else {
         e.setValue("include term.bc;\ninclude extmacros.bc;\ninclude int.bc;\nint seed = 1;\n\nfunction rand() -> int {\n    seed ~= (seed * 128);\n    seed ~= (seed / 512);\n    seed ~= (seed * 256);\n    return seed;\n}\n\nmetamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }\nmetamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }\nmetamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }\nmetamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }\nmetamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }\nabstract class pVec2 {\n    static function Make(int x, int y) -> pVec2 { ((x%0x10000) + (y*0x10000) -> pVec2) }\n    static function WithX(pVec2 this, int x) -> pVec2 { ((x%0x10000) + (((this->int)/0x10000)*0x10000) -> pVec2) }\n    static function WithY(pVec2 this, int y) -> pVec2 { (((this->int)%0x10000)+ (y*0x10000) -> pVec2) }\n}\n\npVec2 apple = pVec2.Make(0xFF,0xFF);\n\n@int DirectionVectors = new pVec2[] {\n    (0xFFFF0000 -> pVec2),\n    (0x00000001 -> pVec2),\n    (0x00010000 -> pVec2),\n    (0x0000FFFF -> pVec2)\n};\n@int DirectionHeads = new int[]{'^','>','v','<'}\n\nmetamethod truthy(Body this)->int{\n    return (this -> int);\n}\nclass Body {\n    pVec2 Pos;\n    pVec2 LastPos;\n    Body Tail;\n    \n    function Move(pVec2 pos){\n        this.LastPos = this.Pos;\n        if(this.Tail)this.Tail.Move(this.Pos);\n        this.Pos = pos;\n    }\n    \n    function MoveBy(pVec2 amount){\n        this.Move(this.Pos + amount);\n    }\n    \n    function Grow(){\n        if(this.Tail)return this.Tail.Grow();\n        this.Tail = new Body(this.LastPos);\n    }\n    \n    function Draw(){\n        if(this.Tail)this.Tail.Draw();\n        Term.Cursor.X = this.Pos.X;\n        Term.Cursor.Y = this.Pos.Y;\n        putchar('#');\n    }\n    \n    new (pVec2 pos){\n        this.LastPos = pos;\n        this.Pos = pos;\n    }\n}\n\nclass Head : Body {\n    int Direction;\n    new (pVec2 pos){\n        this.Direction = 1;\n        this.Pos = pos;\n        this.LastPos = pos;\n    }\n    function Draw(){\n        if(this.Tail)this.Tail.Draw();\n        Term.Cursor.X = this.Pos.X;\n        Term.Cursor.Y = this.Pos.Y;\n        putchar(DirectionHeads + this.Direction);\n    }\n}\n\nint score = 0;\nfunction GameOver(){\n    Term.Clear();\n    Term.Style.Fore = Red;\n    Term.Style.Bold = 1;\n    Term.Cursor.X = 27;\n    Term.Cursor.Y = 15;\n    Term.Write(\"GAME  OVER\");\n    Term.Cursor.X = 28;\n    Term.Cursor.Y = 16;\n    Term.Write(\"SCORE: \");\n    Term.WriteNum(score);\n    asm {halt}\n}\n\nHead snake = new Head(pVec2.Make(32, 16));\nsnake.Grow();\nsnake.Grow();\nsnake.Grow();\n\nint frame = 0;\nint counter = 0;\nint grace = 3;\nTerm.PollEvents();\nTerm.Frame.Push(()=>{\n    seed += counter;\n    rand();\n    if(apple.X > 63){\n        var a = (rand() -> pVec2);\n        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));\n    }\n    if(frame++ >= 2 + (2*!(snake.Direction%2))){\n        snake.MoveBy((*(DirectionVectors + snake.Direction) -> pVec2));\n        frame = 0;\n    }\n    if(snake.Pos == apple){\n        score++;\n        snake.Grow();\n        var a = (rand() -> pVec2);\n        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));\n    }\n    if(grace)grace--\n    else{\n        var b = snake.Tail;\n        while(b){\n            if(snake.Pos == b.Pos){\n                GameOver();\n            }\n            b = b.Tail;\n        }\n    }\n    if(snake.Pos.X > 63){GameOver();}\n    if(snake.Pos.Y > 31){GameOver();}\n    if(snake.Pos.Y < 1){GameOver();}\n    Term.Clear();\n    Term.Cursor.Reset();\n    Term.Style.Back = White;\n    Term.Style.Fore = Black;\n    Term.Write(\"                                                                \");\n    Term.Cursor.Reset();\n    Term.Write(\"SCORE: \");\n    Term.WriteNum(score);\n    Term.Style.Back = Black;\n    Term.Style.Fore = White;\n    Term.Cursor.X = apple.X;\n    Term.Cursor.Y = apple.Y;\n    putchar('a');\n    snake.Draw();\n});\n\nTerm.KeyDown.Push(function(int h, int l){\n    if(h=='w')if(1 == snake.Direction%2)return snake.Direction = 0;\n    if(h=='d')if(0 == snake.Direction%2)return snake.Direction = 1;\n    if(h=='s')if(1 == snake.Direction%2)return snake.Direction = 2;\n    if(h=='a')if(0 == snake.Direction%2)return snake.Direction = 3;\n})\n\nwhile(1){counter++;Term.PollEvents();}");
@@ -489,7 +488,7 @@
         this.InputDone();
       }
       if (code !== null) {
-        a.setValue(code);
+        this.Editor.setValue(code);
       }
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(CustomTab, [{
@@ -562,7 +561,6 @@
     }]);
     return CustomTab;
   }();
-  var AllReadOnlys = {};
   function GenerateReadOnly(name, code) {
     AllReadOnlys[name] = code;
     var newTabButton = document.createElement("button");
@@ -662,10 +660,10 @@
     function ASMRun(event) {
       asmRunning = !asmRunning;
       var breaks = [];
-      for (var _file2 in editors) {
-        var breakPoints = editors[_file2].session.getBreakpoints();
+      for (var _file3 in editors) {
+        var breakPoints = editors[_file3].session.getBreakpoints();
         for (var _line in breakPoints) {
-          breaks.push([_file2, +_line]);
+          breaks.push([_file3, +_line]);
         }
       }
       var breakIPs = new Set();
@@ -715,6 +713,11 @@
         event.target.innerHTML = "⏸";
         document.getElementById("bf").classList.add("running");
         asmRunTimer = setInterval(function () {
+          var _bsInterp$running, _bsInterp;
+          if (!((_bsInterp$running = (_bsInterp = bsInterp) === null || _bsInterp === void 0 ? void 0 : _bsInterp.running) !== null && _bsInterp$running !== void 0 ? _bsInterp$running : false)) {
+            event.target.click();
+            return;
+          }
           PushEvent(_Terminal__WEBPACK_IMPORTED_MODULE_44__.Event.Frame);
           if (bsInterp !== undefined) {
             for (var id in editors) {
@@ -755,7 +758,6 @@
                 //codeText.querySelector("span")!.scrollIntoView();
                 var _span = _codeText.querySelector("span");
                 _codeText.scrollTo(0, _span.offsetTop - 600);
-                editors[bsInterp.GetFile()].session.addMarker(new ace_builds__WEBPACK_IMPORTED_MODULE_9__.Range(bsInterp.GetLine(), 0, bsInterp.GetLine(), 1), "codePointer", "fullLine");
                 asmRunning = false;
                 clearInterval(asmRunTimer);
                 return "break";
@@ -901,7 +903,7 @@
         children: "BrainChild"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 1032,
+        lineNumber: 787,
         columnNumber: 7
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("div", {
         id: "top",
@@ -916,7 +918,7 @@
               children: "main.bc"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1036,
+              lineNumber: 791,
               columnNumber: 13
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("button", {
               onClick: newFile,
@@ -926,12 +928,12 @@
               children: "+"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1043,
+              lineNumber: 798,
               columnNumber: 13
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 1035,
+            lineNumber: 790,
             columnNumber: 11
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("div", {
             id: "editorTabs",
@@ -947,22 +949,22 @@
                 mode: "brainchild"
               }, void 0, false, {
                 fileName: _jsxFileName,
-                lineNumber: 1049,
+                lineNumber: 804,
                 columnNumber: 15
               }, this)
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1048,
+              lineNumber: 803,
               columnNumber: 13
             }, this)
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 1047,
+            lineNumber: 802,
             columnNumber: 11
           }, this)]
         }, void 0, true, {
           fileName: _jsxFileName,
-          lineNumber: 1034,
+          lineNumber: 789,
           columnNumber: 9
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("div", {
           id: "outputSide",
@@ -975,7 +977,7 @@
               children: "\u23F5"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1062,
+              lineNumber: 817,
               columnNumber: 13
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("button", {
               title: "Step Assembly",
@@ -983,7 +985,7 @@
               children: "\u2192"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1065,
+              lineNumber: 820,
               columnNumber: 13
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("button", {
               title: "Step BrainChild",
@@ -991,7 +993,7 @@
               children: "\u23ED"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1068,
+              lineNumber: 823,
               columnNumber: 13
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("button", {
               title: "Restart Interpreter",
@@ -999,12 +1001,12 @@
               children: "\u21BA"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1071,
+              lineNumber: 826,
               columnNumber: 13
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 1061,
+            lineNumber: 816,
             columnNumber: 11
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("pre", {
             id: "output",
@@ -1014,17 +1016,17 @@
             tabIndex: 0
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 1075,
+            lineNumber: 830,
             columnNumber: 11
           }, this)]
         }, void 0, true, {
           fileName: _jsxFileName,
-          lineNumber: 1060,
+          lineNumber: 815,
           columnNumber: 9
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 1033,
+        lineNumber: 788,
         columnNumber: 7
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("div", {
         id: "bf",
@@ -1037,17 +1039,17 @@
               className: "active tab"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 1087,
+              lineNumber: 842,
               columnNumber: 13
             }, this)
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 1086,
+            lineNumber: 841,
             columnNumber: 11
           }, this)
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 1085,
+          lineNumber: 840,
           columnNumber: 9
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_45__.jsxDEV)("div", {
           id: "code",
@@ -1056,22 +1058,22 @@
             children: v
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 1091,
+            lineNumber: 846,
             columnNumber: 11
           }, this)
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 1090,
+          lineNumber: 845,
           columnNumber: 9
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 1084,
+        lineNumber: 839,
         columnNumber: 7
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 1031,
+      lineNumber: 786,
       columnNumber: 5
     }, this);
   }
@@ -1168,6 +1170,8 @@
       this.TakenLabels = {};
       this.CurrentFile = "main.bc";
       this.CurrentFunction = "";
+      this.ScratchLabel = null;
+      this.MaxScratchRequired = 0;
       this.SoftInitilizedMetamethods = [];
       this.MetaMethods = {};
       this.CurrentRequiredReturns = [];
@@ -1178,6 +1182,17 @@
       this.DebuggedVals = new Set();
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Scope, [{
+      key: "GetScratch",
+      value: function GetScratch(size) {
+        var _this$ScratchLabel;
+        if (this.Parent) return this.Parent.GetScratch(size);
+        this.MaxScratchRequired = Math.max(this.MaxScratchRequired, size);
+        return (_this$ScratchLabel = this.ScratchLabel) !== null && _this$ScratchLabel !== void 0 ? _this$ScratchLabel : this.ScratchLabel = this.GetSafeName("scratch");
+      }
+  
+      // Metamethods are By name, and by FuncType.
+      // Collisions are forbidden
+    }, {
       key: "SetupIntMetamethods",
       value: function SetupIntMetamethods() {
         var _this = this;
@@ -1199,7 +1214,7 @@
           if (name === inv[0]) {
             try {
               var other = this.GetMetamethod(inv[1], argTypes, false);
-              if (other !== null) {
+              if (other !== null && _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.AllEquals(other[0], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int])) {
                 var newMethod = other[2].concat("apopa", "nota", "apusha");
                 return [other[0], other[1], newMethod];
               }
@@ -1209,7 +1224,7 @@
           } else if (name === inv[1]) {
             try {
               var _other = this.GetMetamethod(inv[0], argTypes, false);
-              if (_other !== null) {
+              if (_other !== null && _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.AllEquals(_other[0], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int])) {
                 var _newMethod = _other[2].concat("apopa", "nota", "apusha");
                 return [_other[0], _other[1], _newMethod];
               }
@@ -1234,6 +1249,7 @@
           return;
         }
         if (t.PointerDepth > 0) {
+          var t1 = t.WithDeltaPointerDepth(-1);
           // Same as basic math, but with Pointers.
           simpleOps.forEach(function (c) {
             _this2.AddMetamethodSoft(c[0], [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], c[1]);
@@ -1249,9 +1265,9 @@
           this.AddMetamethodSoft("not", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [t], simpleNot);
           this.AddMetamethodSoft("unm", [t], [t], simpleUnm);
           this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
-          this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], ["apopa", "apopb", "addab", "ptrb", "apushb"]);
-          this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, t.WithDeltaPointerDepth(-1)], ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
-          this.AddMetamethodSoft("ptrindex", [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], simpleAdd);
+          this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], t1.IsWide() ? ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addba"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.Get('a', 'a'))) : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
+          this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, t.WithDeltaPointerDepth(-1)], t1.IsWide() ? ["REM Wide set metamethod"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.FlipAB()), ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addab"], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.FlipBA()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.Put("a", "b")), ["REM end wide set metamethod"]) : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
+          this.AddMetamethodSoft("ptrindex", [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], t1.IsWide() ? ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addba", "apusha"] : simpleAdd);
           return;
         }
       }
@@ -1434,7 +1450,7 @@
         if (this.UsingAllocator()) return;
         this.SetAllocator();
         var asm = [];
-        asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])("putchar:\n    apopa\n    writea\n    ret\ngetchar:\n    reada\n    apusha\n    ret\nvAllocTable: db 0\nvAllocSize: db 0\nalloc:\n    seta vAllocTable\n    setb aftercode\n    putbptra\n    seta vAllocSize\n    apopb\n    putbptra\n    wAllocCond:\n        seta vAllocTable\n        ptra\n        ptra\n        jnza wAllocBody\n        seta vAllocTable\n        ptra\n        inca\n        ptra\n        nota\n        jnza wAllocDone\n        seta vAllocTable\n        ptra\n        inca\n        ptra\n        setb vAllocSize\n        ptrb\n        addb 3\n        cmp\n        jnzb wAllocBody\n        jmp wAllocDone\n    wAllocBody:\n        seta vAllocTable\n        ptra\n        setb vAllocTable\n        ptrb\n        incb\n        ptrb\n        addba\n        adda 2\n        setb vAllocTable\n        putaptrb\n        jmp wAllocCond\n    wAllocDone:\n    seta vAllocTable\n    ptra\n    inca\n    ptra\n    jnza fAllocSlip\n    jmp fAllocSlipDone\n    fAllocSlip:\n        setb vAllocSize\n        ptrb\n        subba\n        suba 2\n        apusha\n        seta vAllocTable\n        ptra\n        setb vAllocSize\n        ptrb\n        addba\n        adda 2\n        setb 0\n        putbptra\n        inca\n        apopb\n        putbptra\n    fAllocSlipDone:\n    seta vAllocTable\n    ptra\n    setb 1\n    putbptra\n    inca\n    setb vAllocSize\n    ptrb\n    putbptra\n    inca\n    apusha\n    ret\nvFreeTable: db 0\nvFreeTarget: db 0\nvFreeLast: db 0\nfree:\n    seta vFreeTable\n    setb aftercode\n    putbptra\n    seta vFreeTarget\n    apopb\n    subb 2\n    putbptra\n    wFreeCond:\n        seta vFreeTable\n        ptra\n        setb vFreeTarget\n        ptrb\n        cmp\n        notb\n        jnzb wFreeDone\n        seta vFreeLast\n        setb vFreeTable\n        ptrb\n        putbptra\n        seta vFreeTable\n        ptra\n        setb vFreeTable\n        ptrb\n        incb\n        ptrb\n        addba\n        adda 2\n        setb vFreeTable\n        putaptrb\n        jmp wFreeCond\n    wFreeDone:\n    seta vFreeTable\n    ptra\n    setb vFreeTarget\n    ptrb\n    subab\n    notb\n    jnzb fFreeClear\n    ret\n    fFreeClear:\n        seta vFreeTable\n        ptra\n        setb 0\n        putbptra\n        seta vFreeLast\n        ptra\n        ptra\n        jnza fFreeDone\n        seta vFreeTarget\n        ptra\n        inca\n        ptra\n        setb vFreeLast\n        ptrb\n        incb\n        ptrb\n        addab\n        addb 2\n        seta vFreeLast\n        ptra\n        inca\n        putbptra\n    fFreeDone:\n    ret".split("\n")));
+        asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])("putchar:\n    apopa\n    writea\n    ret\ngetchar:\n    reada\n    apusha\n    ret\nvAllocTable: db 0\nvAllocSize: db 0\nalloc:\n    seta vAllocTable\n    setb aftercode\n    putbptra\n    seta vAllocSize\n    apopb\n    putbptra\n    wAllocCond:\n        seta vAllocTable\n        ptra\n        ptra\n        jnza wAllocBody\n        seta vAllocTable\n        ptra\n        inca\n        ptra\n        nota\n        jnza wAllocDone\n        seta vAllocTable\n        ptra\n        inca\n        ptra\n        setb vAllocSize\n        ptrb\n        addb 3\n        cmp\n        jnzb wAllocBody\n        jmp wAllocDone\n    wAllocBody:\n        seta vAllocTable\n        ptra\n        setb vAllocTable\n        ptrb\n        incb\n        ptrb\n        addba\n        adda 2\n        setb vAllocTable\n        putaptrb\n        jmp wAllocCond\n    wAllocDone:\n    seta vAllocTable\n    ptra\n    inca\n    ptra\n    jnza fAllocSlip\n    jmp fAllocSlipDone\n    fAllocSlip:\n        setb vAllocSize\n        ptrb\n        subba\n        suba 2\n        apusha\n        seta vAllocTable\n        ptra\n        setb vAllocSize\n        ptrb\n        addba\n        adda 2\n        setb 0\n        putbptra\n        inca\n        apopb\n        putbptra\n    fAllocSlipDone:\n    seta vAllocTable\n    ptra\n    setb 1\n    putbptra\n    inca\n    setb vAllocSize\n    ptrb\n    putbptra\n    inca\n    apusha\n    ret\n\nvFreeTable: db 0\nvFreeTarget: db 0\nvFreeLast: db 0\nfree:\n    seta vFreeTable\n    setb aftercode\n    putbptra\n    seta vFreeTarget\n    apopb\n    subb 2\n    putbptra\n    wFreeCond:\n        seta vFreeTable\n        ptra\n        setb vFreeTarget\n        ptrb\n        cmp\n        notb\n        jnzb wFreeDone\n        seta vFreeLast\n        setb vFreeTable\n        ptrb\n        putbptra\n        seta vFreeTable\n        ptra\n        setb vFreeTable\n        ptrb\n        incb\n        ptrb\n        addba\n        adda 2\n        setb vFreeTable\n        putaptrb\n        jmp wFreeCond\n    wFreeDone:\n    seta vFreeTable\n    ptra\n    setb vFreeTarget\n    ptrb\n    subab\n    notb\n    jnzb fFreeClear\n    ret\n    fFreeClear:\n        seta vFreeTable\n        ptra\n        setb 0\n        putbptra\n        seta vFreeLast\n        ptra\n        ptra\n        jnza fFreeDone\n        seta vFreeTarget\n        ptra\n        inca\n        ptra\n        setb vFreeLast\n        ptrb\n        incb\n        ptrb\n        addab\n        addb 2\n        seta vFreeLast\n        ptra\n        inca\n        putbptra\n    fFreeDone:\n    ret".split("\n")));
         (_this$Assembly = this.Assembly).push.apply(_this$Assembly, asm);
         var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_4__.Claimer("");
         var falseFlag = falseClaimer.Flag();
@@ -1478,9 +1494,7 @@
       key: "Get",
       value: function Get(Identifier) {
         var _this$Vars$Identifier, _this$Parent;
-        if (Identifier === "_") {
-          return [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Discard, "_", null];
-        }
+        if (Identifier === "_") return [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Discard, "", 0];
         var o = (_this$Vars$Identifier = this.Vars[Identifier]) !== null && _this$Vars$Identifier !== void 0 ? _this$Vars$Identifier : (_this$Parent = this.Parent) === null || _this$Parent === void 0 ? void 0 : _this$Parent.Get(Identifier);
         if (!o) {
           throw new Error("Unknown identifier ".concat(Identifier));
@@ -1491,10 +1505,11 @@
       key: "Set",
       value: function Set(Identifier, Type) {
         var setup = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-        if (Type.TypeName === "discard") setup = false; // NEVER setup a discard
+        if (Type.TypeName === "discard") setup = false;
         var name = this.GetSafeName("var".concat(Type).concat(Identifier));
         this.Vars[Identifier] = [Type, name, null];
-        if (setup) this.Assembly.push("".concat(name, ": db 0"));
+        var typeDef = Type.GetDefinition();
+        if (setup) this.Assembly.push("".concat(name, ": db ").concat(typeDef.Wide ? new Array(typeDef.Size).fill('0').join(',') : 0));
         this.AllVars[name] = [Type, Identifier, this.CurrentFile, this.CurrentFunction];
         return name;
       }
@@ -1716,11 +1731,6 @@
         if (left.match(/^bpush\s+/) && right === "bpop") return "";
         if ((left === "apusha" || left === "apushb") && right === "apop") return "";
         if ((left === "bpusha" || left === "bpushb") && right === "bpop") return "";
-        if (left.match(/^apusha/) && right.match(/^apopb/) || left.match(/^bpusha/) && right.match(/^bpopb/)) return "".concat(padding, "cpyab");
-        if (left.match(/^apushb/) && right.match(/^apopa/) || left.match(/^bpushb/) && right.match(/^bpopa/)) return "".concat(padding, "cpyba");
-        if (left.match(/^line/) && right.match(/^line/)) return right;
-        if (left.match(/^line/) && right.match(/^file/)) return right;
-        if (left.match(/^file/) && right.match(/^file/)) return right;
         return null;
       }
     }, {
@@ -1738,16 +1748,11 @@
         for (var i = startFrom; i < assembly.length - 1; i++) {
           var shorter = this.CompressRedundancy(assembly[i], assembly[i + 1]);
           if (shorter !== null) {
-            if (shorter.length === 0) {
-              assembly = assembly.slice(0, i).concat(assembly.slice(i + 2));
-              i--;
-            } else {
-              assembly = assembly.slice(0, i).concat([shorter], assembly.slice(i + 2));
-            }
+            if (shorter.length === 0) return Scope.ObliterateRedundancies([].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(assembly.slice(0, i)), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(assembly.slice(i + 2))), i - 1);else return Scope.ObliterateRedundancies([].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(assembly.slice(0, i)), [shorter], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(assembly.slice(i + 2))), i - 1);
           }
         }
         return assembly.filter(function (c) {
-          return c.trim() !== "" && !Scope.SimplyRedundant(c);
+          return !Scope.SimplyRedundant(c);
         });
       }
     }]);
@@ -1877,10 +1882,14 @@
       this.TypeType = null;
       this.ClassLabel = "";
       this.Name = "";
+      this.Wide = false;
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__["default"])(TypeDefinition, [{
       key: "IsParent",
-      value: function IsParent(other) {
+      value:
+      // For structs
+  
+      function IsParent(other) {
         if (other.Name === this.Name) return true;
         if (other.Parent === null) return false;
         return this.IsParent(other.Parent);
@@ -1925,6 +1934,7 @@
         if (this.TypeType) t.TypeType = this.TypeType.Clone();
         t.ClassLabel = this.ClassLabel;
         t.Name = this.Name;
+        t.Wide = this.Wide;
         return t;
       }
     }]);
@@ -1941,7 +1951,6 @@
   _c = GeneratePointerType;
   function GenerateFuncType(typ) {
     var t = new TypeDefinition();
-    //t.AddMetamethod("truthy", [VarType.Int], [typ], []);
     return t;
   }
   _c2 = GenerateFuncType;
@@ -2372,7 +2381,7 @@
           var res = this.Expressions[i].TryEvaluate(subScope);
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
           if (i < this.Expressions.length - 1) {
-            for (var j = 0; j < res[0].length; j++) o.push("apop");
+            for (var j = 0; j < res[0].length; j++) o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][j].APop()));
           } else {
             lastTypes = res[0];
           }
@@ -2528,7 +2537,7 @@
   
   
   
-  var Keywords = ["abstract", "asm", "class", "const", "discard", "else", "func", "function", "if", "include", "int", "label", "macro", "metamethod", "new", "params", "reserve", "return", "static", "var", "void", "while"];
+  var Keywords = ["abstract", "asm", "class", "const", "discard", "else", "func", "function", "if", "include", "int", "label", "macro", "metamethod", "new", "params", "reserve", "return", "static", "struct", "var", "void", "while"];
   var _Claim = /*#__PURE__*/function () {
     function Claim(claimer, body, startIndex) {
       (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_3__["default"])(this, Claim);
@@ -2650,13 +2659,11 @@
                 if (files[l] !== KnownCodes[l]) {
                   delete _include__WEBPACK_IMPORTED_MODULE_10__.Include.Parsed[l];
                   delete _include__WEBPACK_IMPORTED_MODULE_10__.Include.Includes[l];
-                  delete _include__WEBPACK_IMPORTED_MODULE_10__.Include.Evaluated[l];
                   delete KnownCodes[l];
                   if (_macrodef__WEBPACK_IMPORTED_MODULE_11__.Macro.Macros[l]) {
                     KnownCodes = {};
                     _include__WEBPACK_IMPORTED_MODULE_10__.Include.Parsed = {};
                     _include__WEBPACK_IMPORTED_MODULE_10__.Include.Includes = {};
-                    _include__WEBPACK_IMPORTED_MODULE_10__.Include.Evaluated = {};
                     _macrodef__WEBPACK_IMPORTED_MODULE_11__.Macro.Macros = {};
                     break;
                   }
@@ -2735,10 +2742,10 @@
                 try {
                   var _scope$Assembly;
                   var o = [];
-                  _include__WEBPACK_IMPORTED_MODULE_10__.Include.Evaluated = {};
                   for (var i = 0; i < _include__WEBPACK_IMPORTED_MODULE_10__.Include.Parsed["main.bc"].length; i++) {
                     o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_1__["default"])(_include__WEBPACK_IMPORTED_MODULE_10__.Include.Parsed["main.bc"][i].TryEvaluate(scope)));
                   }
+                  if (scope.MaxScratchRequired > 0) scope.Assembly.push("".concat(scope.GetScratch(0), ": db ").concat(new Array(scope.MaxScratchRequired).fill(0).join(",")));
                   (_scope$Assembly = scope.Assembly).push.apply(_scope$Assembly, ["postdata:"].concat(o));
                   scope.Assembly.push("halt");
                   if (scope.UsingAllocator()) scope.Assembly.push("aftercode: db 1, 0");
@@ -2925,20 +2932,25 @@
             mapped.push(targetType);
             spareSize++;
           }
+          var def = targetType.GetDefinition();
+          var elementCount = spareSize;
+          var size = 1;
+          if (def.Wide) size = def.Size;
+          spareSize *= size;
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(mapped, callArgumentTypes)[0]));
           // Push the spare values to a reserved array
           var paramsName = scope.GetSafeName("params".concat(targetType.TypeName));
           scope.Assembly.push("".concat(paramsName, ":"), "db ".concat(Array(spareSize).fill(0)));
           // We're going to set every value in the array to the values off the top of the stack, casted to the target type.
           // Because it's on a stack, we're doing this in reverse.
-          for (var _i2 = spareSize - 1; _i2 >= 0; _i2--) {
+          for (var _i2 = elementCount - 1; _i2 >= 0; _i2--) {
             // First, Coax
             // o.push(...VarType.Coax([targetType], [callArgumentTypes[i]])[0]);
             // Then, store
-            o.push("setb ".concat(paramsName), "addb ".concat(_i2), "apopa", "putaptrb");
+            o.push.apply(o, ["setb ".concat(paramsName), "addb ".concat(_i2 * size)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(targetType.Put("a", "b"))));
           }
           // Then, add the length of the array, and the array itself
-          o.push("apush ".concat(spareSize), "apush ".concat(paramsName));
+          o.push("apush ".concat(elementCount), "apush ".concat(paramsName));
         } else {
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(funcType.ArgTypes, callArgumentTypes)[0]));
         }
@@ -3205,14 +3217,74 @@
       _this.GenericArgs = [];
       _this.IsAbstract = false;
       _this.FromFile = "";
+      _this.Wide = false;
       return _this;
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Class, [{
-      key: "GenerateNewMethod",
-      value: function GenerateNewMethod(scope) {
+      key: "GenerateWideNewMethod",
+      value: function GenerateWideNewMethod(scope) {
         var _this2 = this,
           _scope$Assembly;
         var typeDef = scope.UserTypes[this.Name.Name];
+        var label = scope.GetSafeName("new".concat(this.Name.Name));
+        scope.RequireAllocator();
+        var asm = [];
+        asm.push("".concat(label, ":"));
+        var childrenByOffset = [];
+        for (var id in typeDef.Children) {
+          var child = typeDef.Children[id];
+          childrenByOffset[child[1]] = [id, child];
+        }
+        var childrenInOrder = [];
+        for (var i = 0; i < childrenByOffset.length; i++) {
+          var _child = childrenByOffset[i];
+          childrenInOrder.push(i);
+          if (_child) {
+            var _childType$IsDefined, _childType$GetDefinit;
+            var childType = _child[1][0];
+            if (((_childType$IsDefined = childType === null || childType === void 0 ? void 0 : childType.IsDefined()) !== null && _childType$IsDefined !== void 0 ? _childType$IsDefined : false) && ((_childType$GetDefinit = childType === null || childType === void 0 ? void 0 : childType.GetDefinition().Wide) !== null && _childType$GetDefinit !== void 0 ? _childType$GetDefinit : false)) i += childType.GetDefinition().Size - 1;
+          }
+        }
+        var _loop = function _loop() {
+          var i = childrenInOrder[j];
+          var child = childrenByOffset[i];
+          if (child) {
+            var _childType = child[1][0];
+            // Check if there's a non-static assignment for this child.
+            var possibleAssignments = _this2.Assignments.filter(function (c) {
+              return c.Left.Identifier.Name === child[0];
+            });
+            if (possibleAssignments.length > 0) {
+              if (possibleAssignments.length > 1) throw new Error("Ambiguous default value for ".concat(child[0]));
+              var res = possibleAssignments[0].Right.TryEvaluate(scope);
+              asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
+              for (var spare = 1; spare < res[0].length; spare++) asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][spare].APop()));
+            } else {
+              var _childType$IsDefined2, _childType$GetDefinit2;
+              if (((_childType$IsDefined2 = _childType === null || _childType === void 0 ? void 0 : _childType.IsDefined()) !== null && _childType$IsDefined2 !== void 0 ? _childType$IsDefined2 : false) && ((_childType$GetDefinit2 = _childType === null || _childType === void 0 ? void 0 : _childType.GetDefinition().Wide) !== null && _childType$GetDefinit2 !== void 0 ? _childType$GetDefinit2 : false)) {
+                asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(Array(_childType.GetDefinition().Size).fill("apush 0")));
+              } else {
+                asm.push("apush ".concat(child[1][2]));
+              }
+            }
+          } else {
+            asm.push("apush 0");
+          }
+        };
+        for (var j = childrenInOrder.length - 1; j >= 0; j--) {
+          _loop();
+        }
+        asm.push("  ret");
+        (_scope$Assembly = scope.Assembly).push.apply(_scope$Assembly, asm);
+        return label;
+      }
+    }, {
+      key: "GenerateNewMethod",
+      value: function GenerateNewMethod(scope) {
+        var _this3 = this,
+          _scope$Assembly2;
+        var typeDef = scope.UserTypes[this.Name.Name];
+        if (typeDef.Wide) return this.GenerateWideNewMethod(scope);
         var label = scope.GetSafeName("new".concat(this.Name.Name));
         scope.RequireAllocator();
         var asm = [];
@@ -3222,11 +3294,13 @@
           var child = typeDef.Children[id];
           childrenByOffset[child[1]] = [id, child];
         }
-        var _loop = function _loop() {
-          var child = childrenByOffset[i];
+        var _loop2 = function _loop2(_i) {
+          var child = childrenByOffset[_i];
           if (child) {
+            var _childType$IsDefined4, _childType$GetDefinit4;
+            var childType = child[1][0];
             // Check if there's a non-static assignment for this child.
-            var possibleAssignments = _this2.Assignments.filter(function (c) {
+            var possibleAssignments = _this3.Assignments.filter(function (c) {
               return c.Left.Identifier.Name === child[0];
             });
             if (possibleAssignments.length > 0) {
@@ -3234,25 +3308,33 @@
               asm.push("  apushb");
               var res = possibleAssignments[0].Right.TryEvaluate(scope);
               asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
-              for (var spare = 1; spare < res[0].length; spare++) asm.push("    apop");
-              asm.push("    apopa", "    apopb", "    putaptrb");
+              for (var spare = 1; spare < res[0].length; spare++) asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][spare].APop()));
+              ///asm.push(`    apopa`, `    apopb`, `    putaptrb`);
+              asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][0].FlipAB()).concat(["apopb"], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][0].FlipBA()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][0].Put("a", "b"))));
             } else {
-              asm.push("  seta ".concat(child[1][2]), "  putaptrb");
+              var _childType$IsDefined3, _childType$GetDefinit3;
+              if (((_childType$IsDefined3 = childType === null || childType === void 0 ? void 0 : childType.IsDefined()) !== null && _childType$IsDefined3 !== void 0 ? _childType$IsDefined3 : false) && ((_childType$GetDefinit3 = childType === null || childType === void 0 ? void 0 : childType.GetDefinition().Wide) !== null && _childType$GetDefinit3 !== void 0 ? _childType$GetDefinit3 : false)) {
+                asm.push.apply(asm, ["seta 0"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(Array(childType.GetDefinition().Size).fill(['putaptrb', 'incb']).flat())));
+              } else {
+                asm.push("  seta ".concat(child[1][2]), "  putaptrb");
+              }
             }
+            if (((_childType$IsDefined4 = childType === null || childType === void 0 ? void 0 : childType.IsDefined()) !== null && _childType$IsDefined4 !== void 0 ? _childType$IsDefined4 : false) && ((_childType$GetDefinit4 = childType === null || childType === void 0 ? void 0 : childType.GetDefinition().Wide) !== null && _childType$GetDefinit4 !== void 0 ? _childType$GetDefinit4 : false)) _i += childType.GetDefinition().Size - 1;
           }
-          if (i < childrenByOffset.length - 1) asm.push("  incb");
+          if (_i < childrenByOffset.length - 1) asm.push("  incb");
+          i = _i;
         };
         for (var i = 0; i < childrenByOffset.length; i++) {
-          _loop();
+          _loop2(i);
         }
         asm.push("  ret");
-        (_scope$Assembly = scope.Assembly).push.apply(_scope$Assembly, asm);
+        (_scope$Assembly2 = scope.Assembly).push.apply(_scope$Assembly2, asm);
         return label;
       }
     }, {
       key: "TrySetup",
       value: function TrySetup(scope) {
-        var _this3 = this;
+        var _this4 = this;
         if (this.Parent !== null && !this.Parent.HasDefinition()) {
           return false;
         }
@@ -3263,6 +3345,7 @@
         objectType.Name = this.Name.Name;
         classType.Name = "type".concat(this.Name.Name);
         objectType.TypeType = classType;
+        objectType.Wide = this.Wide;
         if (this.Parent !== null) {
           var parent = this.Parent.GetDefinition();
           var classParent = parent.TypeType;
@@ -3290,8 +3373,9 @@
         }
         objectType.Children["class"] = [_vartype__WEBPACK_IMPORTED_MODULE_14__.VarType.Type, 0, classType.ClassLabel];
         classType.Children["new"] = [_vartype__WEBPACK_IMPORTED_MODULE_14__.VarType.Void, 1, "0"];
-        var _loop2 = function _loop2() {
-          var member = _this3.StaticMembers[i];
+        var _loop3 = function _loop3() {
+          var _type$IsDefined2, _type2, _type$GetDefinition2;
+          var member = _this4.StaticMembers[i];
           if (member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition) {
             var _funcType = member.GetTypes(scope)[0];
             member.Label = scope.GetSafeName("function_" + _funcType.RetTypes + "_" + _funcType.ArgTypes);
@@ -3303,10 +3387,11 @@
           } else {
             type = member.Type;
           }
-          classType.Children[name.Name] = [type, classType.Size++, member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
+          classType.Children[name.Name] = [type, classType.Size, member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
+          classType.Size += ((_type$IsDefined2 = (_type2 = type) === null || _type2 === void 0 ? void 0 : _type2.IsDefined()) !== null && _type$IsDefined2 !== void 0 ? _type$IsDefined2 : false) && (_type$GetDefinition2 = type.GetDefinition()) !== null && _type$GetDefinition2 !== void 0 && _type$GetDefinition2.Wide ? type.GetDefinition().Size : 1;
           // Check for a Assignment baring this name, that assigns to a Reserve
           if (member instanceof _variabledefinition__WEBPACK_IMPORTED_MODULE_13__.VariableDecleration) {
-            _this3.StaticAssignments.filter(function (c) {
+            _this4.StaticAssignments.filter(function (c) {
               return c.Left === member;
             }).filter(function (c) {
               return c.Right instanceof _reserve__WEBPACK_IMPORTED_MODULE_9__.Reserve;
@@ -3322,11 +3407,12 @@
           }
         };
         for (var i = 0; i < this.StaticMembers.length; i++) {
-          _loop2();
+          _loop3();
         }
         // Save virtual members statically too
-        for (var _i = 0; _i < this.VirtualMembers.length; _i++) {
-          var member = this.VirtualMembers[_i];
+        for (var _i2 = 0; _i2 < this.VirtualMembers.length; _i2++) {
+          var _type$IsDefined, _type, _type$GetDefinition;
+          var member = this.VirtualMembers[_i2];
           if (member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition) {
             var funcType = member.GetTypes(scope)[0];
             member.Label = scope.GetSafeName("function_" + funcType.RetTypes + "_" + funcType.ArgTypes);
@@ -3339,10 +3425,11 @@
             type = member.Type;
           }
           classType.Children[_name2.Name] = [type, classType.Size, member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
-          objectType.VirtualChildren[_name2.Name] = [type, classType, classType.Size++, member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
+          objectType.VirtualChildren[_name2.Name] = [type, classType, classType.Size, member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
+          classType.Size += ((_type$IsDefined = (_type = type) === null || _type === void 0 ? void 0 : _type.IsDefined()) !== null && _type$IsDefined !== void 0 ? _type$IsDefined : false) && (_type$GetDefinition = type.GetDefinition()) !== null && _type$GetDefinition !== void 0 && _type$GetDefinition.Wide ? type.GetDefinition().Size : 1;
         }
-        var _loop3 = function _loop3() {
-          var member = _this3.Members[_i2];
+        var _loop4 = function _loop4() {
+          var member = _this4.Members[_i3];
           if (member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition) {
             var _funcType2 = member.GetTypes(scope)[0];
             member.Label = scope.GetSafeName("function_" + _funcType2.RetTypes + "_" + _funcType2.ArgTypes);
@@ -3357,11 +3444,13 @@
           if (objectType.Children[name.Name]) {
             objectType.Children[name.Name] = [type, objectType.Children[name.Name][1], member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
           } else {
-            objectType.Children[name.Name] = [type, objectType.Size++, member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
+            var _type$IsDefined3, _type3, _type$GetDefinition3;
+            objectType.Children[name.Name] = [type, objectType.Size, member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition ? member.Label : "0"];
+            objectType.Size += ((_type$IsDefined3 = (_type3 = type) === null || _type3 === void 0 ? void 0 : _type3.IsDefined()) !== null && _type$IsDefined3 !== void 0 ? _type$IsDefined3 : false) && (_type$GetDefinition3 = type.GetDefinition()) !== null && _type$GetDefinition3 !== void 0 && _type$GetDefinition3.Wide ? type.GetDefinition().Size : 1;
           }
           // Check for a Assignment baring this name, that assigns to a Reserve
           if (member instanceof _variabledefinition__WEBPACK_IMPORTED_MODULE_13__.VariableDecleration) {
-            _this3.Assignments.filter(function (c) {
+            _this4.Assignments.filter(function (c) {
               return c.Left === member;
             }).filter(function (c) {
               return c.Right instanceof _reserve__WEBPACK_IMPORTED_MODULE_9__.Reserve;
@@ -3383,17 +3472,17 @@
             }
           }
         };
-        for (var _i2 = 0; _i2 < this.Members.length; _i2++) {
-          _loop3();
+        for (var _i3 = 0; _i3 < this.Members.length; _i3++) {
+          _loop4();
         }
   
         // Find all const values and set them up.
-        for (var _i3 = 0; _i3 < this.Constants.length; _i3++) {
-          var c = this.Constants[_i3];
+        for (var _i4 = 0; _i4 < this.Constants.length; _i4++) {
+          var c = this.Constants[_i4];
           objectType.ConstantChildren[c.Identifier.Name] = [c.GetTypes(scope)[0], 0];
         }
-        for (var _i4 = 0; _i4 < this.StaticConstants.length; _i4++) {
-          var _c = this.StaticConstants[_i4];
+        for (var _i5 = 0; _i5 < this.StaticConstants.length; _i5++) {
+          var _c = this.StaticConstants[_i5];
           classType.ConstantChildren[_c.Identifier.Name] = [_c.GetTypes(scope)[0], 0];
         }
         objectType.Assignments = this.Assignments;
@@ -3404,7 +3493,7 @@
     }, {
       key: "Evaluate",
       value: function Evaluate(scope) {
-        var _scope$Assembly2;
+        var _scope$Assembly3;
         var asm = [];
         var objectDef = scope.UserTypes[this.Name.Name];
         var classDef = objectDef.TypeType;
@@ -3427,20 +3516,20 @@
           }
         }
         // Load Virtual members into the class as well
-        for (var _i5 = 0; _i5 < this.VirtualMembers.length; _i5++) {
-          var _member2 = this.VirtualMembers[_i5];
+        for (var _i6 = 0; _i6 < this.VirtualMembers.length; _i6++) {
+          var _member2 = this.VirtualMembers[_i6];
           if (_member2 instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition) {
             _member2.IsMeta = true;
             _member2.TryEvaluate(scope);
           }
         }
         // Evaluate constructors
-        for (var _i6 = 0; _i6 < this.Constructors.length; _i6++) {
-          var constructor = this.Constructors[_i6];
+        for (var _i7 = 0; _i7 < this.Constructors.length; _i7++) {
+          var constructor = this.Constructors[_i7];
           constructor.TryEvaluate(scope);
         }
-        for (var _i7 = 0; _i7 < this.Members.length; _i7++) {
-          var member = this.Members[_i7];
+        for (var _i8 = 0; _i8 < this.Members.length; _i8++) {
+          var member = this.Members[_i8];
           if (member instanceof _functiondefinition__WEBPACK_IMPORTED_MODULE_7__.FunctionDefinition) member.TryEvaluate(scope);
         }
         if (!this.IsAbstract) {
@@ -3452,13 +3541,18 @@
           var child = classDef.Children[id];
           vars[child[1]] = child[2];
         }
-        asm.push("db ".concat(vars).replace(/,(?=,)/gm, ",0"));
-        (_scope$Assembly2 = scope.Assembly).push.apply(_scope$Assembly2, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(asm));
+        var varsOrZeros = [];
+        for (var _i9 = 0; _i9 < classDef.Size; _i9++) {
+          var _vars$_i;
+          varsOrZeros.push((_vars$_i = vars[_i9]) !== null && _vars$_i !== void 0 ? _vars$_i : "0");
+        }
+        asm.push("db ".concat(varsOrZeros.join(",")));
+        (_scope$Assembly3 = scope.Assembly).push.apply(_scope$Assembly3, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(asm));
         // Execute all static assignments
         asm = [];
-        for (var _i8 = 0; _i8 < this.StaticAssignments.length; _i8++) {
-          var _asm;
-          var assignment = this.StaticAssignments[_i8];
+        for (var _i10 = 0; _i10 < this.StaticAssignments.length; _i10++) {
+          var _asm, _asm2;
+          var assignment = this.StaticAssignments[_i10];
           var declr = assignment.Left;
           if (declr.IsConstant) {
             // Conveniently also handle constant assignment.
@@ -3469,16 +3563,17 @@
             continue;
           }
           // Find which static-child this belongs to.
-          var _child = classDef.Children[declr.Identifier.Name];
-          var res = assignment.TryEvaluate(scope);
-          asm.push("setb ".concat(classDef.ClassLabel), "addb ".concat(_child[1]), "apushb");
+          var _child2 = classDef.Children[declr.Identifier.Name];
+          var res = assignment.Right.TryEvaluate(scope);
+          asm.push("setb ".concat(classDef.ClassLabel), "addb ".concat(_child2[1]), "apushb");
           (_asm = asm).push.apply(_asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
-          for (var spare = 1; spare < res[0].length; spare++) asm.push("apop");
+          (_asm2 = asm).push.apply(_asm2, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_14__.VarType.Coax([_child2[0]], res[0])[0]));
+          //for (let spare = 1; spare < res[0].length; spare++) asm.push(...res[0][spare].APop());
           asm.push("apopa", "apopb", "putaptrb");
         }
         // Also perform non-static constant assignments
-        for (var _i9 = 0; _i9 < this.Assignments.length; _i9++) {
-          var _assignment = this.Assignments[_i9];
+        for (var _i11 = 0; _i11 < this.Assignments.length; _i11++) {
+          var _assignment = this.Assignments[_i11];
           var _declr = _assignment.Left;
           if (!_declr.IsConstant) continue;
           if (!(0,_Simplifyable__WEBPACK_IMPORTED_MODULE_10__.IsSimplifyable)(_assignment.Right)) throw new Error("Cannot assign non-constant value to constant");
@@ -3534,6 +3629,8 @@
         var abstract = false;
         if (claimer.Claim(/abstract\b/).Success) abstract = true;
         var c = claimer.Claim(/class\b/);
+        var wide = false;
+        if (wide = !c.Success) c = claimer.Claim(/struct\b/);
         if (!c.Success) return null;
         var className = _identifier__WEBPACK_IMPORTED_MODULE_8__.Identifier.Claim(claimer);
         if (className === null) {
@@ -3580,9 +3677,8 @@
         var constructors = [];
         var member = Class.ClaimMember(claimer, abstract, className);
         while (member !== null) {
-          if (member[1] instanceof _variabledefinition__WEBPACK_IMPORTED_MODULE_13__.VariableDecleration && member[1].Type.TypeName === "discard") {
-            throw new Error("Cannot declare discard type variable in class {(member[1] as VariableDecleration).Identifier!.Name}");
-          }
+          var _Type;
+          if (member[1] instanceof _variabledefinition__WEBPACK_IMPORTED_MODULE_13__.VariableDecleration && ((_Type = member[1].Type) === null || _Type === void 0 ? void 0 : _Type.TypeName) === "discard") throw new Error("Cannot declare discard type variable in class ".concat(member[1].Identifier.Name));
           if (member[1] instanceof _variabledefinition__WEBPACK_IMPORTED_MODULE_13__.VariableDecleration && member[0] !== "virtual" && member[0] !== "none") {
             var assignValue = _assignment__WEBPACK_IMPORTED_MODULE_5__.Assignment.RightClaim(member[1], claimer);
             if (assignValue) {
@@ -3644,6 +3740,7 @@
         cls.Parent = parent;
         cls.IsAbstract = abstract;
         cls.FromFile = claimer.File;
+        cls.Wide = wide;
         return cls;
       }
     }]);
@@ -3815,12 +3912,10 @@
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/inherits.js */ "./node_modules/@babel/runtime/helpers/esm/inherits.js");
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createSuper.js */ "./node_modules/@babel/runtime/helpers/esm/createSuper.js");
   /* harmony import */ var _expression__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./expression */ "./src/BrainChild/expression.tsx");
-  /* harmony import */ var _Simplifyable__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Simplifyable */ "./src/BrainChild/Simplifyable.tsx");
-  /* harmony import */ var _variable__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./variable */ "./src/BrainChild/variable.tsx");
-  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
+  /* harmony import */ var _variable__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./variable */ "./src/BrainChild/variable.tsx");
+  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
   /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
   __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
-  
   
   
   
@@ -3849,47 +3944,32 @@
       return _this;
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Cumulate, [{
-      key: "Simplify",
-      value: function Simplify(scope) {
-        if (!(0,_Simplifyable__WEBPACK_IMPORTED_MODULE_6__.IsSimplifyable)(this.Target)) return null;
-        if (!(0,_variable__WEBPACK_IMPORTED_MODULE_7__.IsSimpleAssignable)(this.Target)) return null;
-        var res = this.Target.TrySimplify(scope);
-        if (res === null) return null;
-        var modified = this.Operator === "add" ? res + 1 : res - 1;
-        if (!this.Target.AssignSimple(scope, modified)) return null;
-        return this.PostFix ? res : modified;
-      }
-    }, {
       key: "Evaluate",
       value: function Evaluate(scope) {
         var _this2 = this;
-        var res = this.TrySimplify(scope);
-        if (res !== null) {
-          return [this.GetTypes(scope), ["apush ".concat((res & 0xffffffff) >>> 0)]];
-        }
         var o = [this.GetLine()];
         var ts = this.Target.GetTypes(scope);
         ts.forEach(function (t) {
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_this2.Target.Read(scope)));
           if (_this2.PostFix) {
-            o.push("apopa", "apusha", "apusha");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t.CloneA()));
           }
           var metaName = (_this2.Operator === "add" ? "in" : "de") + "crement";
           var meta = scope.GetMetamethod(metaName, [t]);
           if (meta === null) {
             // Try the math operator instead
-            meta = scope.GetMetamethod(_this2.Operator, [t, _vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Int]);
+            meta = scope.GetMetamethod(_this2.Operator, [t, _vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int]);
             o.push("apush 1");
           }
           if (meta === null) {
             throw new Error("Cannot ".concat(metaName, " type ").concat(t, ". No metamethod"));
           }
-          if (!_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.AllEquals([t], meta[0])) {
+          if (!_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.AllEquals([t], meta[0])) {
             throw new Error("Metamethod ".concat(metaName, " for type ").concat(t, " must return the same time."));
           }
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
           if (!_this2.PostFix) {
-            o.push("apopa", "apusha", "apusha");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t.CloneA()));
           }
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_this2.Target.Assign(scope, t)));
         });
@@ -3907,7 +3987,7 @@
         for (var i = 0; i < cumulativeOperators.length; i++) {
           var op = cumulativeOperators[i];
           if (claimer.Claim(op[0]).Success) {
-            var exp = _variable__WEBPACK_IMPORTED_MODULE_7__.Variable.ClaimReadWritable(claimer);
+            var exp = _variable__WEBPACK_IMPORTED_MODULE_6__.Variable.ClaimReadWritable(claimer);
             if (exp === null) {
               flag.Fail();
               return null;
@@ -3923,7 +4003,7 @@
     }, {
       key: "RightClaim",
       value: function RightClaim(left, claimer) {
-        if (!(0,_variable__WEBPACK_IMPORTED_MODULE_7__.IsReadWritable)(left)) return null;
+        if (!(0,_variable__WEBPACK_IMPORTED_MODULE_6__.IsReadWritable)(left)) return null;
         var l = left;
         var flag = claimer.Flag();
         for (var i = 0; i < cumulativeOperators.length; i++) {
@@ -4031,7 +4111,7 @@
           throw new Error("Cannot dereference non-returning value");
         }
         for (var i = 1; i < res[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][i].APop()));
         }
         if (res[0][0].PointerDepth <= 0) {
           throw new Error("Cannot dereference non-pointer. Got ".concat(res[0][0]));
@@ -4051,7 +4131,7 @@
           throw new Error("Cannot dereference non-returning value");
         }
         for (var i = 1; i < res[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][i].APop()));
         }
         if (res[0][0].PointerDepth <= 0) {
           throw new Error("Cannot dereference non-pointer. Got ".concat(res[0][0]));
@@ -4069,7 +4149,7 @@
           throw new Error("Cannot dereference non-returning value");
         }
         for (var i = 1; i < res[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][i].APop()));
         }
         if (res[0][0].PointerDepth <= 0) {
           throw new Error("Cannot dereference non-pointer. Got ".concat(res[0][0]));
@@ -4400,7 +4480,7 @@
         var res = this.Body.TryEvaluate(scope);
         o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
         for (var i = 0; i < res[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][i].APop()));
         }
         return o;
       }
@@ -4548,8 +4628,10 @@
   /* harmony import */ var _call__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./call */ "./src/BrainChild/call.tsx");
   /* harmony import */ var _block__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./block */ "./src/BrainChild/block.tsx");
   /* harmony import */ var _expression__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./expression */ "./src/BrainChild/expression.tsx");
+  /* harmony import */ var _return__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./return */ "./src/BrainChild/return.tsx");
   /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
   __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
+  
   
   
   
@@ -4617,7 +4699,7 @@
           });
         }
         for (var _i = this.Args.length - 1; _i >= 0; _i--) {
-          o.push("  seta ".concat(this.Args[_i].Label), "  apopb", "  putbptra");
+          o.push.apply(o, ["  seta ".concat(this.Args[_i].Label)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Args[_i].Type.Put("a", "a"))));
         }
         var res = this.Body.TryEvaluate(bodyScope);
         if (!this.Body.DefinitelyReturns() && !_vartype__WEBPACK_IMPORTED_MODULE_10__.VarType.CanCoax(bodyScope.GetRequiredReturns(), res[0])) {
@@ -4966,31 +5048,26 @@
           _vartype__WEBPACK_IMPORTED_MODULE_10__.VarType.CurrentGenericArgs = oldGenericTypes;
           return null;
         }
-        var retTypes = [];
-        if (claimer.Claim(/->/).Success) {
-          var retType = _vartype__WEBPACK_IMPORTED_MODULE_10__.VarType.Claim(claimer);
-          while (retType !== null) {
-            retTypes.push(retType);
-            if (!claimer.Claim(/,/).Success) break;
-            retType = _vartype__WEBPACK_IMPORTED_MODULE_10__.VarType.Claim(claimer);
-          }
-        }
+        var retTypes = [fakeArg.Type];
         var body = _expression__WEBPACK_IMPORTED_MODULE_13__.Expression.Claim(claimer);
         _vartype__WEBPACK_IMPORTED_MODULE_10__.VarType.CurrentGenericArgs = oldGenericTypes;
         if (body === null) {
           fnc.Fail();
           return null;
         }
-        if (body instanceof _block__WEBPACK_IMPORTED_MODULE_12__.Block) {
-          if (body.Expressions.length > 0) {
-            var last = body.Expressions[body.Expressions.length - 1];
-            if (last instanceof _call__WEBPACK_IMPORTED_MODULE_11__.Call) {
-              last.IsFinalExpression = true;
-            }
-          }
-        } else if (body instanceof _call__WEBPACK_IMPORTED_MODULE_11__.Call) {
-          body.IsFinalExpression = true;
+        if (!(body instanceof _block__WEBPACK_IMPORTED_MODULE_12__.Block)) {
+          // Wrap the body in a fake block for constructors
+          var fakeBlock = new _block__WEBPACK_IMPORTED_MODULE_12__.Block(fakeClaimer, fakeClaim);
+          fakeBlock.Expressions.push(body);
+          body = fakeBlock;
         }
+        // Add a return statement to the end of the block
+        var fakeReturn = new _return__WEBPACK_IMPORTED_MODULE_14__.Return(fakeClaimer, fakeClaim);
+        // "this" identifier
+        var thisIdentifier = new _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier(fakeClaimer, fakeClaim);
+        thisIdentifier.Name = "this";
+        fakeReturn.Values = [thisIdentifier];
+        body.Expressions.push(fakeReturn);
         var funct = new FunctionDefinition(claimer, fnc);
         funct.Args = args;
         funct.RetTypes = retTypes;
@@ -5051,14 +5128,15 @@
   /* harmony export */ __webpack_require__.d(__webpack_exports__, {
   /* harmony export */   "Identifier": function() { return /* binding */ Identifier; }
   /* harmony export */ });
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/inherits.js */ "./node_modules/@babel/runtime/helpers/esm/inherits.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createSuper.js */ "./node_modules/@babel/runtime/helpers/esm/createSuper.js");
-  /* harmony import */ var _brainchild__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./brainchild */ "./src/BrainChild/brainchild.tsx");
-  /* harmony import */ var _expression__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./expression */ "./src/BrainChild/expression.tsx");
-  /* harmony import */ var _variable__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./variable */ "./src/BrainChild/variable.tsx");
-  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js */ "./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/inherits.js */ "./node_modules/@babel/runtime/helpers/esm/inherits.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createSuper.js */ "./node_modules/@babel/runtime/helpers/esm/createSuper.js");
+  /* harmony import */ var _brainchild__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./brainchild */ "./src/BrainChild/brainchild.tsx");
+  /* harmony import */ var _expression__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./expression */ "./src/BrainChild/expression.tsx");
+  /* harmony import */ var _variable__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./variable */ "./src/BrainChild/variable.tsx");
+  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
   /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
   __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
   
@@ -5070,13 +5148,14 @@
   
   
   
+  
   var forbiddenClasses = ["int", "void", "discard"];
   var Identifier = /*#__PURE__*/function (_Expression) {
-    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Identifier, _Expression);
-    var _super = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_3__["default"])(Identifier);
+    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_3__["default"])(Identifier, _Expression);
+    var _super = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_4__["default"])(Identifier);
     function Identifier() {
       var _this;
-      (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this, Identifier);
+      (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_1__["default"])(this, Identifier);
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
@@ -5084,9 +5163,11 @@
       _this.Name = "";
       return _this;
     }
-    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__["default"])(Identifier, [{
+    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Identifier, [{
       key: "AssignSimple",
       value: function AssignSimple(scope, value) {
+        var res = scope.Get(this.Name);
+        if (res[0].TypeName === "discard") return true;
         return scope.SetConstant(this.Name, null, value, false);
       }
     }, {
@@ -5095,9 +5176,7 @@
         try {
           var _res$;
           var res = scope.Get(this.Name);
-          if (res[0].TypeName === "discard") {
-            return 0;
-          }
+          if (res[0].TypeName === "discard") return 0;
           return (_res$ = res[2]) !== null && _res$ !== void 0 ? _res$ : null;
         } catch (_unused) {
           return null;
@@ -5108,34 +5187,28 @@
       value: function Assign(scope) {
         var res = scope.Get(this.Name);
         var t = res[0].GetDefinition();
-        if (res[0].TypeName === "discard") {
-          return ["apop"];
-        }
+        if (res[0].TypeName === "discard") return ["apop"];
         if (res[2] !== null) throw new Error("Cannot override constant value with non-constant value!");
         if (t.Name.startsWith("type")) {
           throw new Error("Cannot assign over class");
         }
-        return ["apopb", "seta ".concat(res[1]), "putbptra"];
+        return ["setb ".concat(res[1])].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0].Put("a", "b"))); //[`apopb`, `seta ${res[1]}`, `putbptra`];
       }
     }, {
       key: "Read",
       value: function Read(scope) {
         var res = scope.Get(this.Name);
-        if (res[0].TypeName === "discard") {
-          return ["apush 0"];
-        }
+        if (res[0].TypeName === "discard") return ["apush 0"];
         if (res[2] !== null) return ["apush ".concat((res[2] & 0xffffffff) >>> 0)];
-        return ["seta ".concat(res[1]), "ptra", "apusha"];
+        return ["seta ".concat(res[1])].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0].Get("a", "a")));
       }
     }, {
       key: "Evaluate",
       value: function Evaluate(scope) {
         var res = scope.Get(this.Name);
-        if (res[0].TypeName === "discard") {
-          return [[_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Discard], ["apush 0"]];
-        }
+        if (res[0].TypeName === "discard") return [[_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Discard], ["apush 0"]];
         if (res[2] !== null) return [[res[0]], ["apush ".concat((res[2] & 0xffffffff) >>> 0)]];
-        return [[res[0]], [this.GetLine(), "seta ".concat(res[1]), "ptra", "apusha"]];
+        return [[res[0]], [this.GetLine(), "seta ".concat(res[1])].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0].Get("a", "a")))];
       }
     }, {
       key: "GetPointer",
@@ -5165,7 +5238,7 @@
         var allowForbiddenClasses = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var c = claimer.Claim(/[a-zA-Z_]\w*\b/);
         if (!c.Success) return null;
-        if (_brainchild__WEBPACK_IMPORTED_MODULE_4__.Keywords.includes(c.Body[0])) {
+        if (_brainchild__WEBPACK_IMPORTED_MODULE_5__.Keywords.includes(c.Body[0])) {
           if (!(allowForbiddenClasses && forbiddenClasses.includes(c.Body[0]))) {
             c.Fail();
             return null;
@@ -5177,10 +5250,10 @@
       }
     }]);
     return Identifier;
-  }(_expression__WEBPACK_IMPORTED_MODULE_5__.Expression);
-  _variable__WEBPACK_IMPORTED_MODULE_6__.Variable.RegisterReadWritable(Identifier.Claim);
-  _variable__WEBPACK_IMPORTED_MODULE_6__.Variable.RegisterReferenceable(Identifier.Claim);
-  _expression__WEBPACK_IMPORTED_MODULE_5__.Expression.Register(Identifier.Claim);
+  }(_expression__WEBPACK_IMPORTED_MODULE_6__.Expression);
+  _variable__WEBPACK_IMPORTED_MODULE_7__.Variable.RegisterReadWritable(Identifier.Claim);
+  _variable__WEBPACK_IMPORTED_MODULE_7__.Variable.RegisterReferenceable(Identifier.Claim);
+  _expression__WEBPACK_IMPORTED_MODULE_6__.Expression.Register(Identifier.Claim);
   
   var $ReactRefreshModuleId$ = __webpack_require__.$Refresh$.moduleId;
   var $ReactRefreshCurrentExports$ = __react_refresh_utils__.getModuleExports(
@@ -5293,7 +5366,7 @@
         var valueRes = this.Condition.TryEvaluate(scope);
         o.push.apply(o, [this.GetLine()].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valueRes[1])));
         for (var i = 1; i < valueRes[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valueRes[0][i].APop()));
         }
         var resType = valueRes[0][0];
         var meta = scope.GetMetamethod("truthy", [resType]);
@@ -5314,7 +5387,7 @@
             return "  ".concat(c);
           })));
           for (var _i = resTypes.length; _i < _res2[0].length; _i++) {
-            o.push("apop");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_res2[0][_i].APop()));
           }
         }
         o.push("jmp ".concat(afterTrue), "".concat(ifTrue, ":"));
@@ -5323,7 +5396,7 @@
           return "  ".concat(c);
         })));
         for (var _i2 = resTypes.length; _i2 < res[0].length; _i2++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][_i2].APop()));
         }
         o.push("".concat(afterTrue, ":"));
         return [resTypes, o];
@@ -5476,7 +5549,6 @@
         Include.Parsed[this.Path].forEach(function (c) {
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(c.TryEvaluate(scope)));
         });
-        Include.Evaluated[this.Path] = true;
         scope.CurrentFile = oldFile;
         if (o.length > 1) o.push("file ".concat(this.Claimer.File));else o.pop();
         if (scope.Assembly.length > lastLength) scope.Assembly.push("file ".concat(this.Claimer.File));else scope.Assembly.pop();
@@ -5645,34 +5717,39 @@
         if (valRes[0].length === 0) throw new Error("Cannot index expression that does not resolve in value");
         o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[1]));
         for (var i = 1; i < valRes[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][i].APop()));
         }
         var vType = valRes[0][0];
         var typeDef = this.Generics.length ? vType.GetDefinition().WithGenerics(this.Generics) : vType.GetDefinition();
         if (this.Target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier) {
           if (this.Curry) {
-            o.push("apopa", "apusha", "apusha");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].CloneA()));
             this.CurryType = valRes[0][0];
           }
           var targetName = this.Target.Name;
           var meta = scope.GetMetamethod("get_" + targetName, [vType]);
           if (meta) {
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(meta[1], [vType])[0]));
             o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
             return [meta[0], o];
           }
           var virtualChild = typeDef.VirtualChildren[targetName];
           if (virtualChild) {
-            o.push("apop", "seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2]), "ptra", "apusha");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].APop()).concat(["seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2])], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(virtualChild[0].Get("a", "a"))));
             return [[virtualChild[0]], o];
           }
           var constChild = typeDef.ConstantChildren[targetName];
           if (constChild) {
-            o.push("apop", "apush ".concat((constChild[1] & 0xffffffff) >>> 0));
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].APop()).concat(["apush ".concat((constChild[1] & 0xffffffff) >>> 0)]));
             return [[constChild[0]], o];
           }
           var child = typeDef.Children[targetName];
           if (!child) throw new Error("Value does not have member ".concat(targetName));
-          o.push("apopa", "adda ".concat(child[1]), "ptra", "apusha");
+          if (typeDef.Wide) {
+            // if it's wide, convert to a reference to it.
+            o.push.apply(o, ["setb ".concat(scope.GetScratch(typeDef.Size))].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(vType.Put("a", "b")), ["apush ".concat(scope.GetScratch(typeDef.Size))]));
+          }
+          o.push.apply(o, ["apopa", "adda ".concat(child[1])].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(child[0].Get("a", "a"))));
           return [[child[0]], o];
         } else {
           var indexTypes = [vType];
@@ -5685,8 +5762,74 @@
           if (_meta === null) {
             throw new Error("Cannot index Type ".concat(vType, " with types (").concat(indexTypes, ")."));
           }
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(_meta[1], indexTypes)[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta[2]));
           return [_meta[0], o];
+        }
+      }
+    }, {
+      key: "AssignWide",
+      value: function AssignWide(scope, anyType, value) {
+        var ptrType = value.WithDeltaPointerDepth(1);
+        if (this.Target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier) {
+          // Check for a set_ metamethod
+          var targetName = this.Target.Name;
+          var meta = scope.GetMetamethod("set_" + targetName, [ptrType, anyType]);
+          if (meta) {
+            // If there IS a meta, call it with a pointer to the Left value.
+            if (!(0,_variable__WEBPACK_IMPORTED_MODULE_7__.IsReferenceable)(this.Left)) throw new Error("Cannot assign to a struct on the stack.");
+            return [].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipAB()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Left.GetPointer(scope)), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipBA()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(meta[1], [ptrType, anyType])[0]), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
+          }
+          // If there is no meta, check for a virtual child.
+          var virtualChild = value.GetDefinition().VirtualChildren[targetName];
+          if (virtualChild) {
+            return ["seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2])].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(virtualChild[0].Put("a", "a")));
+          }
+  
+          // If there is no virtual child, check for a constant child.
+          var constChild = value.GetDefinition().ConstantChildren[targetName];
+          if (constChild) {
+            throw new Error("Cannot assign to a constant value.");
+          }
+  
+          // If there is no constant child, check for a regular child.
+          var child = value.GetDefinition().Children[targetName];
+          if (!child) throw new Error("Value does not have member ".concat(targetName));
+          if (!(0,_variable__WEBPACK_IMPORTED_MODULE_7__.IsAssignable)(this.Left)) throw new Error("Cannot assign to a struct on the stack.");
+          // Load the current value unto the stack
+          var leftRes = this.Left.TryEvaluate(scope);
+          var o = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(leftRes[1]);
+          for (var i = 1; i < leftRes[0].length; i++) {
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(leftRes[0][i].APop()));
+          }
+          // Write the current value unto scratch
+          o.push("setb ".concat(scope.GetScratch(value.GetDefinition().Size)));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(leftRes[0][0].Put("a", "b")));
+          // Add the offset of the child
+          o.push("seta ".concat(scope.GetScratch(value.GetDefinition().Size)));
+          o.push("adda ".concat(child[1]));
+          // Write the new value
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(child[0].Put("a", "a")));
+          // Read the new value back into the scratch
+          o.push("seta ".concat(scope.GetScratch(value.GetDefinition().Size)));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(leftRes[0][0].Get("a", "a")));
+          // Assign the new value
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Left.Assign(scope, leftRes[0][0])));
+          return o;
+        } else {
+          // If the target is not an identifier, we're indexing.
+          var indexTypes = [value];
+          var pushAllIndexables = [];
+          for (var _i2 = 0; _i2 < this.Target.length; _i2++) {
+            var res = this.Target[_i2].TryEvaluate(scope);
+            indexTypes.push.apply(indexTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0]));
+            pushAllIndexables.push.apply(pushAllIndexables, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
+          }
+          var _meta2 = scope.GetMetamethod("setindex", indexTypes);
+          if (_meta2 === null) {
+            throw new Error("Cannot set index Type ".concat(value, " with types (").concat(indexTypes.slice(0, indexTypes.length - 1), ")."));
+          }
+          return [].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Left.GetPointer(scope)), pushAllIndexables, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(_meta2[1], indexTypes)[0]), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta2[2]));
         }
       }
     }, {
@@ -5695,28 +5838,34 @@
         var o = [this.GetLine()];
         var valRes = this.Left.TryEvaluate(scope);
         if (valRes[0].length === 0) throw new Error("Cannot index expression that does not resolve in value");
+        if (valRes[0][0].GetDefinition().Wide) {
+          // Wide types get special treatment.
+          // Going to pull this into its own function
+          return this.AssignWide(scope, anyType, valRes[0][0]);
+        }
         var vType = valRes[0][0];
         var typeDef = this.Generics.length ? vType.GetDefinition().WithGenerics(this.Generics) : vType.GetDefinition();
         if (this.Target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier) {
           var targetName = this.Target.Name;
           var meta = scope.GetMetamethod("set_" + targetName, [vType, anyType]);
           if (meta) {
-            o.push("apopb", "bpushb");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipAB()));
             o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[1]));
-            for (var _i2 = 1; _i2 < valRes[0].length; _i2++) {
-              o.push("apop");
+            for (var _i3 = 1; _i3 < valRes[0].length; _i3++) {
+              o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][_i3].APop()));
             }
-            o.push("bpopb", "apushb");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipBA()));
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(meta[1], [vType, anyType])[0]));
             o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
             return o;
           }
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[1]));
           for (var i = 1; i < valRes[0].length; i++) {
-            o.push("apop");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][i].APop()));
           }
           var virtualChild = typeDef.VirtualChildren[targetName];
           if (virtualChild) {
-            o.push("apopb", "apop", "seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2]), "putbptra");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipAB()).concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].APop()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipBA()), ["seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2])], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.Put("a", "a"))));
             return o;
           }
           var constChild = typeDef.ConstantChildren[targetName];
@@ -5725,28 +5874,28 @@
           }
           var child = typeDef.Children[targetName];
           if (!child) throw new Error("Value does not have member ".concat(targetName));
-          o.push("apopa", "apopb", "adda ".concat(child[1]), "putbptra");
+          o.push.apply(o, ["apopa", "adda ".concat(child[1])].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(child[0].Put("a", "a"))));
           return o;
         } else {
-          o.push("apopb", "bpushb");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipAB()));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[1]));
-          for (var _i3 = 1; _i3 < valRes[0].length; _i3++) {
-            o.push("apop");
+          for (var _i4 = 1; _i4 < valRes[0].length; _i4++) {
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][_i4].APop()));
           }
           var indexTypes = [vType];
-          for (var _i4 = 0; _i4 < this.Target.length; _i4++) {
-            var res = this.Target[_i4].TryEvaluate(scope);
+          for (var _i5 = 0; _i5 < this.Target.length; _i5++) {
+            var res = this.Target[_i5].TryEvaluate(scope);
             indexTypes.push.apply(indexTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0]));
             o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
           }
           indexTypes.push(anyType);
-          var _meta2 = scope.GetMetamethod("setindex", indexTypes);
-          if (_meta2 === null) {
+          var _meta3 = scope.GetMetamethod("setindex", indexTypes);
+          if (_meta3 === null) {
             throw new Error("Cannot set index Type ".concat(vType, " with types (").concat(indexTypes.slice(0, indexTypes.length - 1), ")."));
           }
-          o.push("bpopb", "apushb");
-          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta2[2]));
-          for (var _i5 = 0; _i5 < _meta2[0].length; _i5++) o.push("apopa");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(anyType.FlipBA()));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(_meta3[1], indexTypes)[0]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta3[2]));
           return o;
         }
       }
@@ -5758,30 +5907,39 @@
         if (valRes[0].length === 0) throw new Error("Cannot index expression that does not resolve in value");
         o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[1]));
         for (var i = 1; i < valRes[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][i].APop()));
         }
         var vType = valRes[0][0];
         var typeDef = this.Generics.length ? vType.GetDefinition().WithGenerics(this.Generics) : vType.GetDefinition();
         if (this.Target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier) {
+          if (this.Curry) {
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].CloneA()));
+            this.CurryType = valRes[0][0];
+          }
           var targetName = this.Target.Name;
           var meta = scope.GetMetamethod("get_" + targetName, [vType]);
           if (meta) {
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(meta[1], [vType])[0]));
             o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
             return o;
           }
           var virtualChild = typeDef.VirtualChildren[targetName];
           if (virtualChild) {
-            o.push("apop", "seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2]), "ptra", "apusha");
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].APop()).concat(["seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2])], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(virtualChild[0].Get("a", "a"))));
             return o;
           }
           var constChild = typeDef.ConstantChildren[targetName];
           if (constChild) {
-            o.push("apop", "apush ".concat((constChild[1] & 0xffffffff) >>> 0));
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].APop()).concat(["apush ".concat((constChild[1] & 0xffffffff) >>> 0)]));
             return o;
           }
           var child = typeDef.Children[targetName];
           if (!child) throw new Error("Value does not have member ".concat(targetName));
-          o.push("apopa", "adda ".concat(child[1]), "ptra", "apusha");
+          if (typeDef.Wide) {
+            // if it's wide, convert to a reference to it.
+            o.push.apply(o, ["setb ".concat(scope.GetScratch(typeDef.Size))].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(vType.Put("a", "b")), ["apush ".concat(scope.GetScratch(typeDef.Size))]));
+          }
+          o.push.apply(o, ["apopa", "adda ".concat(child[1])].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(child[0].Get("a", "a"))));
           return o;
         } else {
           var indexTypes = [vType];
@@ -5790,11 +5948,70 @@
             indexTypes.push.apply(indexTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0]));
             o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
           }
-          var _meta3 = scope.GetMetamethod("getindex", indexTypes);
-          if (_meta3 === null) {
+          var _meta4 = scope.GetMetamethod("getindex", indexTypes);
+          if (_meta4 === null) {
             throw new Error("Cannot index Type ".concat(vType, " with types (").concat(indexTypes, ")."));
           }
-          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta3[2]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax([vType], _meta4[1])[0]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta4[2]));
+          return o;
+        }
+      }
+    }, {
+      key: "GetPointerWide",
+      value: function GetPointerWide(scope) {
+        // SPECIAL behaviour for wide types.
+        // We have to get a pointer to wherever it's stored, instead of the value itself.
+        if (!(0,_variable__WEBPACK_IMPORTED_MODULE_7__.IsReferenceable)(this.Left)) throw new Error("Cannot get a pointer to a struct on the stack.");
+        var o = [];
+        // Push the pointer to the stack, because all things need this.
+        o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Left.GetPointer(scope)));
+        var pointerType = this.Left.GetReferenceTypes(scope)[0];
+  
+        // If the target is an identifier, we're accessing a property.
+        if (this.Target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier) {
+          // Check for a set_ metamethod
+          var targetName = this.Target.Name;
+          var meta = scope.GetMetamethod("ptr_" + targetName, [pointerType]);
+          if (meta) {
+            // If there IS a meta, call it with a pointer to the Left value.
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax([pointerType], meta[1])[0]));
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
+            return o;
+          }
+  
+          // If there is no meta, check for a virtual child.
+          var virtualChild = pointerType.GetDefinition().VirtualChildren[targetName];
+          if (virtualChild) {
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(pointerType.APop()).concat(["seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2]), "apusha"]));
+            return o;
+          }
+  
+          // If there is no virtual child, check for a constant child.
+          var constChild = pointerType.GetDefinition().ConstantChildren[targetName];
+          if (constChild) {
+            throw new Error("Cannot get pointer to a constant value.");
+          }
+  
+          // If there is no constant child, check for a regular child.
+          var child = pointerType.GetDefinition().Children[targetName];
+          if (!child) throw new Error("Value does not have member ".concat(targetName));
+          o.push("apopa", "adda ".concat(child[1]), "apusha");
+          return o;
+        } else {
+          // If the target is not an identifier, we're indexing.
+          var indexTypes = [pointerType];
+          for (var i = 0; i < this.Target.length; i++) {
+            var res = this.Target[i].TryEvaluate(scope);
+            indexTypes.push.apply(indexTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0]));
+            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
+          }
+          var _meta5 = scope.GetMetamethod("ptrindex", indexTypes);
+          if (_meta5 === null) {
+            throw new Error("Cannot derefence Type ".concat(pointerType, " with types (").concat(indexTypes, ")."));
+          }
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax(indexTypes, _meta5[1])[0]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta5[2]));
           return o;
         }
       }
@@ -5804,9 +6021,12 @@
         var o = [this.GetLine()];
         var valRes = this.Left.TryEvaluate(scope);
         if (valRes[0].length === 0) throw new Error("Cannot index expression that does not resolve in value");
+        if (valRes[0][0].GetDefinition().Wide) {
+          return this.GetPointerWide(scope);
+        }
         o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[1]));
         for (var i = 1; i < valRes[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][i].APop()));
         }
         var vType = valRes[0][0];
         var typeDef = this.Generics.length ? vType.GetDefinition().WithGenerics(this.Generics) : vType.GetDefinition();
@@ -5817,21 +6037,22 @@
             indexTypes.push.apply(indexTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0]));
             o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
           }
-          var _meta4 = scope.GetMetamethod("ptrindex", indexTypes);
-          if (_meta4 === null) {
+          var _meta6 = scope.GetMetamethod("ptrindex", indexTypes);
+          if (_meta6 === null) {
             throw new Error("Cannot derefence Type ".concat(vType, " with types (").concat(indexTypes, ")."));
           }
-          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta4[2]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_8__.VarType.Coax([vType], _meta6[1])[0]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta6[2]));
           return o;
         }
         var targetName = this.Target.Name;
-        var meta = scope.GetMetamethod("set_" + targetName, [vType]);
+        var meta = scope.GetMetamethod("ptr_" + targetName, [vType]);
         if (meta) {
           throw new Error("Cannot dereference property.");
         }
         var virtualChild = typeDef.VirtualChildren[targetName];
         if (virtualChild) {
-          o.push("apop", "seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2]), "apusha");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valRes[0][0].APop()).concat(["seta ".concat(virtualChild[1].ClassLabel), "adda ".concat(virtualChild[2]), "apusha"]));
           return o;
         }
         var constChild = typeDef.ConstantChildren[targetName];
@@ -5848,7 +6069,7 @@
       value: function GetReferenceTypes(scope) {
         if (!(this.Target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier)) {
           var vType = this.Left.GetTypes(scope)[0];
-          var indexTypes = [vType];
+          var indexTypes = [vType.GetDefinition().Wide ? vType.WithDeltaPointerDepth(1) : vType];
           for (var i = 0; i < this.Target.length; i++) {
             indexTypes.push.apply(indexTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Target[i].GetTypes(scope)));
           }
@@ -5888,7 +6109,7 @@
         var typeDef = vType.GetDefinition();
         if (this.Target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier) {
           var targetName = this.Target.Name;
-          var meta = scope.GetMetamethod("get_" + targetName, [vType]);
+          var meta = scope.GetMetamethod("get_" + targetName, [vType.GetDefinition().Wide ? vType.WithDeltaPointerDepth(1) : vType]);
           if (meta) {
             return meta[0];
           }
@@ -5904,15 +6125,15 @@
           if (!child) throw new Error("Value does not have member ".concat(targetName));
           return [child[0]];
         } else {
-          var indexTypes = [vType];
+          var indexTypes = [vType.GetDefinition().Wide ? vType.WithDeltaPointerDepth(1) : vType];
           for (var i = 0; i < this.Target.length; i++) {
             indexTypes.push.apply(indexTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Target[i].GetTypes(scope)));
           }
-          var _meta5 = scope.GetMetamethod("getindex", indexTypes);
-          if (_meta5 === null) {
+          var _meta7 = scope.GetMetamethod("getindex", indexTypes);
+          if (_meta7 === null) {
             throw new Error("Cannot index Type ".concat(vType, " with types (").concat(indexTypes, ")."));
           }
-          return _meta5[0];
+          return _meta7[0];
         }
       }
     }], [{
@@ -6964,10 +7185,11 @@
           var rightRes = this.Right.TryEvaluate(scope);
           // Run any truthy metamethod on the left
           var meta = scope.GetMetamethod("truthy", leftRes[0]);
-          if (meta === null) throw new Error("No truthy metamethod for ".concat(leftRes[0]));
+          if (meta === null) throw new Error("No truthy metamethod for type ".concat(leftRes[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(leftRes[1]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(meta[1], leftRes[0])[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax([_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int], meta[0])[0]));
           // If the top of the astack is truthy, run the right side and leave it's truthy value on the stack
           // Otherwise, leave this falsey value on the stack
           var rightSideLabel = scope.GetSafeName("rightSide");
@@ -6975,9 +7197,10 @@
           o.push("apopa", "jnza ".concat(rightSideLabel), "apush 0", "jmp ".concat(afterRightSideLabel), "".concat(rightSideLabel, ":"));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(rightRes[1]));
           meta = scope.GetMetamethod("truthy", rightRes[0]);
-          if (meta === null) throw new Error("No truthy metamethod for ".concat(rightRes[0]));
+          if (meta === null) throw new Error("No truthy metamethod for type ".concat(rightRes[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(meta[1], rightRes[0])[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax([_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int], meta[0])[0]));
           o.push("".concat(afterRightSideLabel, ":"));
           return [[_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int], o];
         }
@@ -6987,21 +7210,23 @@
           var _rightRes = this.Right.TryEvaluate(scope);
           // Run any truthy metamethod on the left
           var _meta = scope.GetMetamethod("truthy", _leftRes[0]);
-          if (_meta === null) throw new Error("No truthy metamethod for ".concat(_leftRes[0]));
+          if (_meta === null) throw new Error("No truthy metamethod for type ".concat(_leftRes[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_leftRes[1]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(_meta[1], _leftRes[0])[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta[2]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax([_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int], _meta[0])[0]));
           // If the top of the astack is truthy, leave this truthy value on the stack
           // Otherwise, run the right side and leave it's truthy value on the stack
-          // We have to leave the truthy value on the stack by duplicating it, and destroying it if the left side is falsey
+          // We have to leave the truthy value on the stack  by duplicating it, and destroying it if the left side is falsey
           var _afterRightSideLabel = scope.GetSafeName("afterRightSide");
           o.push("apopa", "apusha", "jnza ".concat(_afterRightSideLabel));
           o.push("apop");
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_rightRes[1]));
           _meta = scope.GetMetamethod("truthy", _rightRes[0]);
-          if (_meta === null) throw new Error("No truthy metamethod for ".concat(_rightRes[0]));
+          if (_meta === null) throw new Error("No truthy metamethod for type ".concat(_rightRes[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(_meta[1], _rightRes[0])[0]));
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_meta[2]));
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax([_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int], _meta[0])[0]));
           o.push("".concat(_afterRightSideLabel, ":"));
           return [[_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int], o];
         }
@@ -7026,12 +7251,7 @@
       key: "GetTypes",
       value: function GetTypes(scope) {
         if (this.Simplify(scope) !== null) return [_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int];
-        if (this.Operator === "and") {
-          return [_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int];
-        }
-        if (this.Operator === "or") {
-          return [_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int];
-        }
+        if (this.Operator === "and" || this.Operator === "or") return [_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int];
         var left = this.Left.GetTypes(scope);
         if (left.length < 1) throw new Error("Leftside expression does not resolve to any value.");
         var bothArgs = [left[0]];
@@ -7051,7 +7271,7 @@
           if (!(0,_Simplifyable__WEBPACK_IMPORTED_MODULE_6__.IsSimplifyable)(this.Left)) return null;
           var left = this.Left.TrySimplify(scope);
           if (left === null) return null;
-          if (this.Operator === "or" && left) return 1;
+          if (this.Operator === "or" && left) return left;
           if (this.Operator === "and" && !left) return 0;
           if (!(0,_Simplifyable__WEBPACK_IMPORTED_MODULE_6__.IsSimplifyable)(this.Right)) return null;
           return this.Right.TrySimplify(scope);
@@ -7069,10 +7289,10 @@
                 return (_left >> right & 0xffffffff) >>> 0;
               case "band":
                 return (_left & right & 0xffffffff) >>> 0;
-              case "bor":
-                return ((_left | right) & 0xffffffff) >>> 0;
               case "bxor":
                 return ((_left ^ right) & 0xffffffff) >>> 0;
+              case "bor":
+                return ((_left | right) & 0xffffffff) >>> 0;
               case "mul":
                 return (_left * right & 0xffffffff) >>> 0;
               case "div":
@@ -7152,12 +7372,6 @@
         var v = this.Simplify(scope);
         if (v !== null) return [[_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Int], [this.GetLine(), "apush ".concat((v & 0xffffffff) >>> 0)]];
         var o = [this.GetLine()];
-        if (this.Operator === "and") {
-          throw new Error("TODO");
-        }
-        if (this.Operator === "or") {
-          throw new Error("TODO");
-        }
         var bothArgs = [];
         var right = this.Right.TryEvaluate(scope);
         o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(right[1]));
@@ -7198,6 +7412,8 @@
                 return -right;
               case "unp":
                 return +right;
+              case "bnot":
+                return ~right;
             }
           }
         }
@@ -7313,16 +7529,15 @@
       key: "Evaluate",
       value: function Evaluate(scope) {
         var o = [this.GetLine()];
+        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_5__.Claimer("");
+        var falseFlag = falseClaimer.Flag();
+        var vType = new _vartype__WEBPACK_IMPORTED_MODULE_8__.VarType(falseClaimer, falseFlag);
         var objectType = scope.UserTypes[this.Type.Name];
         if (objectType === undefined) throw new Error("Cannot find type ".concat(this.Type.Name));
         var classType = objectType.TypeType;
         if (!classType) throw new Error("Cannot find type type for ".concat(this.Type.Name));
         var targTypeNewMethod = classType.Children["new"];
         if (targTypeNewMethod === undefined) throw new Error("Cannot find new method for type ".concat(this.Type.Name));
-        o.push("seta ".concat(classType.ClassLabel), "adda ".concat(targTypeNewMethod[1]), "ptra", "calla", "apopa", "apusha", "bpusha");
-        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_5__.Claimer("");
-        var falseFlag = falseClaimer.Flag();
-        var vType = new _vartype__WEBPACK_IMPORTED_MODULE_8__.VarType(falseClaimer, falseFlag);
         vType.TypeName = this.Type.Name;
         var argTypes = [];
         for (var i = 0; i < this.Arguments.length; i++) {
@@ -7333,22 +7548,32 @@
         argTypes.push(vType);
         var constructorMetamethod = scope.GetMetamethod(this.Type.Name, argTypes);
         if (!constructorMetamethod) throw new Error("Cannot find constructor new ".concat(argTypes));
-        o.push("bpopa", "apusha");
+        o.push("seta ".concat(classType.ClassLabel), "adda ".concat(targTypeNewMethod[1]), "ptra", "calla");
         o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(constructorMetamethod[2]));
-        return [[vType], o];
+        return [constructorMetamethod[0], o];
       }
     }, {
       key: "GetTypes",
       value: function GetTypes(scope) {
+        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_5__.Claimer("");
+        var falseFlag = falseClaimer.Flag();
+        var vType = new _vartype__WEBPACK_IMPORTED_MODULE_8__.VarType(falseClaimer, falseFlag);
         var objectType = scope.UserTypes[this.Type.Name];
         if (objectType === undefined) throw new Error("Cannot find type ".concat(this.Type.Name));
         var classType = objectType.TypeType;
         if (!classType) throw new Error("Cannot find type type for ".concat(this.Type.Name));
-        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_5__.Claimer("");
-        var falseFlag = falseClaimer.Flag();
-        var vType = new _vartype__WEBPACK_IMPORTED_MODULE_8__.VarType(falseClaimer, falseFlag);
+        var targTypeNewMethod = classType.Children["new"];
+        if (targTypeNewMethod === undefined) throw new Error("Cannot find new method for type ".concat(this.Type.Name));
         vType.TypeName = this.Type.Name;
-        return [vType];
+        var argTypes = [];
+        for (var i = 0; i < this.Arguments.length; i++) {
+          var arg = this.Arguments[i].TryEvaluate(scope);
+          argTypes.push.apply(argTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(arg[0]));
+        }
+        argTypes.push(vType);
+        var constructorMetamethod = scope.GetMetamethod(this.Type.Name, argTypes);
+        if (!constructorMetamethod) throw new Error("Cannot find constructor new ".concat(argTypes));
+        return constructorMetamethod[0];
       }
     }], [{
       key: "Claim",
@@ -7584,8 +7809,8 @@
           o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
         }
         var outTypes = this.Types.length > 0 ? this.Types : [receivedTypes[0]];
-        for (var _i = 0; _i < receivedTypes.length - outTypes.length; _i++) {
-          o.push("apop");
+        for (var _i = outTypes.length; _i < receivedTypes.length; _i++) {
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(receivedTypes[_i].APop()));
         }
         return [outTypes, o];
       }
@@ -7886,6 +8111,7 @@
         } else {
           // We're going to copy the top of the A stack to the B stack, which contains a pointer to this, so we can access once all the arguments are resolved.
           // (Because the A stack contains a reference to where we are editing, that we must preserve)
+          // Knowing it's a pointer means we know it isn't wide, and we can do this the ugly way.
           asm.push("apopb", "apushb", "bpushb");
         }
         // Push the arguments to the stack
@@ -7916,9 +8142,11 @@
           var child = typeDef.Children[id];
           childrenByOffset[child[1]] = [id, child];
         }
-        var _loop = function _loop() {
-          var child = childrenByOffset[_i];
+        var _loop = function _loop(_i2) {
+          var child = childrenByOffset[_i2];
           if (child) {
+            var _childType$GetDefinit2;
+            var childType = child[1][0];
             // Check if there's a non-static assignment for this child.
             var possibleAssignments = typeDef.Assignments.filter(function (c) {
               return c.Left.Identifier.Name === child[0];
@@ -7928,16 +8156,23 @@
               asm.push("  apushb");
               var res = possibleAssignments[0].Right.TryEvaluate(scope);
               asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[1]));
-              for (var spare = 1; spare < res[0].length; spare++) asm.push("    apop");
-              asm.push("    apopa", "    apopb", "    putaptrb");
+              for (var spare = 1; spare < res[0].length; spare++) asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][spare].APop()));
+              asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][0].FlipAB()).concat(["apopb"], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][0].FlipBA()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(res[0][0].Put("a", "b"))));
             } else {
-              asm.push("  seta ".concat(child[1][2]), "  putaptrb");
+              var _childType$GetDefinit;
+              if ((_childType$GetDefinit = childType === null || childType === void 0 ? void 0 : childType.GetDefinition().Wide) !== null && _childType$GetDefinit !== void 0 ? _childType$GetDefinit : false) {
+                asm.push.apply(asm, ["seta 0"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(Array(childType.GetDefinition().Size).fill(['putaptrb', 'incb']).flat())));
+              } else {
+                asm.push("  seta ".concat(child[1][2]), "  putaptrb");
+              }
             }
+            if ((_childType$GetDefinit2 = childType === null || childType === void 0 ? void 0 : childType.GetDefinition().Wide) !== null && _childType$GetDefinit2 !== void 0 ? _childType$GetDefinit2 : false) _i2 += childType.GetDefinition().Size - 1;
           }
-          if (_i < childrenByOffset.length - 1) asm.push("  incb");
+          if (_i2 < childrenByOffset.length - 1) asm.push("  incb");
+          _i = _i2;
         };
         for (var _i = 0; _i < childrenByOffset.length; _i++) {
-          _loop();
+          _loop(_i);
         }
         if (this.ClassMember) {
           asm.push("bpopb", "apushb", "bpushb");
@@ -8563,8 +8798,6 @@
     return "Left" in e && "Precedence" in e && "LeftRightAssociative" in e;
   }
   _c2 = IsLeftDonor;
-  var lastOutputLine = -1;
-  var lastOutputFile = "";
   var Token = /*#__PURE__*/function () {
     function Token(claimer, claim) {
       (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_3__["default"])(this, Token);
@@ -8608,13 +8841,7 @@
     }, {
       key: "GetLine",
       value: function GetLine() {
-        var lineNo = this.GetLineNo();
-        if (lastOutputFile !== this.Claimer.File || lastOutputLine !== lineNo) {
-          lastOutputFile = this.Claimer.File;
-          lastOutputLine = lineNo;
-          return "line ".concat(lineNo);
-        }
-        return "";
+        return "line ".concat(this.GetLineNo());
       }
     }]);
     return Token;
@@ -8837,15 +9064,16 @@
   /* harmony export */ __webpack_require__.d(__webpack_exports__, {
   /* harmony export */   "VariableDecleration": function() { return /* binding */ VariableDecleration; }
   /* harmony export */ });
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/inherits.js */ "./node_modules/@babel/runtime/helpers/esm/inherits.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createSuper.js */ "./node_modules/@babel/runtime/helpers/esm/createSuper.js");
-  /* harmony import */ var _brainchild__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./brainchild */ "./src/BrainChild/brainchild.tsx");
-  /* harmony import */ var _identifier__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./identifier */ "./src/BrainChild/identifier.tsx");
-  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
-  /* harmony import */ var _variable__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./variable */ "./src/BrainChild/variable.tsx");
-  /* harmony import */ var _expression__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./expression */ "./src/BrainChild/expression.tsx");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js */ "./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/inherits.js */ "./node_modules/@babel/runtime/helpers/esm/inherits.js");
+  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createSuper.js */ "./node_modules/@babel/runtime/helpers/esm/createSuper.js");
+  /* harmony import */ var _brainchild__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./brainchild */ "./src/BrainChild/brainchild.tsx");
+  /* harmony import */ var _identifier__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./identifier */ "./src/BrainChild/identifier.tsx");
+  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
+  /* harmony import */ var _variable__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./variable */ "./src/BrainChild/variable.tsx");
+  /* harmony import */ var _expression__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./expression */ "./src/BrainChild/expression.tsx");
   /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
   __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
   
@@ -8858,12 +9086,13 @@
   
   
   
+  
   var VariableDecleration = /*#__PURE__*/function (_Expression) {
-    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_2__["default"])(VariableDecleration, _Expression);
-    var _super = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_3__["default"])(VariableDecleration);
+    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_inherits_js__WEBPACK_IMPORTED_MODULE_3__["default"])(VariableDecleration, _Expression);
+    var _super = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createSuper_js__WEBPACK_IMPORTED_MODULE_4__["default"])(VariableDecleration);
     function VariableDecleration() {
       var _this;
-      (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this, VariableDecleration);
+      (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_1__["default"])(this, VariableDecleration);
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
@@ -8875,12 +9104,27 @@
       _this.IsConstant = false;
       return _this;
     }
-    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__["default"])(VariableDecleration, [{
+    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(VariableDecleration, [{
+      key: "Read",
+      value: function Read(scope) {
+        return this.Evaluate(scope)[1];
+      }
+    }, {
+      key: "GetPointer",
+      value: function GetPointer(scope) {
+        // Ensure we're set up.
+        this.Evaluate(scope);
+        return ["apush ".concat(this.Label)];
+      }
+    }, {
+      key: "GetReferenceTypes",
+      value: function GetReferenceTypes(scope) {
+        return [this.Type.WithDeltaPointerDepth(1)];
+      }
+    }, {
       key: "Evaluate",
       value: function Evaluate(scope) {
-        if (this.Type.TypeName === "discard") {
-          return [[_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Discard], ["apush 0"]];
-        }
+        if (this.Type.TypeName === "discard") return [[_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Discard], ['apush 0']];
         if (this.IsConstant) {
           if (!this.Label) {
             scope.SetConstant(this.Identifier.Name, this.Type, 0, true);
@@ -8895,14 +9139,12 @@
           this.LastScope = scope;
         }
         this.Label || (this.Label = scope.Set(this.Identifier.Name, this.Type));
-        return [[this.Type], ["seta ".concat(this.Label), "ptra", "apusha"]];
+        return [[this.Type], ["seta ".concat(this.Label)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Type.Get("a", "a")))];
       }
     }, {
       key: "Assign",
       value: function Assign(scope, anyType) {
-        if (this.Type.TypeName === "discard") {
-          return ["apop"];
-        }
+        if (this.Type.TypeName === "discard") return ['apop'];
         if (this.IsConstant) {
           throw new Error("Cannot assign non-constant value to constant variable");
         }
@@ -8915,7 +9157,7 @@
           this.LastScope = scope;
         }
         this.Label || (this.Label = scope.Set(this.Identifier.Name, this.Type.TypeName === "var" ? anyType : this.Type));
-        return ["apopb", "seta ".concat(this.Label), "putbptra"];
+        return ["seta ".concat(this.Label)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Type.Put("a", "a")));
       }
     }, {
       key: "GetTypes",
@@ -8925,9 +9167,7 @@
     }, {
       key: "Simplify",
       value: function Simplify(scope) {
-        if (this.Type.TypeName === "discard") {
-          return 0;
-        }
+        if (this.Type.TypeName === "discard") return 0;
         if (!this.IsConstant) return null;
         if (!this.Label) {
           scope.SetConstant(this.Identifier.Name, this.Type, 0, true);
@@ -8940,9 +9180,7 @@
     }, {
       key: "AssignSimple",
       value: function AssignSimple(scope, val) {
-        if (this.Type.TypeName === "discard") {
-          return true;
-        }
+        if (this.Type.TypeName === "discard") return true;
         if (!this.IsConstant) return false;
         if (!this.Label || scope !== this.LastScope) {
           scope.SetConstant(this.Identifier.Name, this.Type, val, true);
@@ -8962,15 +9200,15 @@
         var isConst = false;
         if (claimer.Claim(/const\b/).Success) isConst = true;
         if (claimer.Claim(/var\b/).Success) {
-          typ = _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Any;
+          typ = _vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Any;
         } else {
-          typ = _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Claim(claimer);
+          typ = _vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Claim(claimer);
           if (typ === null) {
             flag.Fail();
             return null;
           }
         }
-        var ident = _identifier__WEBPACK_IMPORTED_MODULE_5__.Identifier.Claim(claimer);
+        var ident = _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier.Claim(claimer);
         if (ident === null) {
           flag.Fail();
           return null;
@@ -8992,12 +9230,12 @@
           fnc.Fail();
           return null;
         }
-        var target = _variable__WEBPACK_IMPORTED_MODULE_7__.Variable.ClaimAssignable(claimer, false);
+        var target = _variable__WEBPACK_IMPORTED_MODULE_8__.Variable.ClaimAssignable(claimer, false);
         if (target === null) {
           fnc.Fail();
           return null;
         }
-        if (!(target instanceof _identifier__WEBPACK_IMPORTED_MODULE_5__.Identifier)) {
+        if (!(target instanceof _identifier__WEBPACK_IMPORTED_MODULE_6__.Identifier)) {
           fnc.Fail();
           return null;
         }
@@ -9018,17 +9256,17 @@
         }
         var retTypes = [];
         if (claimer.Claim(/->/).Success) {
-          var retType = _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Claim(claimer);
+          var retType = _vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Claim(claimer);
           while (retType !== null) {
             retTypes.push(retType);
             if (!claimer.Claim(/,/).Success) break;
-            retType = _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Claim(claimer);
+            retType = _vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Claim(claimer);
           }
         }
         var funct = new VariableDecleration(claimer, fnc);
-        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_4__.Claimer("");
+        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_5__.Claimer("");
         var falseFlag = falseClaimer.Flag();
-        var typ = new _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType(falseClaimer, falseFlag);
+        var typ = new _vartype__WEBPACK_IMPORTED_MODULE_7__.FuncType(falseClaimer, falseFlag);
         typ.ArgTypes = args.map(function (c) {
           return c.Type;
         });
@@ -9037,9 +9275,10 @@
       }
     }]);
     return VariableDecleration;
-  }(_expression__WEBPACK_IMPORTED_MODULE_8__.Expression);
-  _expression__WEBPACK_IMPORTED_MODULE_8__.Expression.Register(VariableDecleration.Claim);
-  _variable__WEBPACK_IMPORTED_MODULE_7__.Variable.RegisterAssignable(VariableDecleration.Claim);
+  }(_expression__WEBPACK_IMPORTED_MODULE_9__.Expression);
+  _expression__WEBPACK_IMPORTED_MODULE_9__.Expression.Register(VariableDecleration.Claim);
+  _variable__WEBPACK_IMPORTED_MODULE_8__.Variable.RegisterReadWritable(VariableDecleration.Claim);
+  _variable__WEBPACK_IMPORTED_MODULE_8__.Variable.RegisterReferenceable(VariableDecleration.Claim);
   
   var $ReactRefreshModuleId$ = __webpack_require__.$Refresh$.moduleId;
   var $ReactRefreshCurrentExports$ = __react_refresh_utils__.getModuleExports(
@@ -9144,6 +9383,12 @@
         return this.TypeName === other.TypeName && this.PointerDepth === other.PointerDepth;
       }
     }, {
+      key: "IsWide",
+      value: function IsWide() {
+        var _this$GetDefinition$W, _this$GetDefinition;
+        return this.IsDefined() && ((_this$GetDefinition$W = (_this$GetDefinition = this.GetDefinition()) === null || _this$GetDefinition === void 0 ? void 0 : _this$GetDefinition.Wide) !== null && _this$GetDefinition$W !== void 0 ? _this$GetDefinition$W : false);
+      }
+    }, {
       key: "CastableFrom",
       value: function CastableFrom(other) {
         if (this.TypeName === "var") return true;
@@ -9169,10 +9414,10 @@
         if (this.TypeName === "discard") return true;
         if (other.TypeName === "discard") return false;
         if (this.TypeName === "void") {
-          return this.PointerDepth <= other.PointerDepth;
+          return !other.IsWide() && this.PointerDepth <= other.PointerDepth;
         }
         if (other.TypeName === "void") {
-          return this.PointerDepth >= other.PointerDepth;
+          return !this.IsWide() && this.PointerDepth >= other.PointerDepth;
         }
         if (!(other instanceof FuncType) && this.TypeName === other.TypeName && this.PointerDepth <= other.PointerDepth) return true;
         var typeDef = this.GetDefinition();
@@ -9202,22 +9447,24 @@
     }, {
       key: "Debug",
       value: function Debug(scope, bs, label, identifier, location) {
-        var valAtLocation = bs.Heap[location] << 24 + bs.Heap[location + 1] << 16 + bs.Heap[location + 2] << 8 + bs.Heap[location + 3];
+        var _bs$Heap, _bs$Heap2, _bs$Heap3, _bs$Heap4;
+        var valAtLocation = (((_bs$Heap = bs.Heap[location * 4]) !== null && _bs$Heap !== void 0 ? _bs$Heap : 0) << 24) + (((_bs$Heap2 = bs.Heap[location * 4 + 1]) !== null && _bs$Heap2 !== void 0 ? _bs$Heap2 : 0) << 16) + (((_bs$Heap3 = bs.Heap[location * 4 + 2]) !== null && _bs$Heap3 !== void 0 ? _bs$Heap3 : 0) << 8) + ((_bs$Heap4 = bs.Heap[location * 4 + 3]) !== null && _bs$Heap4 !== void 0 ? _bs$Heap4 : 0);
         if (scope.DebuggedVals.has(location)) return "<span class='var' title='".concat(label, "'><b>").concat(this.ToHTML(), "</b> ").concat(identifier, "</span> = ").concat(hexPad(valAtLocation, 8));
         scope.DebuggedVals.add(location);
-        if (this.PointerDepth === 0 && valAtLocation > 0 && scope.UserTypes[this.TypeName]) {
-          var t = scope.UserTypes[this.TypeName];
-          var cls = bs.Heap[valAtLocation] << 24 + bs.Heap[valAtLocation + 1] << 16 + bs.Heap[valAtLocation + 2] << 8 + bs.Heap[valAtLocation + 3];
-          var _val = hexPad(valAtLocation, 8);
+        var t;
+        if (this.PointerDepth === 0 && (t = scope.UserTypes[this.TypeName]) && (t.Wide || valAtLocation > 0)) {
+          var ptr = t.Wide ? location : valAtLocation;
+          var cls = t.Wide ? valAtLocation : bs.Heap[valAtLocation];
+          var _val = hexPad(ptr, 8);
           var s = "<span class='var' title='".concat(label, "'><b>").concat(this.ToHTML(), "</b> ").concat(identifier, "</span> = ").concat(_val, " {<br>");
           var childrenByOffset = [];
           var className = "undefined";
-          for (var _id in bs.Labels) {
-            if (!_id.startsWith("class")) continue;
-            if (bs.Labels[_id] === cls) {
+          for (var id in bs.Labels) {
+            if (!id.startsWith("class")) continue;
+            if (bs.Labels[id] === cls) {
               for (var clsName in scope.UserTypes) {
                 if (clsName.startsWith("type")) continue;
-                if (scope.UserTypes[clsName].ClassLabel === _id) {
+                if (scope.UserTypes[clsName].ClassLabel === id) {
                   className = clsName;
                   break;
                 }
@@ -9229,31 +9476,24 @@
             if (t.IsParent(scope.UserTypes[className])) t = scope.UserTypes[className];
           }
           if (t && this.Generics.length > 0) t = t.WithGenerics(this.Generics);
-          for (var ident in t.VirtualChildren) {
-            var child = t.VirtualChildren[ident];
-            if (!child) continue;
-            var v = bs.Heap[bs.Heap[location] + child[2]];
-            var expected = +child[2];
-            if (bs.Labels[child[2]]) expected = bs.Labels[child[3]];
-            if (v !== expected) s += "\t" + child[0].Debug(scope, bs, "", ident, valAtLocation + child[2]).replace(/<br>(?!$)/g, "<br>\t") + "<br>";
-          }
-          for (var _ident in t.Children) {
-            var _child = t.Children[_ident];
-            childrenByOffset[_child[1]] = [_child[0], _child[1], _child[2], _ident];
+          for (var ident in t.Children) {
+            var child = t.Children[ident];
+            childrenByOffset[child[1]] = [child[0], child[1], child[2], ident];
           }
           for (var i = 0; i < childrenByOffset.length; i++) {
-            var _child2 = childrenByOffset[i];
-            if (!_child2) continue;
-            if (_child2[3] === "class") {
+            var _bs$Heap5, _bs$Heap6, _bs$Heap7, _bs$Heap8;
+            var _child = childrenByOffset[i];
+            if (!_child) continue;
+            if (_child[3] === "class") {
               if (className === "undefined") continue;
               if (className === this.TypeName) continue;
               s += "\t<b>class</b> = <b>".concat(className, "</b><br>");
               continue;
             }
-            var _v = bs.Heap[valAtLocation + _child2[1]];
-            var _expected = +_child2[2];
-            if (bs.Labels[_child2[2]]) _expected = bs.Labels[_child2[2]];
-            if (_v !== _expected) s += "\t" + _child2[0].Debug(scope, bs, "", _child2[3], valAtLocation + _child2[1]).replace(/<br>(?!$)/g, "<br>\t") + "<br>";
+            var v = (((_bs$Heap5 = bs.Heap[(ptr + _child[1]) * 4]) !== null && _bs$Heap5 !== void 0 ? _bs$Heap5 : 0) << 24) + (((_bs$Heap6 = bs.Heap[(ptr + _child[1]) * 4 + 1]) !== null && _bs$Heap6 !== void 0 ? _bs$Heap6 : 0) << 16) + (((_bs$Heap7 = bs.Heap[(ptr + _child[1]) * 4 + 2]) !== null && _bs$Heap7 !== void 0 ? _bs$Heap7 : 0) << 8) + (((_bs$Heap8 = bs.Heap[(ptr + _child[1]) * 4 + 3]) !== null && _bs$Heap8 !== void 0 ? _bs$Heap8 : 0) << 0);
+            var expected = +_child[2];
+            if (bs.Labels[_child[2]]) expected = bs.Labels[_child[2]];
+            if (v !== expected) s += "\t" + _child[0].Debug(scope, bs, "", _child[3], ptr + _child[1]).replace(/<br>(?!$)/g, "<br>\t") + "<br>";
           }
           return s + "}";
         }
@@ -9307,6 +9547,18 @@
         return true;
       }
     }, {
+      key: "IsDefined",
+      value: function IsDefined() {
+        if (this.PointerDepth > 0) {
+          return true;
+        }
+        if (this.TypeName === "int") return true;
+        if (this.TypeName === "void") return true;
+        if (this.TypeName === "discard") return true;
+        if (this.TypeName.startsWith("$")) return true;
+        return !!_Scope__WEBPACK_IMPORTED_MODULE_6__.Scope.CURRENT.UserTypes[this.TypeName];
+      }
+    }, {
       key: "GetDefinition",
       value: function GetDefinition() {
         if (this.PointerDepth > 0) {
@@ -9329,16 +9581,17 @@
         var recurse = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         if (this.TypeName.startsWith("$") && !this.TypeName.startsWith("$$")) {
           var v = genericArgs[+this.TypeName.substr(1)].Clone();
+          if (v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
           v.PointerDepth += this.PointerDepth;
           return v;
         } else {
-          var _v2 = this.Clone();
+          var _v = this.Clone();
           if (recurse) {
-            for (var i = 0; i < _v2.Generics.length; i++) {
-              _v2.Generics[i] = _v2.Generics[i].WithGenerics(genericArgs, true);
+            for (var i = 0; i < _v.Generics.length; i++) {
+              _v.Generics[i] = _v.Generics[i].WithGenerics(genericArgs, true);
             }
           }
-          return _v2;
+          return _v;
         }
       }
     }, {
@@ -9346,6 +9599,7 @@
       value: function WithFunctionGenerics(genericArgs) {
         if (this.TypeName.startsWith("$$")) {
           var v = genericArgs[+this.TypeName.substr(2)].Clone();
+          if (v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
           v.PointerDepth += this.PointerDepth;
           for (var i = 0; i < v.Generics.length; i++) {
             v.Generics[i] = v.Generics[i].WithFunctionGenerics(genericArgs);
@@ -9353,6 +9607,99 @@
           return v;
         }
         return this;
+      }
+    }, {
+      key: "APop",
+      value: function APop() {
+        var def = this.GetDefinition();
+        if (!def.Wide) return ['apop'];
+        return new Array(def.Size).fill('apop');
+      }
+    }, {
+      key: "BPop",
+      value: function BPop() {
+        var def = this.GetDefinition();
+        if (!def.Wide) return ['bpop'];
+        return new Array(def.Size).fill('bpop');
+      }
+      // Flip from the A stack to the B stack
+    }, {
+      key: "FlipAB",
+      value: function FlipAB() {
+        var def = this.GetDefinition();
+        if (!def.Wide) return ['apopa', 'bpusha'];
+        return new Array(def.Size).fill(['apopa', 'bpusha']).flat();
+      }
+      // Flip from the B stack to the A stack
+    }, {
+      key: "FlipBA",
+      value: function FlipBA() {
+        var def = this.GetDefinition();
+        if (!def.Wide) return ['bpopa', 'apusha'];
+        return new Array(def.Size).fill(['bpopa', 'apusha']).flat();
+      }
+      // Puts the value from the top of the selected stack to the location pointed to by the selected register
+      // Move the location register to the end of the value
+    }, {
+      key: "Put",
+      value: function Put() {
+        var fromStack = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "a";
+        var toLocation = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "b";
+        var def = this.GetDefinition();
+        var other = toLocation === "a" ? "b" : "a";
+        if (!def.Wide) return ["".concat(fromStack, "pop").concat(other), "put".concat(other, "ptr").concat(toLocation)];
+        return new Array(def.Size).fill(["".concat(fromStack, "pop").concat(other), "put".concat(other, "ptr").concat(toLocation), "inc".concat(toLocation)]).flat().slice(0, -1);
+      }
+      // Grabs the value from the location pointed to by the selected register and puts it on the selected stack
+      // Move the location register to the end of the value
+      // Reversed is used purely to allow flipping the stack order. It assumes the b register points to the START of the location.
+    }, {
+      key: "Get",
+      value: function Get() {
+        var toStack = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "a";
+        var fromLocation = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "b";
+        var reversed = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+        var def = this.GetDefinition();
+        var other = fromLocation === "a" ? "b" : "a";
+        if (!def.Wide) return ["cpy".concat(fromLocation).concat(other), "ptr".concat(other), "".concat(toStack, "push").concat(other)];
+        var o = [];
+        if (!reversed) o.push("add".concat(fromLocation, " ").concat(def.Size - 1));
+        o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(new Array(def.Size).fill(["cpy".concat(fromLocation).concat(other), "ptr".concat(other), "".concat(toStack, "push").concat(other), reversed ? "inc".concat(fromLocation) : "dec".concat(fromLocation)]).flat().slice(0, -1)));
+        return o;
+      }
+      // Flip the top of the A stack, uses scratch as temporary storage
+    }, {
+      key: "FlipA",
+      value: function FlipA() {
+        var def = this.GetDefinition();
+        if (!def.Wide) return []; // Do nothing :D
+        return ["setb ".concat(_Scope__WEBPACK_IMPORTED_MODULE_6__.Scope.CURRENT.GetScratch(def.Size))].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Put()), ["setb ".concat(_Scope__WEBPACK_IMPORTED_MODULE_6__.Scope.CURRENT.GetScratch(def.Size))], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Get("a", "b", true)));
+      }
+      // Flip the top of the B stack, uses scratch as temporary storage
+    }, {
+      key: "FlipB",
+      value: function FlipB() {
+        var def = this.GetDefinition();
+        if (def.Wide) return []; // Do nothing :D
+        return ["setb ".concat(_Scope__WEBPACK_IMPORTED_MODULE_6__.Scope.CURRENT.GetScratch(def.Size))].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Put("b")), ["setb ".concat(_Scope__WEBPACK_IMPORTED_MODULE_6__.Scope.CURRENT.GetScratch(def.Size))], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Get("b", "a", true)));
+      }
+      // Clone the top of the A stack, uses scratch as temporary storage
+    }, {
+      key: "CloneA",
+      value: function CloneA() {
+        var def = this.GetDefinition();
+        if (!def.Wide) return ["apopa", "apusha", "apusha"]; // Do nothing :D
+        var scratch = _Scope__WEBPACK_IMPORTED_MODULE_6__.Scope.CURRENT.GetScratch(def.Size);
+        return ["setb ".concat(scratch)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Put()), ["setb ".concat(scratch)], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Get("b", "a")), ["setb ".concat(scratch)], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Get("b", "a")));
+      }
+      // Clone the top of the B stack, uses scratch as temporary storage
+    }, {
+      key: "CloneB",
+      value: function CloneB() {
+        var def = this.GetDefinition();
+        if (!def.Wide) return ["apopa", "apusha", "apusha"]; // Do nothing :D
+        var scratch = _Scope__WEBPACK_IMPORTED_MODULE_6__.Scope.CURRENT.GetScratch(def.Size);
+        return ["setb ".concat(scratch)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Put("b")), ["setb ".concat(scratch)], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Get("a", "b")), ["setb ".concat(scratch)], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Get("a", "b")));
       }
     }], [{
       key: "Claim",
@@ -9471,7 +9818,9 @@
                 return metas.add(c);
               });
             }
-            var metasArr = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(metas);
+            var metasArr = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(metas).map(function (m) {
+              return scope.RemapGenericMetamethod(m, receivedStack, false);
+            });
             // That are casts to and from
             metasArr = metasArr.filter(function (c) {
               return !restricted.has(c);
@@ -9522,40 +9871,6 @@
         return [true, receivedPtr];
       }
     }, {
-      key: "oldCoax",
-      value: function oldCoax(targetStack, receivedStack) {
-        var o = [];
-        var targetLookup = {};
-        var maxRet = 0;
-        for (var _i = 0; _i < targetStack.length; _i++) {
-          if (targetStack[_i].TypeName === "var") {
-            targetStack[_i] = receivedStack[maxRet];
-            targetLookup[maxRet++] = _i;
-            continue;
-          }
-          while (maxRet < receivedStack.length && !targetStack[_i].AssignableFrom(receivedStack[maxRet])) maxRet++;
-          if (maxRet >= receivedStack.length) {
-            throw new Error("Too many/Incorrect targets for expression. Expected: ".concat(targetStack, " Got: ").concat(receivedStack));
-          }
-          targetLookup[maxRet++] = _i;
-        }
-        for (var _i2 = receivedStack.length - 1; _i2 >= 0; _i2--) {
-          if (targetLookup[_i2] !== undefined) {
-            o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(targetStack[targetLookup[_i2]].ConvertFrom(receivedStack[_i2])));
-            if (_i2 > 0) o.push("apopa", "bpusha");
-          } else {
-            o.push("apop");
-            if (_i2 === 0) {
-              o.push("bpopa", "apusha");
-            }
-          }
-        }
-        for (var i = 1; i < targetStack.length; i++) {
-          o.push("bpopa", "apusha");
-        }
-        return o;
-      }
-    }, {
       key: "Coax",
       value: function Coax(targetStack, receivedStack) {
         var restricted = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Set();
@@ -9566,7 +9881,7 @@
         var asm = [];
         // Cycle everything to the B stack (So we handle it from left to right)
         for (var i = 0; i < receivedStack.length; i++) {
-          asm.push("apopa", "bpusha");
+          asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(receivedStack[i].FlipAB()));
         }
         var converted = [];
         var targetPtr = 0;
@@ -9578,7 +9893,7 @@
             }
             // Directly assignable
             if (targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr])) {
-              asm.push("bpopa", "apusha");
+              asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(receivedStack[receivedPtr].FlipBA()));
               asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(targetStack[targetPtr].ConvertFrom(receivedStack[receivedPtr])));
               converted.push(receivedStack[receivedPtr]);
               receivedPtr++;
@@ -9594,7 +9909,9 @@
                 return metas.add(c);
               });
             }
-            var metasArr = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(metas);
+            var metasArr = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(metas).map(function (m) {
+              return scope.RemapGenericMetamethod(m, receivedStack, false);
+            });
             // That are casts to and from
             metasArr = metasArr.filter(function (c) {
               return !restricted.has(c);
@@ -9625,8 +9942,8 @@
             r = new Set(restricted);
             r.add(m);
             var c = VarType.CanCoax(m[1], receivedStack.slice(receivedPtr), r, true)[1];
-            for (var _i3 = 0; _i3 < c; _i3++) {
-              asm.push("bpopa", "apusha");
+            for (var _i = 0; _i < c; _i++) {
+              asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(receivedStack[receivedPtr + _i].FlipBA()));
             }
             asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(VarType.Coax(m[1], receivedStack.slice(receivedPtr, receivedPtr + c), r, false, true)[0]));
             asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(m[2]));
@@ -9643,7 +9960,7 @@
           sticky = false;
         }
         if (cleanup) {
-          while (receivedPtr++ < receivedStack.length) asm.push("bpop");
+          while (receivedPtr < receivedStack.length) asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(receivedStack[receivedPtr++].BPop()));
         }
         return [asm, receivedPtr, converted];
       }
@@ -9699,7 +10016,7 @@
         if (this.ArgTypes.length != other.ArgTypes.length) return false;
         if (this.RetTypes.length != other.RetTypes.length) return false;
         for (var i = 0; i < this.ArgTypes.length; i++) if (!other.ArgTypes[i].CastableFrom(this.ArgTypes[i])) return false;
-        for (var _i4 = 0; _i4 < this.RetTypes.length; _i4++) if (!this.RetTypes[_i4].CastableFrom(other.RetTypes[_i4])) return false;
+        for (var _i2 = 0; _i2 < this.RetTypes.length; _i2++) if (!this.RetTypes[_i2].CastableFrom(other.RetTypes[_i2])) return false;
         return true;
       }
     }, {
@@ -9711,7 +10028,7 @@
         if (this.ArgTypes.length != other.ArgTypes.length) return false;
         if (this.RetTypes.length != other.RetTypes.length) return false;
         for (var i = 0; i < this.ArgTypes.length; i++) if (!other.ArgTypes[i].CastableFrom(this.ArgTypes[i])) return false;
-        for (var _i5 = 0; _i5 < this.RetTypes.length; _i5++) if (!this.RetTypes[_i5].CastableFrom(other.RetTypes[_i5])) return false;
+        for (var _i3 = 0; _i3 < this.RetTypes.length; _i3++) if (!this.RetTypes[_i3].CastableFrom(other.RetTypes[_i3])) return false;
         return true;
       }
     }, {
@@ -9961,7 +10278,7 @@
         o.push("".concat(condition, ":"));
         o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valueRes[1]));
         for (var i = 1; i < valueRes[0].length; i++) {
-          o.push("apop");
+          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(valueRes[0][i].APop()));
         }
         var resType = valueRes[0][0];
         var meta = scope.GetMetamethod("truthy", [resType]);
@@ -10084,160 +10401,7 @@
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("term.bc", "include stack.bc;\ninclude string.bc;\n\nmetamethod get_R(Color3B c) -> int {\n    return (c->int)%2;\n}\nmetamethod get_G(Color3B c) -> int {\n    return ((c->int)/2)%2;\n}\nmetamethod get_B(Color3B c) -> int {\n    return ((c->int)/4)%2;\n}\nabstract class Color3B {\n    static function FromRGB(int r, int g, int b) -> Color3B{\n        return ((r%2) + (g%2)*2 + (b%2)*4 -> Color3B);\n    }\n}\n\nColor3B Black   = (0 -> Color3B);\nColor3B Red     = (1 -> Color3B);\nColor3B Green   = (2 -> Color3B);\nColor3B Yellow  = (3 -> Color3B);\nColor3B Blue    = (4 -> Color3B);\nColor3B Magenta = (5 -> Color3B);\nColor3B Cyan    = (6 -> Color3B);\nColor3B White   = (7 -> Color3B);\n\n@int numBuffer = reserve 10;\nabstract class Term {    \n    static function WriteLen(int length, @int data){\n        while(length--)putchar(data++);\n    }\n\n    static function Write(string text){\n        Term.WriteLen(text.length, text.chars);\n    }\n    \n    static function WriteNum(int n){\n        if(n==0)return putchar('0');\n        int l = 0;\n        while(n>0){\n            n,int m = n/%10;\n            *((numBuffer+4)-l) = '0' + m;\n            l++;\n        }\n        Term.WriteLen(l, (numBuffer+5)-l);\n    }\n    \n    static function smethod(int c){\n        putchar(0x1B);\n        putchar('[');\n        putchar(c);\n    }\n    \n    static function method(int n, int c){\n        putchar(0x1B);\n        putchar('[');\n        Term.WriteNum(n);\n        putchar(c);\n    }\n    \n    // Formatting stuff\n    static function format(int n){\n        Term.method(n, 'm');\n    }\n    static __Style Style;\n    static __Cursor Cursor;\n    \n    // Clear\n    static function ClearAfter(){\n        return Term.smethod('J');\n    }\n    static function ClearBefore(){\n        return Term.method(1, 'J');\n    }\n    static function Clear(){\n        return Term.method(2, 'J');\n    }\n    \n    // Events\n    static function PollEvents(){\n        int r = getchar();\n        if(r){\n            int low = getchar();\n            int high = getchar();\n            int i = 0;\n            if(r == 1){\n                while(i < Term.Click.Length){\n                    (Term.Click[i++] -> func(int,int))(low, high)\n                }\n            }else if (r == 2){\n                while(i < Term.KeyDown.Length){\n                    (Term.KeyDown[i++] -> func(int,int))(low, high)\n                }\n            }else if (r == 3){\n                while(i < Term.KeyUp.Length){\n                    (Term.KeyUp[i++] -> func(int,int))(low, high)\n                }\n            }else if (r == 4){\n                while(i < Term.Frame.Length){\n                    (Term.Frame[i++] -> func())()\n                }\n            }\n        }\n    }\n    \n    \n    \n    static Stack<func(int,int)> KeyDown = reserve Stack(1);\n    static Stack<func(int,int)> KeyUp = reserve Stack(1);\n    static Stack<func(int,int)> Click = reserve Stack(1);\n    static Stack<func()> Frame = reserve Stack(1);\n}\n\nmetamethod get_Fore(__Style s) -> void{return 0;}\nmetamethod get_Back(__Style s) -> void{return 0;}\nmetamethod get_Bold(__Style s) -> void{return 0;}\nmetamethod get_Italic(__Style s) -> void{return 0;}\nmetamethod get_Underline(__Style s) -> void{return 0;}\nmetamethod get_Striked(__Style s) -> void{return 0;}\n\nmetamethod set_Fore(__Style s, Color3B col){\n    return Term.format(30 + (col -> int));\n}\nmetamethod set_Back(__Style s, Color3B col){\n    return Term.format(40 + (col -> int));\n}\nmetamethod set_Bold(__Style s, int b){\n    if(b)Term.format(1)\n    else Term.format(22);\n}\nmetamethod set_Italic(__Style s, int b){\n    if(b)Term.format(3)\n    else Term.format(23);\n}\nmetamethod set_Underline(__Style s, int b){\n    if(b)Term.format(4)\n    else Term.format(24);\n}\nmetamethod set_Striked(__Style s, int b){\n    if(b)Term.format(9)\n    else Term.format(29);\n}\nabstract class __Style {\n}\n\nmetamethod get_X(__Cursor c) -> void {return 0};\nmetamethod get_Y(__Cursor c) -> void {return 0};\nmetamethod get_Up(__Cursor c) -> void {return 0};\nmetamethod get_Down(__Cursor c) -> void {return 0};\nmetamethod get_Left(__Cursor c) -> void {return 0};\nmetamethod get_Right(__Cursor c) -> void {return 0};\n\nmetamethod set_X(__Cursor c, int x){ return Term.method(x, 'G') }\nmetamethod set_Y(__Cursor c, int y){ return Term.method(y, 'H') }\nabstract class __Cursor {\n    virtual function Up(int n){ return Term.method(n, 'A') }\n    virtual function Down(int n){ return Term.method(n, 'B') }\n    virtual function Left(int n){ return Term.method(n, 'D') }\n    virtual function Right(int n){ return Term.method(n, 'C') }\n    virtual function Push(){ return Term.smethod('s') }\n    virtual function Pop(){ return Term.smethod('u') }\n    virtual function Reset(){ return Term.smethod('H') }\n    virtual function NextLine(){ return Term.method(1, 'E') }\n    virtual function PrevLine(){ return Term.method(1, 'F') }\n}");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("*", Object.keys(_App__WEBPACK_IMPORTED_MODULE_0__.AllReadOnlys).map(function (c) {
       return "include ".concat(c, ";");
-    }).join("\n"));
-    /* GenerateReadOnly(
-      "tree.bc",
-      `include stack.bc;
-    void NULL;
-    class Branch<T> {
-      @Branch<T> Anchor;
-      Branch<T> Left;
-      int High;
-      int Key;
-      T Value;
-      Branch<T> Right;
-      
-      metamethod Branch(@Branch<T> Anchor, int High, int Key, T Value){
-          this.Anchor = Anchor;
-          this.High = High;
-          this.Key = Key;
-          this.Value = Value;
-      }
-      
-      function FillStack(Stack<Branch> s){
-          if(this.Left)this.Left.FillStack(s);
-          s.Push(this);
-          if(this.Right)this.Right.FillStack(s);
-      }
-      
-      function Destroy(){
-          if(!this.Left * !this.Right){
-              if(this.Anchor){
-                  *this.Anchor = NULL;
-              }
-              free((this -> @void));
-              return;
-          }
-          if(!this.Left){
-              if(this.Anchor){
-                  *this.Anchor = this.Right;
-                  this.Right.Anchor = this.Anchor;
-              }
-              this.Right.High = this.High;
-              free((this -> @void));
-              return;
-          }
-          if(!this.Right){
-              if(this.Anchor){
-                  *this.Anchor = this.Left;
-                  this.Left.Anchor = this.Anchor;
-              }
-              this.Left.High = this.High;
-              free((this -> @void));
-              return;
-          }
-          if(this.High){
-              var r = this.Left.Right;
-              this.Left.Right = this.Right;
-              *this.Anchor = this.Left;
-              var l = this.Right;
-              while(l.Left){l = l.Left};
-              l.Left = r;
-              free((this -> @void));
-          }else{
-              var r = this.Right.Left;
-              this.Right.Left = this.Left;
-              *this.Anchor = this.Right;
-              var l = this.Left;
-              while(l.Right){l = l.Right};
-              l.Right = r;
-              free((this -> @void));
-          }
-      }
-      
-      function Each(func(int, T) method){
-          if(this.Left)this.Left.Each(method);
-          method(this.Key, this.Value);
-          if(this.Right)this.Right.Each(method);
-      }
-      
-      function Get(int key) -> T {
-          if(key == this.Key){
-              return this.Value;
-          }
-          if(key < this.Key){
-              if(!this.Left)return NULL;
-              return this.Left.Get(key);
-          }
-          if(!this.Right)return NULL;
-          return this.Right.Get(key);
-      }
-      function Set(int key, T val) {
-          if(key == this.Key){
-              return this.Value = val;
-          }
-          if(key < this.Key){
-              if(!this.Left)return this.Left = new Branch(&this.Left, 0, key, val);
-              return this.Left.Set(key, val);
-          }
-          if(!this.Right)return this.Right = new Branch(&this.Right, 1, key, val);
-          return this.Right.Set(key, val);
-      }
-      
-      metamethod truthy(Branch this) -> int { (this -> int) }
-    }
-    class Tree<T> {
-      Branch<T> Root;
-      
-      function ToStack() -> Stack<Branch<T>> {
-          Stack<Branch<T>> s = new Stack();
-          if(this.Root)this.Root.FillStack(s);
-          return s;
-      }
-      
-      function Rebalance() { 
-          Stack<Branch<T>> s = this.ToStack(); 
-          int middle = s.Length/2;
-          this.Root = NULL;
-          this[(s[middle] -> Branch).Key] = (s[middle] -> Branch).Value;
-          this.Fill(s, 0, middle-1);
-          this.Fill(s, middle+1, s.Length-1);
-          int i = 0;
-          while(i < s.Length){
-              free((s[i++] -> @void));
-          }
-      }
-      
-      function Fill(Stack<Branch<T>> s, int low, int high){
-          if(high > low){
-              int m = ((high - low)/2) + low;
-              this[(s[m] -> Branch).Key] = (s[m] -> Branch).Value;
-              this.Fill(s, low, m-1);
-              this.Fill(s, m+1, high);
-              return;
-          }
-          if(high == low){
-              this[(s[low] -> Branch).Key] = (s[low] -> Branch).Value;
-          }
-      }
-      
-      function Each(func(int,T) method){
-          if(this.Root)this.Root.Each(method);
-      }
-      
-      metamethod getindex(Tree<T> this, int i) -> T{
-          if(this.Root)return this.Root.Get(i);
-          return NULL;
-      }
-      
-      metamethod setindex(Tree<T> this, int i, T v){
-          if(this.Root)return this.Root.Set(i, v);
-          this.Root = new Branch(&this.Root, 1, i, v);
-      }
-      
-      metamethod Tree(){}
-    }`
-    );*/
+    }).join('\n'));
   }
   _c = GenerateReadOnlys;
   var _c;
@@ -10719,268 +10883,6 @@
   
   /***/ }),
   
-  /***/ "./src/bf.tsx":
-  /*!********************!*\
-    !*** ./src/bf.tsx ***!
-    \********************/
-  /***/ (function(module, __webpack_exports__, __webpack_require__) {
-  
-  "use strict";
-  __webpack_require__.r(__webpack_exports__);
-  /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-  /* harmony export */   "Interpreter": function() { return /* binding */ Interpreter; }
-  /* harmony export */ });
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
-  /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
-  __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
-  
-  
-  
-  var Interpreter = /*#__PURE__*/function () {
-    function Interpreter(code) {
-      (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this, Interpreter);
-      this.Code = void 0;
-      this.CodePointer = 0;
-      this.Tape = [0];
-      this.TapePointer = 0;
-      this.Input = "";
-      this.InputPointer = 0;
-      this.Output = "";
-      this.LoopStack = [];
-      this.Code = code;
-    }
-    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__["default"])(Interpreter, [{
-      key: "CodeWithPointerHighlight",
-      value: function CodeWithPointerHighlight() {
-        var left = this.Code.substr(0, this.CodePointer);
-        var right = this.Code.substr(this.CodePointer + 1);
-        left = left.replace(">", "&gt;").replace("<", "&lt;");
-        right = right.replace(">", "&gt;").replace("<", "&lt;");
-        return left + "<span class='pointer'>" + this.Code.charAt(this.CodePointer) + "</span>" + right;
-      }
-    }, {
-      key: "Step",
-      value: function Step() {
-        var _this$LoopStack;
-        if (this.Code.length <= this.CodePointer) {
-          return;
-        }
-        var action = this.Code[this.CodePointer++];
-        switch (action) {
-          case ",":
-            this.Tape[this.TapePointer] = this.Input.length > this.InputPointer ? this.Input.charCodeAt(this.InputPointer++) : 0x00;
-            break;
-          case ".":
-            this.Output += String.fromCharCode(this.Tape[this.TapePointer]);
-            break;
-          case "-":
-            if (--this.Tape[this.TapePointer] < 0) this.Tape[this.TapePointer] = 255;
-            break;
-          case "+":
-            if (++this.Tape[this.TapePointer] > 255) this.Tape[this.TapePointer] = 0;
-            break;
-          case ">":
-            this.TapePointer++;
-            break;
-          case "<":
-            this.TapePointer--;
-            break;
-          case "[":
-            if (this.Tape[this.TapePointer] === 0) {
-              var depth = 1;
-              while (depth > 0 && this.Code.length > this.CodePointer) {
-                action = this.Code[this.CodePointer++];
-                if (action === "[") depth++;else if (action === "]") depth--;
-              }
-            } else {
-              this.LoopStack.push(this.CodePointer);
-            }
-            break;
-          case "]":
-            if (this.Tape[this.TapePointer] === 0) this.LoopStack.pop();else this.CodePointer = (_this$LoopStack = this.LoopStack[this.LoopStack.length - 1]) !== null && _this$LoopStack !== void 0 ? _this$LoopStack : this.CodePointer;
-            break;
-          case ":":
-            break;
-          default:
-            this.Step();
-        }
-        if (this.Tape[this.TapePointer] === undefined) this.Tape[this.TapePointer] = 0;
-      }
-    }, {
-      key: "UnderstandChunk",
-      value: function UnderstandChunk(chunk) {
-        var localPointer = 0;
-        var localTape = {};
-        var readWrites = [];
-        for (var i = 0; i < chunk.length; i++) {
-          switch (chunk[i]) {
-            case "+":
-              if (localTape[localPointer] === undefined) localTape[localPointer] = 0;
-              localTape[localPointer]++;
-              break;
-            case "-":
-              if (localTape[localPointer] === undefined) localTape[localPointer] = 0;
-              localTape[localPointer]--;
-              break;
-            case ">":
-              localPointer++;
-              break;
-            case "<":
-              localPointer--;
-              break;
-            case ",":
-              readWrites.push({
-                action: "read",
-                pointer: localPointer
-              });
-              localTape[localPointer] = 0;
-              break;
-            case ".":
-              if (localTape[localPointer] === undefined) localTape[localPointer] = 0;
-              readWrites.push({
-                action: "write",
-                pointer: localPointer,
-                value: localTape[localPointer]
-              });
-              break;
-          }
-        }
-        return {
-          actions: readWrites,
-          tape: localTape,
-          pointer: localPointer
-        };
-      }
-    }, {
-      key: "PLUSMINUS",
-      value: function PLUSMINUS(name) {
-        if (+name === 0) return "";
-        if (+name < 0) return "-" + Math.abs(+name);
-        return "+" + Math.abs(+name);
-      }
-    }, {
-      key: "TAB",
-      value: function TAB(depth) {
-        var s = "";
-        for (var i = 0; i < depth; i++) s += "\t";
-        return s;
-      }
-    }, {
-      key: "Compile",
-      value: function Compile() {
-        var _this = this;
-        var newCode = this.Code;
-        var d = 1;
-        newCode = 'i => {\n\tlet m={};\n\tlet p=0;\n\tlet o="";\n\tlet ip=0;\n\tlet touch=p=>{if(m[p]===undefined)m[p]=0;if(m[p]<0)m[p]=255;if(m[p]>255)m[p]=0;return m[p]};\n' + newCode.replace(/[[\]]|[^[\]]+/g, function (s) {
-          if (s === "[") {
-            d++;
-            return _this.TAB(d - 1) + s + "\n";
-          }
-          if (s === "]") d--;
-          return _this.TAB(d) + s + "\n";
-        }).replace(/\[/g, "«").replace(/\]/g, "»").replace(/[<>,.+-]+/g, function (c) {
-          var chunk = _this.UnderstandChunk(c);
-          var s = "";
-          for (var i = 0; i < chunk.actions.length; i++) {
-            var action = chunk.actions[i];
-            if (action.action === "read") {
-              s += "touch(p".concat(_this.PLUSMINUS(action.pointer), ");m[p").concat(_this.PLUSMINUS(action.pointer), "]=i.charCodeAt(ip++);");
-            } else {
-              s += "touch(p".concat(_this.PLUSMINUS(action.pointer), ");o+=String.fromCharCode(m[p").concat(_this.PLUSMINUS(action.pointer), "]").concat(_this.PLUSMINUS(action.value), ");");
-            }
-          }
-          for (var v in chunk.tape) {
-            if (chunk.tape[v] === 1) s += "touch(p".concat(_this.PLUSMINUS(v), ");m[p").concat(_this.PLUSMINUS(v), "]++;");else if (chunk.tape[v] === -1) s += "touch(p".concat(_this.PLUSMINUS(v), ");m[p").concat(_this.PLUSMINUS(v), "]--;");else if (chunk.tape[v] !== 0) {
-              s += "touch(p".concat(_this.PLUSMINUS(v), ");m[p").concat(_this.PLUSMINUS(v), "]").concat(chunk.tape[v] > 0 ? "+" : "-", "=").concat(Math.abs(chunk.tape[v]), ";");
-            }
-          }
-          if (chunk.pointer === 1) s += "p++;";else if (chunk.pointer === -1) s += "p--;";else if (chunk.pointer > 0) s += "p+=".concat(chunk.pointer, ";");else if (chunk.pointer < 0) s += "p-=".concat(-chunk.pointer, ";");
-          return s + " /* " + c + " */";
-        }).replace(/«/g, "while(touch(p)){").replace(/»/g, "}") + "\treturn o;\n}";
-        return newCode;
-      }
-    }, {
-      key: "RenderBFMemory",
-      value: function RenderBFMemory() {
-        var body = "<div class='tape'>";
-        for (var i = 0; i < this.Tape.length; i++) {
-          body += "<span class='memorycell".concat(i === this.TapePointer ? " selected" : "", "'><span class='character'>").concat(this.Tape[i] >= 33 && this.Tape[i] <= 126 ? String.fromCharCode(this.Tape[i]) : "", "</span><span class='number'>").concat(this.Tape[i], "</span></span>");
-        }
-        document.querySelector('div.tab[data-target="bfMemory"]').innerHTML = body;
-      }
-    }, {
-      key: "RenderBFBMMemory",
-      value: function RenderBFBMMemory() {
-        var body = "";
-        var stacks = [];
-        for (var i = 0; i < 6; i++) {
-          // 6 stacks
-          stacks[i] = "<span class='tape'>";
-          for (var j = i * 2 + 11; j < this.Tape.length; j += 12) {
-            if (this.Tape[j] === 0 && this.Tape[j + 1] === 0) continue;
-            stacks[i] += "<span class='memorycell".concat(j + 1 === this.TapePointer ? " selected" : "").concat(this.Tape[j] === 0 ? " error" : "", "'><span class='character'>").concat(this.Tape[j + 1] >= 33 && this.Tape[j + 1] <= 126 ? String.fromCharCode(this.Tape[j + 1]) : "", "</span><span class='number'>").concat(this.Tape[j + 1], "</span></span>");
-          }
-          stacks[i] += "</span>";
-        }
-        body = stacks[0] + stacks[1] + stacks[2] + stacks[3] + stacks[4] + stacks[5];
-        document.querySelector('div.tab[data-target="bfbmMemory"]').innerHTML = body;
-      }
-    }, {
-      key: "RenderBSMemory",
-      value: function RenderBSMemory() {}
-    }, {
-      key: "RenderMemory",
-      value: function RenderMemory(style) {
-        switch (style) {
-          case "bfMemory":
-            this.RenderBFMemory();
-            break;
-          case "bfbmMemory":
-            this.RenderBFBMMemory();
-            break;
-          case "bsMemory":
-            this.RenderBSMemory();
-            break;
-        }
-      }
-    }]);
-    return Interpreter;
-  }();
-  
-  var $ReactRefreshModuleId$ = __webpack_require__.$Refresh$.moduleId;
-  var $ReactRefreshCurrentExports$ = __react_refresh_utils__.getModuleExports(
-    $ReactRefreshModuleId$
-  );
-  
-  function $ReactRefreshModuleRuntime$(exports) {
-    if (true) {
-      var errorOverlay;
-      if (true) {
-        errorOverlay = false;
-      }
-      var testMode;
-      if (typeof __react_refresh_test__ !== 'undefined') {
-        testMode = __react_refresh_test__;
-      }
-      return __react_refresh_utils__.executeRuntime(
-        exports,
-        $ReactRefreshModuleId$,
-        module.hot,
-        errorOverlay,
-        testMode
-      );
-    }
-  }
-  
-  if (typeof Promise !== 'undefined' && $ReactRefreshCurrentExports$ instanceof Promise) {
-    $ReactRefreshCurrentExports$.then($ReactRefreshModuleRuntime$);
-  } else {
-    $ReactRefreshModuleRuntime$($ReactRefreshCurrentExports$);
-  }
-  
-  /***/ }),
-  
   /***/ "./src/brainasm.tsx":
   /*!**************************!*\
     !*** ./src/brainasm.tsx ***!
@@ -10991,19 +10893,13 @@
   __webpack_require__.r(__webpack_exports__);
   /* harmony export */ __webpack_require__.d(__webpack_exports__, {
   /* harmony export */   "ASMInterpreter": function() { return /* binding */ ASMInterpreter; },
-  /* harmony export */   "ASMTranspile": function() { return /* binding */ ASMTranspile; },
-  /* harmony export */   "INSTRUCTIONS": function() { return /* binding */ INSTRUCTIONS; },
-  /* harmony export */   "MAIN_LOOP": function() { return /* binding */ MAIN_LOOP; },
-  /* harmony export */   "Tape": function() { return /* binding */ Tape; }
+  /* harmony export */   "INSTRUCTIONS": function() { return /* binding */ INSTRUCTIONS; }
   /* harmony export */ });
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createForOfIteratorHelper.js */ "./node_modules/@babel/runtime/helpers/esm/createForOfIteratorHelper.js");
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
-  /* harmony import */ var _brainmeta__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./brainmeta */ "./src/brainmeta.tsx");
   /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
   __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
-  
-  
   
   
   
@@ -11218,436 +11114,125 @@
     APUSH: true,
     BPUSH: true
   };
-  var STACK1 = "E";
-  var STACK2 = "F";
-  var Tape = /*#__PURE__*/function () {
-    function Tape(leftStack, rightStack) {
-      (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_1__["default"])(this, Tape);
-      this.LeftStack = void 0;
-      this.RightStack = void 0;
-      this.LeftStack = leftStack;
-      this.RightStack = rightStack;
-    }
-    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Tape, [{
-      key: "RotateRight",
-      value: function RotateRight() {
-        return "MOV ".concat(this.RightStack, " ").concat(this.LeftStack, "\n");
-      }
-    }, {
-      key: "RotateLeft",
-      value: function RotateLeft() {
-        return "MOV ".concat(this.LeftStack, " ").concat(this.RightStack, "\n");
-      }
-    }, {
-      key: "Left",
-      value: function Left() {
-        return this.RotateLeft() + this.RotateLeft();
-      }
-    }, {
-      key: "Right",
-      value: function Right() {
-        return this.RotateRight() + this.RotateRight();
-      }
-    }, {
-      key: "IncShort",
-      value: function IncShort() {
-        return "INC ".concat(this.LeftStack, " 1\n") + "CPY ".concat(this.LeftStack, " ").concat(STACK2, "\n") + "PUT ".concat(STACK1, " 1\n") + "WHL ".concat(STACK2, "\n") + "ZER ".concat(STACK1, "\n") + "ZER ".concat(STACK2, "\n") + "END\n" + "POP ".concat(STACK2, "\n") + "WHL ".concat(STACK1, "\n") + "INC ".concat(this.RightStack, "\n") + "ZER ".concat(STACK1, "\n") + "END\n" + "POP ".concat(STACK1, "\n");
-      }
-    }, {
-      key: "DecShort",
-      value: function DecShort() {
-        return "CPY ".concat(this.LeftStack, " ").concat(STACK2, "\n") + "PUT ".concat(STACK1, " 1\n") + "WHL ".concat(STACK2, "\n") + "ZER ".concat(STACK1, "\n") + "ZER ".concat(STACK2, "\n") + "END\n" + "POP ".concat(STACK2, "\n") + "WHL ".concat(STACK1, "\n") + "DEC ".concat(this.RightStack, "\n") + "ZER ".concat(STACK1, "\n") + "END\n" + "POP ".concat(STACK1, "\n") + "DEC ".concat(this.LeftStack, " 1\n");
-      }
-    }, {
-      key: "AddShort",
-      value: function AddShort(gotoB, gotoA) {
-        return "WHL ".concat(this.LeftStack, "\n").concat(this.DecShort(), "\n").concat(gotoB, "\n").concat(this.IncShort(), "\n").concat(gotoA, "\nEND\n").concat(this.RotateRight(), "\nWHL ").concat(this.LeftStack, "\nDEC ").concat(this.LeftStack, "\n").concat(gotoB, "\nINC ").concat(this.LeftStack, "\n").concat(gotoA, "\nEND\n").concat(this.RotateLeft());
-      }
-    }, {
-      key: "SubShort",
-      value: function SubShort(gotoB, gotoA) {
-        return "WHL ".concat(this.LeftStack, "\n").concat(this.DecShort(), "\n").concat(gotoB, "\n").concat(this.DecShort(), "\n").concat(gotoA, "\nEND\n").concat(this.RotateRight(), "\nWHL ").concat(this.LeftStack, "\nDEC ").concat(this.LeftStack, "\n").concat(gotoB, "\nDEC ").concat(this.LeftStack, "\n").concat(gotoA, "\nEND\n").concat(this.RotateLeft());
-      }
-    }, {
-      key: "CpyShort",
-      value: function CpyShort(gotoB, gotoA) {
-        return "CPY ".concat(this.LeftStack, " ").concat(STACK1, "\n") + "CPY ".concat(this.RightStack, " ").concat(STACK1, "\n") + gotoB + "ZER ".concat(this.LeftStack, "\n") + "ZER ".concat(this.RightStack, "\n") + "ADD ".concat(STACK1, " ").concat(this.RightStack, "\n") + "ADD ".concat(STACK1, " ").concat(this.LeftStack, "\n") + gotoA;
-      }
-    }, {
-      key: "ZerShort",
-      value: function ZerShort() {
-        return "ZER ".concat(this.LeftStack, "\nZER ").concat(this.RightStack, "\n");
-      }
-    }]);
-    return Tape;
-  }();
-  var REG = new Tape("A", "B");
-  var HEAP = new Tape("C", "D");
-  var IF = function IF(conditionStack, truthy) {
-    return "CPY ".concat(conditionStack, " ").concat(STACK1, "\nWHL ").concat(STACK1, "\n  POP ").concat(STACK1, "\n  ").concat(truthy, "\n  PUT ").concat(STACK1, " 0\nEND\nPOP ").concat(STACK1, "\n");
-  };
-  _c = IF;
-  var IFSHORT = function IFSHORT(tape, truthy) {
-    return "PUT ".concat(STACK1, " 0\n").concat(IF(tape.LeftStack, "INC ".concat(STACK1)), "\n").concat(IF(tape.RightStack, "INC ".concat(STACK1)), "\n").concat(IF(STACK1, "POP ".concat(STACK1, "\n").concat(truthy, "\nPUT ").concat(STACK1, " 0")), "\nPOP ").concat(STACK1, "\n");
-  };
-  _c2 = IFSHORT;
-  var WHILESHORT = function WHILESHORT(tape, body) {
-    return "PUT ".concat(STACK2, " 0\n").concat(IFSHORT(tape, "INC ".concat(STACK2)), "\nWHL ").concat(STACK2, "\n  POP ").concat(STACK2, "\n  ").concat(body, "\n  PUT ").concat(STACK2, " 0\n  ").concat(IFSHORT(tape, "INC ".concat(STACK2)), "\nEND\nPOP ").concat(STACK2, "\n");
-  };
-  _c3 = WHILESHORT;
-  var HEAP_MOVE = function HEAP_MOVE() {
-    return "".concat(WHILESHORT(REG, REG.DecShort() + HEAP.Left()), "\n").concat(REG.Right(), "\n").concat(WHILESHORT(REG, REG.DecShort() + REG.Left() + REG.IncShort() + REG.Right() + HEAP.Right()), "\n").concat(REG.Left(), "\n");
-  };
-  _c4 = HEAP_MOVE;
-  var GOTO_IP = function GOTO_IP() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Left(), "\nZER ").concat(REG.RightStack, "\nADD ").concat(STACK1, " ").concat(REG.RightStack, "\nZER ").concat(REG.LeftStack, "\nADD ").concat(STACK1, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(HEAP_MOVE(), "\n");
-  };
-  _c5 = GOTO_IP;
-  var LOAD_INSTRUCTION = function LOAD_INSTRUCTION() {
-    return "".concat(GOTO_IP(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\nCPY ").concat(HEAP.LeftStack, " ").concat(HEAP.LeftStack, "\nADD ").concat(HEAP.LeftStack, " ").concat(REG.LeftStack, "\nCPY ").concat(HEAP.RightStack, " ").concat(HEAP.RightStack, "\nADD ").concat(HEAP.RightStack, " ").concat(REG.RightStack, "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(HEAP.Right(), "\nCPY ").concat(HEAP.LeftStack, " ").concat(HEAP.LeftStack, "\nADD ").concat(HEAP.LeftStack, " ").concat(REG.LeftStack, "\nCPY ").concat(HEAP.RightStack, " ").concat(HEAP.RightStack, "\nADD ").concat(HEAP.RightStack, " ").concat(REG.RightStack, "\n").concat(HEAP.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  };
-  _c6 = LOAD_INSTRUCTION;
-  function HALT() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nZER ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c7 = HALT;
-  function SETA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Right(), REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c8 = SETA;
-  function SETB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Right() + REG.Right(), REG.Left() + REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c9 = SETB;
-  function CPYAB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Left(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Right(), "\nADD ").concat(STACK1, " ").concat(REG.RightStack, "\nADD ").concat(STACK1, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c10 = CPYAB;
-  function CPYBA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Left(), "\nADD ").concat(STACK1, " ").concat(REG.RightStack, "\nADD ").concat(STACK1, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  // Read A into A
-  _c11 = CPYBA;
-  function PTRA() {
-    return "".concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Left() + REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(HEAP_MOVE(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(HEAP.LeftStack, " ").concat(STACK1, "\nCPY ").concat(HEAP.RightStack, " ").concat(STACK1, "\nADD ").concat(STACK1, " ").concat(REG.RightStack, "\nADD ").concat(STACK1, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  // Read B into B
-  _c12 = PTRA;
-  function PTRB() {
-    return "".concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Left() + REG.Left() + REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(HEAP_MOVE(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(HEAP.LeftStack, " ").concat(STACK1, "\nCPY ").concat(HEAP.RightStack, " ").concat(STACK1, "\nADD ").concat(STACK1, " ").concat(REG.RightStack, "\nADD ").concat(STACK1, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c13 = PTRB;
-  function PUTBPTRA() {
-    return "".concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Left(), "\n").concat(REG.AddShort(REG.Left() + REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(HEAP_MOVE(), "\nZER ").concat(HEAP.LeftStack, "\nZER ").concat(HEAP.RightStack, "\nADD ").concat(STACK1, " ").concat(HEAP.RightStack, "\nADD ").concat(STACK1, " ").concat(HEAP.LeftStack, "\n");
-  }
-  _c14 = PUTBPTRA;
-  function PUTAPTRB() {
-    return "".concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Left() + REG.Left() + REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(HEAP_MOVE(), "\nZER ").concat(HEAP.LeftStack, "\nZER ").concat(HEAP.RightStack, "\nADD ").concat(STACK1, " ").concat(HEAP.RightStack, "\nADD ").concat(STACK1, " ").concat(HEAP.LeftStack, "\n");
-  }
-  _c15 = PUTAPTRB;
-  function JMP() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Left() + REG.Left(), REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.DecShort(), "\n").concat(REG.DecShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c16 = JMP;
-  function JMPA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.DecShort(), "\n").concat(REG.DecShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c17 = JMPA;
-  function JMPB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Left() + REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.DecShort(), "\n").concat(REG.DecShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c18 = JMPB;
-  function JNZA() {
-    return "PUT ".concat(STACK2, " 0\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(IF(STACK2, JMP()), "\nPOP ").concat(STACK2);
-  }
-  _c19 = JNZA;
-  function JNZB() {
-    return "PUT ".concat(STACK2, " 0\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(IF(STACK2, JMP()), "\nPOP ").concat(STACK2);
-  }
-  _c20 = JNZB;
-  function JBNZA() {
-    return "PUT ".concat(STACK2, " 0\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(IF(STACK2, JMPB()), "\nPOP ").concat(STACK2);
-  }
-  _c21 = JBNZA;
-  function JANZB() {
-    return "PUT ".concat(STACK2, " 0\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(IF(STACK2, JMPA()), "\nPOP ").concat(STACK2);
-  }
-  _c22 = JANZB;
-  function CALL() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.IncShort(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left(), REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.DecShort(), "\n").concat(REG.DecShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c23 = CALL;
-  function CALLA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.IncShort(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.DecShort(), "\n").concat(REG.DecShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c24 = CALLA;
-  function CALLB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.IncShort(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right() + REG.Right()), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.DecShort(), "\n").concat(REG.DecShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c25 = CALLB;
-  function RET() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\nADD ").concat(STACK2, " ").concat(REG.RightStack, "\nADD ").concat(STACK2, " ").concat(REG.LeftStack, "\n").concat(REG.Right(), "\n").concat(REG.ZerShort(), "\nADD ").concat(STACK2, " ").concat(REG.RightStack, "\nADD ").concat(STACK2, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.ZerShort(), "\nADD ").concat(STACK2, " ").concat(REG.RightStack, "\nADD ").concat(STACK2, " ").concat(REG.LeftStack, "\n").concat(REG.DecShort(), "\n").concat(REG.DecShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c26 = RET;
-  function INCA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c27 = INCA;
-  function INCB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c28 = INCB;
-  function DECA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c29 = DECA;
-  function DECB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c30 = DECB;
-  function ADDA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Right(), REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c31 = ADDA;
-  function ADDB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Right() + REG.Right(), REG.Left() + REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c32 = ADDB;
-  function ADDAB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Right(), REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c33 = ADDAB;
-  function ADDBA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.AddShort(REG.Left(), REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c34 = ADDBA;
-  function SUBA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.SubShort(REG.Right(), REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c35 = SUBA;
-  function SUBB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.SubShort(REG.Right() + REG.Right(), REG.Left() + REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c36 = SUBB;
-  function SUBAB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.SubShort(REG.Right(), REG.Left()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c37 = SUBAB;
-  function SUBBA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.SubShort(REG.Left(), REG.Right()), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c38 = SUBBA;
-  function MULAB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left(), REG.Right()), "\nZER ").concat(REG.LeftStack, "\nZER ").concat(REG.RightStack, "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\nZER ").concat(REG.LeftStack, "\nZER ").concat(REG.RightStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(WHILESHORT(REG, "".concat(REG.DecShort(), "\n  ").concat(REG.Right(), "\n  ADD ").concat(STACK1, " ").concat(REG.RightStack, "\n  ADD ").concat(STACK1, " ").concat(REG.LeftStack, "\n  CPY ").concat(REG.LeftStack, " ").concat(STACK1, "\n  CPY ").concat(REG.RightStack, " ").concat(STACK1, "\n  ").concat(REG.AddShort(REG.Right(), REG.Left()), "\n  ").concat(REG.Left(), "\n")), "\nPOP ").concat(STACK1, "\nPOP ").concat(STACK1, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c39 = MULAB;
-  function MULBA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left(), REG.Right() + REG.Right()), "\nZER ").concat(REG.LeftStack, "\nZER ").concat(REG.RightStack, "\n").concat(REG.Left(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\nZER ").concat(REG.LeftStack, "\nZER ").concat(REG.RightStack, "\n").concat(REG.Left(), "\n").concat(WHILESHORT(REG, "".concat(REG.DecShort(), "\n  ").concat(REG.Right(), "\n  ").concat(REG.Right(), "\n  ADD ").concat(STACK1, " ").concat(REG.RightStack, "\n  ADD ").concat(STACK1, " ").concat(REG.LeftStack, "\n  CPY ").concat(REG.LeftStack, " ").concat(STACK1, "\n  CPY ").concat(REG.RightStack, " ").concat(STACK1, "\n  ").concat(REG.AddShort(REG.Left(), REG.Right()), "\n  ").concat(REG.Left(), "\n  ").concat(REG.Left(), "\n")), "\nPOP ").concat(STACK1, "\nPOP ").concat(STACK1, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c40 = MULBA;
-  function DIVAB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left(), REG.Right() + REG.Right()), "\n").concat(REG.Left(), "\n").concat(WHILESHORT(REG, "".concat(REG.DecShort(), "\n  ").concat(REG.Right(), "\n  ").concat(REG.Right(), "\n  ").concat(REG.Right(), "\n  ").concat(REG.IncShort(), "\n  ").concat(REG.Left(), "\n  ").concat(REG.Left(), "\n  ").concat(REG.DecShort(), "\n  PUT ").concat(STACK2, " 1\n  ").concat(IFSHORT(REG, "ZER ".concat(STACK2)), "\n  WHL ").concat(STACK2, "\n    ").concat(REG.Left(), "\n    ").concat(REG.Left(), "\n    ").concat(REG.CpyShort(REG.Right() + REG.Right(), REG.Left() + REG.Left()), "\n    ").concat(REG.Right(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.ZerShort(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.IncShort(), "\n    ").concat(REG.Left(), "\n    ").concat(REG.Left(), "\n    ").concat(REG.Left(), "\n    ZER ").concat(STACK2, "\n  END\n  POP ").concat(STACK2, "\n  ").concat(REG.Left())), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left(), REG.Right() + REG.Right()), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.ZerShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c41 = DIVAB;
-  function DIVBA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left(), REG.Right()), "\n").concat(REG.Right(), "\n").concat(WHILESHORT(REG, "".concat(REG.DecShort(), "\n  ").concat(REG.Right(), "\n  ").concat(REG.Right(), "\n  ").concat(REG.IncShort(), "\n  ").concat(REG.Left(), "\n  ").concat(REG.Left(), "\n  ").concat(REG.Left(), "\n  ").concat(REG.DecShort(), "\n  PUT ").concat(STACK2, " 1\n  ").concat(IFSHORT(REG, "ZER ".concat(STACK2)), "\n  WHL ").concat(STACK2, "\n    ").concat(REG.Left(), "\n    ").concat(REG.CpyShort(REG.Right(), REG.Left()), "\n    ").concat(REG.Right(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.ZerShort(), "\n    ").concat(REG.Right(), "\n    ").concat(REG.IncShort(), "\n    ").concat(REG.Left(), "\n    ").concat(REG.Left(), "\n    ").concat(REG.Left(), "\n    ").concat(REG.Left(), "\n    ZER ").concat(STACK2, "\n  END\n  POP ").concat(STACK2, "\n  ").concat(REG.Right())), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.ZerShort(), "\n").concat(REG.Right(), "\n").concat(REG.CpyShort(REG.Left() + REG.Left() + REG.Left(), REG.Right() + REG.Right() + REG.Right()), "\n").concat(REG.ZerShort(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c42 = DIVBA;
-  function NOTA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPUT ").concat(STACK2, " 1\n").concat(IFSHORT(REG, "ZER ".concat(STACK2)), "\n").concat(REG.ZerShort(), "\nADD ").concat(STACK2, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c43 = NOTA;
-  function NOTB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPUT ").concat(STACK2, " 1\n").concat(IFSHORT(REG, "ZER ".concat(STACK2)), "\n").concat(REG.ZerShort(), "\nADD ").concat(STACK2, " ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n");
-  }
-  _c44 = NOTB;
-  function READA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPOP ").concat(REG.LeftStack, "\nINP ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c45 = READA;
-  function READB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPOP ").concat(REG.LeftStack, "\nINP ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c46 = READB;
-  function WRITEA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nOUT ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c47 = WRITEA;
-  function WRITEB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nOUT ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c48 = WRITEB;
-  function CMP() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPUT ").concat(STACK2, " 1\nPUT ").concat(STACK2, " 254\n").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\n").concat(REG.Right(), "\n").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\nWHL ").concat(STACK2, "\n  POP ").concat(STACK2, "\n  ZER ").concat(STACK2, "\n  PUT ").concat(STACK2, " 0\nEND\nPOP ").concat(STACK2, "\nWHL ").concat(STACK2, "\n  POP ").concat(STACK2, "\n  ").concat(REG.DecShort(), "\n  ").concat(REG.Left(), "\n  ").concat(REG.DecShort(), "\n  PUT ").concat(STACK2, " 1\n  PUT ").concat(STACK2, " 254\n  ").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\n  ").concat(REG.Right(), "\n  ").concat(IFSHORT(REG, "INC ".concat(STACK2)), "\n  WHL ").concat(STACK2, "\n    POP ").concat(STACK2, "\n    ZER ").concat(STACK2, "\n    PUT ").concat(STACK2, " 0\n  END\n  POP ").concat(STACK2, "\nEND\nPOP ").concat(STACK2, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c49 = CMP;
-  function APUSH() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c50 = APUSH;
-  function APUSHA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c51 = APUSHA;
-  function APUSHB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK1, "\nCPY ").concat(REG.RightStack, " ").concat(STACK1, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c52 = APUSHB;
-  function BPUSH() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c53 = BPUSH;
-  function BPUSHA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c54 = BPUSHA;
-  function BPUSHB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nCPY ").concat(REG.LeftStack, " ").concat(STACK2, "\nCPY ").concat(REG.RightStack, " ").concat(STACK2, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c55 = BPUSHB;
-  function APOP() {
-    return "POP ".concat(STACK1, "\nPOP ").concat(STACK1);
-  }
-  _c56 = APOP;
-  function APOPA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPOP ").concat(REG.LeftStack, "\nPOP ").concat(REG.RightStack, "\nMOV ").concat(STACK1, " ").concat(REG.RightStack, "\nMOV ").concat(STACK1, " ").concat(REG.LeftStack, " \n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c57 = APOPA;
-  function APOPB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPOP ").concat(REG.LeftStack, "\nPOP ").concat(REG.RightStack, "\nMOV ").concat(STACK1, " ").concat(REG.RightStack, "\nMOV ").concat(STACK1, " ").concat(REG.LeftStack, " \n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c58 = APOPB;
-  function BPOP() {
-    return "POP ".concat(STACK2, "\nPOP ").concat(STACK2);
-  }
-  _c59 = BPOP;
-  function BPOPA() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPOP ").concat(REG.LeftStack, "\nPOP ").concat(REG.RightStack, "\nMOV ").concat(STACK2, " ").concat(REG.RightStack, "\nMOV ").concat(STACK2, " ").concat(REG.LeftStack, " \n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c60 = BPOPA;
-  function BPOPB() {
-    return "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nPOP ").concat(REG.LeftStack, "\nPOP ").concat(REG.RightStack, "\nMOV ").concat(STACK2, " ").concat(REG.RightStack, "\nMOV ").concat(STACK2, " ").concat(REG.LeftStack, " \n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-  }
-  _c61 = BPOPB;
-  var INSTRUCTIONS = [["NOP", "", function (interp, arg) {}], ["HALT", HALT(), function (interp, arg) {
+  var INSTRUCTIONS = [["NOP", "", function (interp, arg) {}], ["HALT", '', function (interp, arg) {
     interp.running = false;
-  }], ["SETA", SETA(), function (interp, arg) {
+  }], ["SETA", '', function (interp, arg) {
     interp.RegA = arg;
-  }], ["SETB", SETB(), function (interp, arg) {
+  }], ["SETB", '', function (interp, arg) {
     interp.RegB = arg;
-  }], ["CPYAB", CPYAB(), function (interp, arg) {
+  }], ["CPYAB", '', function (interp, arg) {
     interp.RegB = interp.RegA;
-  }], ["CPYBA", CPYBA(), function (interp, arg) {
+  }], ["CPYBA", '', function (interp, arg) {
     interp.RegA = interp.RegB;
-  }], ["PTRA", PTRA(), function (interp, arg) {
+  }], ["PTRA", '', function (interp, arg) {
     var _interp$Heap, _interp$Heap2, _interp$Heap3, _interp$Heap4;
     interp.RegA = (((_interp$Heap = interp.Heap[interp.RegA * 4 + 0]) !== null && _interp$Heap !== void 0 ? _interp$Heap : 0) << 24) + (((_interp$Heap2 = interp.Heap[interp.RegA * 4 + 1]) !== null && _interp$Heap2 !== void 0 ? _interp$Heap2 : 0) << 16) + (((_interp$Heap3 = interp.Heap[interp.RegA * 4 + 2]) !== null && _interp$Heap3 !== void 0 ? _interp$Heap3 : 0) << 8) + (((_interp$Heap4 = interp.Heap[interp.RegA * 4 + 3]) !== null && _interp$Heap4 !== void 0 ? _interp$Heap4 : 0) << 0);
-  }], ["PTRB", PTRB(), function (interp, arg) {
+  }], ["PTRB", '', function (interp, arg) {
     var _interp$Heap5, _interp$Heap6, _interp$Heap7, _interp$Heap8;
     interp.RegB = (((_interp$Heap5 = interp.Heap[interp.RegB * 4 + 0]) !== null && _interp$Heap5 !== void 0 ? _interp$Heap5 : 0) << 24) + (((_interp$Heap6 = interp.Heap[interp.RegB * 4 + 1]) !== null && _interp$Heap6 !== void 0 ? _interp$Heap6 : 0) << 16) + (((_interp$Heap7 = interp.Heap[interp.RegB * 4 + 2]) !== null && _interp$Heap7 !== void 0 ? _interp$Heap7 : 0) << 8) + (((_interp$Heap8 = interp.Heap[interp.RegB * 4 + 3]) !== null && _interp$Heap8 !== void 0 ? _interp$Heap8 : 0) << 0);
-  }], ["PUTBPTRA", PUTBPTRA(), function (interp, arg) {
+  }], ["PUTBPTRA", '', function (interp, arg) {
     interp.Heap[interp.RegA * 4 + 0] = interp.RegB >> 24 & 0xff;
     interp.Heap[interp.RegA * 4 + 1] = interp.RegB >> 16 & 0xff;
     interp.Heap[interp.RegA * 4 + 2] = interp.RegB >> 8 & 0xff;
     interp.Heap[interp.RegA * 4 + 3] = interp.RegB >> 0 & 0xff;
-  }], ["PUTAPTRB", PUTAPTRB(), function (interp, arg) {
+  }], ["PUTAPTRB", '', function (interp, arg) {
     interp.Heap[interp.RegB * 4 + 0] = interp.RegA >> 24 & 0xff;
     interp.Heap[interp.RegB * 4 + 1] = interp.RegA >> 16 & 0xff;
     interp.Heap[interp.RegB * 4 + 2] = interp.RegA >> 8 & 0xff;
     interp.Heap[interp.RegB * 4 + 3] = interp.RegA >> 0 & 0xff;
-  }], ["JMP", JMP(), function (interp, arg) {
+  }], ["JMP", '', function (interp, arg) {
     interp.IP = arg * 4;
-  }], ["JMPA", JMPA(), function (interp, arg) {
+  }], ["JMPA", '', function (interp, arg) {
     interp.IP = interp.RegA * 4;
-  }], ["JMPB", JMPB(), function (interp, arg) {
+  }], ["JMPB", '', function (interp, arg) {
     interp.IP = interp.RegB * 4;
-  }], ["JNZA", JNZA(), function (interp, arg) {
+  }], ["JNZA", '', function (interp, arg) {
     if (interp.RegA) interp.IP = arg * 4;
-  }], ["JNZB", JNZB(), function (interp, arg) {
+  }], ["JNZB", '', function (interp, arg) {
     if (interp.RegB) interp.IP = arg * 4;
-  }], ["JBNZA", JBNZA(), function (interp, arg) {
+  }], ["JBNZA", '', function (interp, arg) {
     if (interp.RegA) interp.IP = interp.RegB * 4;
-  }], ["JANZB", JANZB(), function (interp, arg) {
+  }], ["JANZB", '', function (interp, arg) {
     if (interp.RegB) interp.IP = interp.RegA * 4;
-  }], ["CALL", CALL(), function (interp, arg) {
+  }], ["CALL", '', function (interp, arg) {
     interp.StackB.push(interp.IP);
     interp.StackB.push(interp.RegB);
     interp.StackB.push(interp.RegA);
     interp.IP = arg * 4;
-  }], ["CALLA", CALLA(), function (interp, arg) {
+  }], ["CALLA", '', function (interp, arg) {
     interp.StackB.push(interp.IP);
     interp.StackB.push(interp.RegB);
     interp.StackB.push(interp.RegA);
     interp.IP = interp.RegA * 4;
-  }], ["CALLB", CALLB(), function (interp, arg) {
+  }], ["CALLB", '', function (interp, arg) {
     interp.StackB.push(interp.IP);
     interp.StackB.push(interp.RegB);
     interp.StackB.push(interp.RegA);
     interp.IP = interp.RegB * 4;
-  }], ["RET", RET(), function (interp, arg) {
+  }], ["RET", '', function (interp, arg) {
     var _interp$StackB$pop, _interp$StackB$pop2, _interp$StackB$pop3;
     interp.RegA = (_interp$StackB$pop = interp.StackB.pop()) !== null && _interp$StackB$pop !== void 0 ? _interp$StackB$pop : 0;
     interp.RegB = (_interp$StackB$pop2 = interp.StackB.pop()) !== null && _interp$StackB$pop2 !== void 0 ? _interp$StackB$pop2 : 0;
     interp.IP = (_interp$StackB$pop3 = interp.StackB.pop()) !== null && _interp$StackB$pop3 !== void 0 ? _interp$StackB$pop3 : 0;
-  }], ["INCA", INCA(), function (interp, arg) {
+  }], ["INCA", '', function (interp, arg) {
     interp.RegA++;
     if (interp.RegA > 0xffffffff) interp.RegA = 0;
-  }], ["INCB", INCB(), function (interp, arg) {
+  }], ["INCB", '', function (interp, arg) {
     interp.RegB++;
     if (interp.RegB > 0xffffffff) interp.RegB = 0;
-  }], ["DECA", DECA(), function (interp, arg) {
+  }], ["DECA", '', function (interp, arg) {
     interp.RegA--;
     if (interp.RegA < 0) interp.RegA = 0xffffffff;
-  }], ["DECB", DECB(), function (interp, arg) {
+  }], ["DECB", '', function (interp, arg) {
     interp.RegB--;
     if (interp.RegB < 0) interp.RegB = 0xffffffff;
-  }], ["ADDA", ADDA(), function (interp, arg) {
+  }], ["ADDA", '', function (interp, arg) {
     interp.RegA += arg;
     interp.RegA &= 0xffffffff;
     interp.RegA >>>= 0;
-  }], ["ADDB", ADDB(), function (interp, arg) {
+  }], ["ADDB", '', function (interp, arg) {
     interp.RegB += arg;
     interp.RegB &= 0xffffffff;
     interp.RegB >>>= 0;
-  }], ["ADDAB", ADDAB(), function (interp, arg) {
+  }], ["ADDAB", '', function (interp, arg) {
     interp.RegB += interp.RegA;
     interp.RegB &= 0xffffffff;
     interp.RegB >>>= 0;
     interp.RegA = 0;
-  }], ["ADDBA", ADDBA(), function (interp, arg) {
+  }], ["ADDBA", '', function (interp, arg) {
     interp.RegA += interp.RegB;
     interp.RegA &= 0xffffffff;
     interp.RegA >>>= 0;
     interp.RegB = 0;
-  }], ["SUBA", SUBA(), function (interp, arg) {
+  }], ["SUBA", '', function (interp, arg) {
     interp.RegA -= arg;
     interp.RegA &= 0xffffffff;
     interp.RegA >>>= 0;
-  }], ["SUBB", SUBB(), function (interp, arg) {
+  }], ["SUBB", '', function (interp, arg) {
     interp.RegB -= arg;
     interp.RegB &= 0xffffffff;
     interp.RegB >>>= 0;
-  }], ["SUBAB", SUBAB(), function (interp, arg) {
+  }], ["SUBAB", '', function (interp, arg) {
     interp.RegB -= interp.RegA;
     interp.RegB &= 0xffffffff;
     interp.RegB >>>= 0;
     interp.RegA = 0;
-  }], ["SUBBA", SUBBA(), function (interp, arg) {
+  }], ["SUBBA", '', function (interp, arg) {
     interp.RegA -= interp.RegB;
     interp.RegA &= 0xffffffff;
     interp.RegA >>>= 0;
     interp.RegB = 0;
-  }], ["MULAB", MULAB(), function (interp, arg) {
+  }], ["MULAB", '', function (interp, arg) {
     interp.RegB *= interp.RegA;
     interp.RegB &= 0xffffffff;
     interp.RegB >>>= 0;
     interp.RegA = 0;
-  }], ["MULBA", MULBA(), function (interp, arg) {
+  }], ["MULBA", '', function (interp, arg) {
     interp.RegA *= interp.RegB;
     interp.RegA &= 0xffffffff;
     interp.RegA >>>= 0;
     interp.RegB = 0;
-  }], ["DIVAB", DIVAB(), function (interp, arg) {
+  }], ["DIVAB", '', function (interp, arg) {
     if (interp.RegB === 0) {
       interp.RegA = 0;
       interp.RegB = 0;
@@ -11657,7 +11242,7 @@
       interp.RegB = remainder;
       interp.RegA = quotient;
     }
-  }], ["DIVBA", DIVBA(), function (interp, arg) {
+  }], ["DIVBA", '', function (interp, arg) {
     if (interp.RegA === 0) {
       interp.RegA = 0;
       interp.RegB = 0;
@@ -11667,21 +11252,21 @@
       interp.RegA = remainder;
       interp.RegB = quotient;
     }
-  }], ["NOTA", NOTA(), function (interp, arg) {
+  }], ["NOTA", '', function (interp, arg) {
     interp.RegA = interp.RegA ? 0 : 1;
-  }], ["NOTB", NOTB(), function (interp, arg) {
+  }], ["NOTB", '', function (interp, arg) {
     interp.RegB = interp.RegB ? 0 : 1;
-  }], ["READA", READA(), function (interp, arg) {
+  }], ["READA", '', function (interp, arg) {
     interp.RegA = interp.Input.charCodeAt(interp.InputPointer++);
     if (interp.InputPointer > interp.Input.length) interp.RegA = 0;
-  }], ["READB", READB(), function (interp, arg) {
+  }], ["READB", '', function (interp, arg) {
     interp.RegB = interp.Input.charCodeAt(interp.InputPointer++);
     if (interp.InputPointer > interp.Input.length) interp.RegB = 0;
-  }], ["WRITEA", WRITEA(), function (interp, arg) {
+  }], ["WRITEA", '', function (interp, arg) {
     interp.Output += String.fromCharCode(interp.RegA);
-  }], ["WRITEB", WRITEB(), function (interp, arg) {
+  }], ["WRITEB", '', function (interp, arg) {
     interp.Output += String.fromCharCode(interp.RegB);
-  }], ["CMP", CMP(), function (interp, arg) {
+  }], ["CMP", '', function (interp, arg) {
     if (interp.RegA > interp.RegB) {
       interp.RegA -= interp.RegB;
       interp.RegB = 0;
@@ -11692,206 +11277,35 @@
       interp.RegA = 0;
       interp.RegB = 0;
     }
-  }], ["APUSH", APUSH(), function (interp, arg) {
+  }], ["APUSH", '', function (interp, arg) {
     interp.StackA.push(arg);
-  }], ["BPUSH", BPUSH(), function (interp, arg) {
+  }], ["BPUSH", '', function (interp, arg) {
     interp.StackB.push(arg);
-  }], ["APUSHA", APUSHA(), function (interp, arg) {
+  }], ["APUSHA", '', function (interp, arg) {
     interp.StackA.push(interp.RegA);
-  }], ["APUSHB", APUSHB(), function (interp, arg) {
+  }], ["APUSHB", '', function (interp, arg) {
     interp.StackA.push(interp.RegB);
-  }], ["BPUSHA", BPUSHA(), function (interp, arg) {
+  }], ["BPUSHA", '', function (interp, arg) {
     interp.StackB.push(interp.RegA);
-  }], ["BPUSHB", BPUSHB(), function (interp, arg) {
+  }], ["BPUSHB", '', function (interp, arg) {
     interp.StackB.push(interp.RegB);
-  }], ["APOP", APOP(), function (interp, arg) {
+  }], ["APOP", '', function (interp, arg) {
     interp.StackA.pop();
-  }], ["BPOP", BPOP(), function (interp, arg) {
+  }], ["BPOP", '', function (interp, arg) {
     interp.StackB.pop();
-  }], ["APOPA", APOPA(), function (interp, arg) {
+  }], ["APOPA", '', function (interp, arg) {
     var _interp$StackA$pop;
     interp.RegA = (_interp$StackA$pop = interp.StackA.pop()) !== null && _interp$StackA$pop !== void 0 ? _interp$StackA$pop : 0;
-  }], ["APOPB", APOPB(), function (interp, arg) {
+  }], ["APOPB", '', function (interp, arg) {
     var _interp$StackA$pop2;
     interp.RegB = (_interp$StackA$pop2 = interp.StackA.pop()) !== null && _interp$StackA$pop2 !== void 0 ? _interp$StackA$pop2 : 0;
-  }], ["BPOPA", BPOPA(), function (interp, arg) {
+  }], ["BPOPA", '', function (interp, arg) {
     var _interp$StackB$pop4;
     interp.RegA = (_interp$StackB$pop4 = interp.StackB.pop()) !== null && _interp$StackB$pop4 !== void 0 ? _interp$StackB$pop4 : 0;
-  }], ["BPOPB", BPOPB(), function (interp, arg) {
+  }], ["BPOPB", '', function (interp, arg) {
     var _interp$StackB$pop5;
     interp.RegB = (_interp$StackB$pop5 = interp.StackB.pop()) !== null && _interp$StackB$pop5 !== void 0 ? _interp$StackB$pop5 : 0;
   }]];
-  
-  // Assumes instruction is in INSTRUCTION
-  var DO_INSTRUCTION = function DO_INSTRUCTION() {
-    var s = "".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right());
-    for (var id in INSTRUCTIONS) {
-      var instr = INSTRUCTIONS[id];
-      s += "\nPUT ".concat(STACK1, " 1\n").concat(IF(REG.LeftStack, "ZER ".concat(STACK1)), "\n").concat(IF(STACK1, "".concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\nPOP ").concat(STACK1, "\n").concat(instr[1], "\nPUT ").concat(STACK1, " 0\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right())), "\nPOP ").concat(STACK1, "\nDEC ").concat(REG.LeftStack);
-    }
-    s += "".concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left());
-    return s;
-  };
-  _c62 = DO_INSTRUCTION;
-  var MAIN_LOOP = function MAIN_LOOP() {
-    return "\n".concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nINC ").concat(REG.LeftStack, "\nWHL ").concat(REG.LeftStack, "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\n").concat(REG.Left(), "\nCDE 0\n").concat(LOAD_INSTRUCTION(), "\n").concat(DO_INSTRUCTION(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.IncShort(), "\n").concat(REG.IncShort(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\n").concat(REG.Right(), "\nEND\n");
-  };
-  _c63 = MAIN_LOOP;
-  function ASMTranspile(code) {
-    var oldInstrs = INSTRUCTIONS;
-    var commands = code.matchAll(/^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim);
-    var usedInstructions = [];
-    var _iterator = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_0__["default"])(commands),
-      _step;
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var _c$;
-        var c = _step.value;
-        var command = (_c$ = c[4]) !== null && _c$ !== void 0 ? _c$ : "";
-        if (command.length > 0 && !usedInstructions.includes(command)) {
-          usedInstructions.push(command);
-        }
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
-    }
-    INSTRUCTIONS = [];
-    for (var i = 0; i < oldInstrs.length; i++) {
-      var old = oldInstrs[i];
-      INSTRUCTIONS[i] = [old[0], "", old[2]];
-    }
-    commands = code.matchAll(/^[ \t]*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?[ \t]*(?:(?:db[ \t]*((?:(?:"[^"]*?"|0x[a-f0-9]{1,8}|\d{1,10}|'\\?.'|[a-z_]\w*),?\s*)*))|(rem\s*.*)|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:[ \t]+(?:(\d{0,10})|([a-z_]\w*)|('\\?.')|(0x[a-f0-9]{1,8})))?))?$/gim);
-    var heap = [];
-    var labels = {};
-    var waitingLabels = {};
-    var ptr = 0;
-    var _iterator2 = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_0__["default"])(commands),
-      _step2;
-    try {
-      var _loop = function _loop() {
-        var _c$2, _c$3, _c$4, _c$5, _c$6, _c$7, _c$8;
-        var c = _step2.value;
-        var label = (_c$2 = c[1]) !== null && _c$2 !== void 0 ? _c$2 : "";
-        var dbArgs = (_c$3 = c[2]) !== null && _c$3 !== void 0 ? _c$3 : "";
-        var command = (_c$4 = c[4]) !== null && _c$4 !== void 0 ? _c$4 : "";
-        var argNumber = (_c$5 = c[5]) !== null && _c$5 !== void 0 ? _c$5 : "";
-        var argLabel = (_c$6 = c[6]) !== null && _c$6 !== void 0 ? _c$6 : "";
-        var argChar = (_c$7 = c[7]) !== null && _c$7 !== void 0 ? _c$7 : "";
-        var argHex = (_c$8 = c[8]) !== null && _c$8 !== void 0 ? _c$8 : "";
-        if (label.length > 0) {
-          var l = Math.floor(ptr / 2);
-          labels[label] = l;
-          if (waitingLabels[label]) {
-            waitingLabels[label].forEach(function (i) {
-              heap[i] = l & 255;
-              heap[i + 1] = l >> 8 & 255;
-            });
-            delete waitingLabels[label];
-          }
-        }
-        if (dbArgs.length > 0) {
-          var parsedArgs = dbArgs.matchAll(/(?:(?:"([^"]*?)"|(0x[a-f0-9]{1,8})|(\d{1,10})|('\\?.')|([a-z_]\w*)),?\s*)/gim);
-          var _iterator3 = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_0__["default"])(parsedArgs),
-            _step3;
-          try {
-            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-              var _a$, _a$2, _a$3, _a$4, _a$5;
-              var a = _step3.value;
-              var stringBody = (_a$ = a[1]) !== null && _a$ !== void 0 ? _a$ : "";
-              var hexBody = (_a$2 = a[2]) !== null && _a$2 !== void 0 ? _a$2 : "";
-              var numberBody = (_a$3 = a[3]) !== null && _a$3 !== void 0 ? _a$3 : "";
-              var charBody = (_a$4 = a[4]) !== null && _a$4 !== void 0 ? _a$4 : "";
-              var labelBody = (_a$5 = a[5]) !== null && _a$5 !== void 0 ? _a$5 : "";
-              if (numberBody.length > 0) {
-                var v = +numberBody;
-                heap[ptr++] = v & 255;
-                heap[ptr++] = v >> 8 & 255;
-              } else if (hexBody.length > 2) {
-                var _v = +hexBody;
-                heap[ptr++] = _v & 255;
-                heap[ptr++] = _v >> 8 & 255;
-              } else if (charBody.length > 2) {
-                var _v2 = 0;
-                if (charBody === "'\"'") {
-                  _v2 = 32;
-                } else {
-                  _v2 = JSON.parse(charBody.replace(/'(\\?.)'/, '"$1"')).charCodeAt(0);
-                }
-                heap[ptr++] = _v2 & 255;
-                heap[ptr++] = _v2 >> 8 & 255;
-              } else if (labelBody.length > 0) {
-                if (labels[labelBody]) {
-                  var _v3 = labels[labelBody];
-                  heap[ptr++] = _v3 & 255;
-                  heap[ptr++] = _v3 >> 8 & 255;
-                } else {
-                  if (!waitingLabels[labelBody]) waitingLabels[labelBody] = [];
-                  waitingLabels[labelBody].push(ptr);
-                  ptr += 2;
-                }
-              } else {
-                for (var _i2 = 0; _i2 < stringBody.length; _i2++) {
-                  heap[ptr++] = stringBody.charCodeAt(_i2);
-                  heap[ptr++] = 0;
-                }
-              }
-            }
-          } catch (err) {
-            _iterator3.e(err);
-          } finally {
-            _iterator3.f();
-          }
-        } else if (command.length > 0) {
-          var commandIndex = INSTRUCTIONS.findIndex(function (i) {
-            return i[0] === command.toUpperCase();
-          });
-          if (commandIndex < 0) {
-            console.log("UNKNOWN COMMAND: ".concat(command));
-          }
-          heap[ptr++] = commandIndex;
-          heap[ptr++] = 0;
-          var argV = 0;
-          if (argNumber.length > 0) argV = +argNumber;else if (argHex.length > 2) argV = +argHex;else if (argChar.length > 2) {
-            if (argChar === "'\"'") {
-              argV = 32;
-            } else {
-              argV = JSON.parse(argChar.replace(/'(\\?.)'/, '"$1"')).charCodeAt(0);
-            }
-          } else if (argLabel.length > 0) {
-            if (argLabel.toUpperCase() === "_IP") labels[argLabel] = Math.floor(ptr / 2);
-            if (labels[argLabel] !== undefined) {
-              argV = labels[argLabel];
-            } else {
-              if (waitingLabels[argLabel] === undefined) waitingLabels[argLabel] = [];
-              waitingLabels[argLabel].push(ptr);
-            }
-          }
-          heap[ptr++] = argV & 255;
-          heap[ptr++] = argV >> 8 & 255;
-        }
-      };
-      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-        _loop();
-      }
-    } catch (err) {
-      _iterator2.e(err);
-    } finally {
-      _iterator2.f();
-    }
-    for (var name in waitingLabels) {
-      console.log("MISSING LABEL: " + name);
-    }
-    var s = "";
-    for (var _i = ptr - 1; _i >= 0; _i--) {
-      if (_i > 0) s += "PUT ".concat(HEAP.RightStack, " ").concat(heap[_i], "\n");else s += "INC ".concat(HEAP.LeftStack, " ").concat(heap[0]);
-    }
-    s += MAIN_LOOP();
-    INSTRUCTIONS = oldInstrs;
-    return s;
-  }
-  _c64 = ASMTranspile;
   function hexPad(value) {
     var amount = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
     return ("0".repeat(amount) + value.toString(16).toUpperCase()).slice(-amount);
@@ -11915,20 +11329,22 @@
       this.ASMMap = [];
       this.CodeLines = [];
       if (typeof code === "string") {
+        this.Code = code;
         code = code.split("\n");
+      } else {
+        this.Code = code.join("\n");
       }
       var t = Date.now();
-      this.Code = code.join("\n");
       var heap = [];
       var labels = {};
       var waitingLabels = {};
       var commandTimes = [];
       var ptr = 0;
-      var _loop2 = function _loop2() {
+      var _loop = function _loop() {
         var _codel$, _codel$2, _codel$3, _codel$4, _codel$5;
         if (code[i].match(/^\s*LINE/i)) return "continue";
         if (code[i].match(/^\s*FILE/i)) return "continue";
-        var codel = code[i].match(/^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?\s*$/im);
+        var codel = code[i].match(/^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(REM|NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?\s*$/im);
         if (!codel) {
           console.log("No match: ".concat(code[i]));
           return "continue";
@@ -11943,7 +11359,7 @@
         var commandT = Date.now();
         if (label) {
           var l = ptr;
-          labels[label] = l;
+          labels[label] = l / 4;
           if (waitingLabels[label]) {
             waitingLabels[label].forEach(function (i) {
               heap[i] = (l / 4 & 0xffffffff) >>> 24 & 0xff;
@@ -11956,12 +11372,12 @@
         }
         if (dbArgs.length > 0) {
           var argVals = dbArgs.matchAll(/(\d+)|([a-z_]\w*)/gi);
-          var _iterator4 = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_0__["default"])(argVals),
-            _step4;
+          var _iterator = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_0__["default"])(argVals),
+            _step;
           try {
-            for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+            for (_iterator.s(); !(_step = _iterator.n()).done;) {
               var _argVal$, _argVal$2;
-              var argVal = _step4.value;
+              var argVal = _step.value;
               var argNum = (_argVal$ = argVal[1]) !== null && _argVal$ !== void 0 ? _argVal$ : "";
               var argLab = (_argVal$2 = argVal[2]) !== null && _argVal$2 !== void 0 ? _argVal$2 : "";
               if (argNum.length > 0) {
@@ -11972,7 +11388,7 @@
                 heap[ptr++] = (_l & 0xffffffff) >>> 0 & 0xff;
               } else if (argLab.length > 0) {
                 if (labels[argLab] !== undefined) {
-                  var _l2 = labels[argLab] / 4;
+                  var _l2 = labels[argLab];
                   heap[ptr++] = (_l2 & 0xffffffff) >>> 24 & 0xff;
                   heap[ptr++] = (_l2 & 0xffffffff) >>> 16 & 0xff;
                   heap[ptr++] = (_l2 & 0xffffffff) >>> 8 & 0xff;
@@ -11985,11 +11401,12 @@
               }
             }
           } catch (err) {
-            _iterator4.e(err);
+            _iterator.e(err);
           } finally {
-            _iterator4.f();
+            _iterator.f();
           }
         } else if (command.length > 0) {
+          if (command.toUpperCase() === 'REM') return "continue";
           var commandIndex = INSTRUCTIONS.findIndex(function (i) {
             return i[0] === command.toUpperCase();
           });
@@ -11997,13 +11414,12 @@
             console.log("UNKNOWN COMMAND: ".concat(command));
           }
           heap[ptr++] = commandIndex;
-          var acceptsArg = (command.toUpperCase() in acceptsArgument);
-          if (acceptsArg) {
+          if (command.toUpperCase() in acceptsArgument) {
             var argV = 0;
             if (argNumber.length > 0) argV = +argNumber;else if (argLabel.length > 0) {
-              if (argLabel.toUpperCase() === "_IP") labels[argLabel] = ptr;
+              if (argLabel.toUpperCase() === "_IP") labels[argLabel] = ptr / 4;
               if (labels[argLabel] !== undefined) {
-                argV = labels[argLabel] / 4;
+                argV = labels[argLabel];
               } else {
                 if (waitingLabels[argLabel] === undefined) waitingLabels[argLabel] = [];
                 waitingLabels[argLabel].push(ptr);
@@ -12018,7 +11434,7 @@
         commandTimes.push(Date.now() - commandT);
       };
       for (var i = 0; i < code.length; i++) {
-        var _ret = _loop2();
+        var _ret = _loop();
         if (_ret === "continue") continue;
       }
       console.log("Command Times: ");
@@ -12044,72 +11460,6 @@
         return code.join("\n");
       }
     }, {
-      key: "ToMeta",
-      value: function ToMeta() {
-        var interp = new _brainmeta__WEBPACK_IMPORTED_MODULE_3__.MetaInterpreter(ASMTranspile(this.Code));
-        interp.CodePointer = interp.Code.findIndex(function (c) {
-          return c[0] === "CDE";
-        });
-  
-        // Rebuild the WhileStack
-        for (var i = 0; i < interp.CodePointer; i++) {
-          var codel = interp.Code[i];
-          if (codel[0] === "WHL") {
-            var args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g)).map(function (c) {
-              return c[1];
-            }).map(function (c) {
-              return c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c;
-            });
-            var a = (0,_brainmeta__WEBPACK_IMPORTED_MODULE_3__.GetStackIndex)(args[0]);
-            interp.WhileStack.push([i, a]);
-          } else if (codel[0] === "END") {
-            interp.WhileStack.pop();
-          }
-        }
-        interp.Input = this.Input;
-        interp.InputPointer = this.InputPointer;
-        interp.Output = this.Output;
-        interp.LastStack = 0;
-  
-        // Rebuild registeries
-        // Halt
-        interp.Stacks[1].push(0);
-        interp.Stacks[1].push(this.running ? 1 : 0);
-        // RegB
-        interp.Stacks[1].push(this.RegB >> 8 & 255);
-        interp.Stacks[1].push(this.RegB & 255);
-        // RegA
-        interp.Stacks[1].push(this.RegA >> 8 & 255);
-        interp.Stacks[1].push(this.RegA & 255);
-        // Instruction arg
-        interp.Stacks[1].push(0);
-        interp.Stacks[1].push(0);
-        // Loaded instruction
-        interp.Stacks[1].push(0);
-        interp.Stacks[1].push(0);
-        // Instruction Pointer
-        interp.Stacks[1].push(this.IP >> 8 & 255);
-        interp.Stacks[1].push(this.IP & 255);
-        // Heap Target
-        interp.Stacks[1].push(0);
-        interp.Stacks[1].push(0);
-        // Heap Pointer
-        interp.Stacks[1].push(0);
-        interp.Stacks[0].push(0);
-  
-        // Rebuild Heap
-        var maxHeap = 0;
-        this.Heap.forEach(function (c, i) {
-          maxHeap = Math.max(maxHeap, i);
-        });
-        for (var _i3 = maxHeap; _i3 >= 0; _i3--) {
-          var _this$Heap$_i, _this$Heap$_i2;
-          interp.Stacks[3].push(((_this$Heap$_i = this.Heap[_i3]) !== null && _this$Heap$_i !== void 0 ? _this$Heap$_i : 0) >> 8 & 255);
-          interp.Stacks[_i3 > 0 ? 3 : 2].push(((_this$Heap$_i2 = this.Heap[_i3]) !== null && _this$Heap$_i2 !== void 0 ? _this$Heap$_i2 : 0) & 255);
-        }
-        return interp;
-      }
-    }, {
       key: "Step",
       value: function Step() {
         if (!this.running) return;
@@ -12124,16 +11474,6 @@
           this.running = false;
           throw new Error("Unknown instruction ".concat(command));
         }
-      }
-    }, {
-      key: "RenderBFMemory",
-      value: function RenderBFMemory() {
-        return this.ToMeta().RenderBFMemory();
-      }
-    }, {
-      key: "RenderBFBMMemory",
-      value: function RenderBFBMMemory() {
-        return this.ToMeta().RenderBFBMMemory();
       }
     }, {
       key: "RenderHeap",
@@ -12176,7 +11516,7 @@
         var stack1 = "";
         var stack2 = "";
         for (var i = 0; i < this.StackA.length; i++) stack1 += hexPad(this.StackA[i], 8) + " ";
-        for (var _i4 = 0; _i4 < this.StackB.length; _i4++) stack2 += hexPad(this.StackB[_i4], 8) + " ";
+        for (var _i = 0; _i < this.StackB.length; _i++) stack2 += hexPad(this.StackB[_i], 8) + " ";
         var body = "File: <span class='reg'>".concat(this.GetFile(), "</span><br>\nLine: <span class='reg'>").concat(this.GetLine() + 1, "</span><br>\nInstruction PTR: <span class='reg'>").concat(hexPad(instructionPtr, 4), "</span><br>\nInstruction: <span class='reg'>").concat(hexPad((_this$Heap$instructio = this.Heap[instructionPtr]) !== null && _this$Heap$instructio !== void 0 ? _this$Heap$instructio : 0), " ").concat((_INSTRUCTIONS$ = (_INSTRUCTIONS = INSTRUCTIONS[(_this$Heap$instructio2 = this.Heap[instructionPtr]) !== null && _this$Heap$instructio2 !== void 0 ? _this$Heap$instructio2 : 0]) === null || _INSTRUCTIONS === void 0 ? void 0 : _INSTRUCTIONS[0]) !== null && _INSTRUCTIONS$ !== void 0 ? _INSTRUCTIONS$ : "????", " ").concat(hexPad((_this$Heap = this.Heap[instructionPtr + 1]) !== null && _this$Heap !== void 0 ? _this$Heap : 0, 8), "</span><br>\nRegister A: <span class='reg'>").concat(hexPad(regA, 8), "</span><br>\nRegister B: <span class='reg'>").concat(hexPad(regB, 8), "</span><br><br>\nStack1: <span class='reg'>").concat(stack1, "</span><br>\nStack2: <span class='reg'>").concat(stack2, "</span><br>");
         document.querySelector('div.tab[data-target="baMemory"]').innerHTML = body;
       }
@@ -12219,769 +11559,11 @@
     }, {
       key: "RenderMemory",
       value: function RenderMemory(style) {
-        switch (style) {
-          case "bfMemory":
-            this.RenderBFMemory();
-            break;
-          case "bfbmMemory":
-            this.RenderBFBMMemory();
-            break;
-          case "baMemory":
-            this.RenderBSMemory();
-            break;
-        }
+        this.RenderBSMemory();
       }
     }]);
     return ASMInterpreter;
   }();
-  var _c, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c10, _c11, _c12, _c13, _c14, _c15, _c16, _c17, _c18, _c19, _c20, _c21, _c22, _c23, _c24, _c25, _c26, _c27, _c28, _c29, _c30, _c31, _c32, _c33, _c34, _c35, _c36, _c37, _c38, _c39, _c40, _c41, _c42, _c43, _c44, _c45, _c46, _c47, _c48, _c49, _c50, _c51, _c52, _c53, _c54, _c55, _c56, _c57, _c58, _c59, _c60, _c61, _c62, _c63, _c64;
-  __webpack_require__.$Refresh$.register(_c, "IF");
-  __webpack_require__.$Refresh$.register(_c2, "IFSHORT");
-  __webpack_require__.$Refresh$.register(_c3, "WHILESHORT");
-  __webpack_require__.$Refresh$.register(_c4, "HEAP_MOVE");
-  __webpack_require__.$Refresh$.register(_c5, "GOTO_IP");
-  __webpack_require__.$Refresh$.register(_c6, "LOAD_INSTRUCTION");
-  __webpack_require__.$Refresh$.register(_c7, "HALT");
-  __webpack_require__.$Refresh$.register(_c8, "SETA");
-  __webpack_require__.$Refresh$.register(_c9, "SETB");
-  __webpack_require__.$Refresh$.register(_c10, "CPYAB");
-  __webpack_require__.$Refresh$.register(_c11, "CPYBA");
-  __webpack_require__.$Refresh$.register(_c12, "PTRA");
-  __webpack_require__.$Refresh$.register(_c13, "PTRB");
-  __webpack_require__.$Refresh$.register(_c14, "PUTBPTRA");
-  __webpack_require__.$Refresh$.register(_c15, "PUTAPTRB");
-  __webpack_require__.$Refresh$.register(_c16, "JMP");
-  __webpack_require__.$Refresh$.register(_c17, "JMPA");
-  __webpack_require__.$Refresh$.register(_c18, "JMPB");
-  __webpack_require__.$Refresh$.register(_c19, "JNZA");
-  __webpack_require__.$Refresh$.register(_c20, "JNZB");
-  __webpack_require__.$Refresh$.register(_c21, "JBNZA");
-  __webpack_require__.$Refresh$.register(_c22, "JANZB");
-  __webpack_require__.$Refresh$.register(_c23, "CALL");
-  __webpack_require__.$Refresh$.register(_c24, "CALLA");
-  __webpack_require__.$Refresh$.register(_c25, "CALLB");
-  __webpack_require__.$Refresh$.register(_c26, "RET");
-  __webpack_require__.$Refresh$.register(_c27, "INCA");
-  __webpack_require__.$Refresh$.register(_c28, "INCB");
-  __webpack_require__.$Refresh$.register(_c29, "DECA");
-  __webpack_require__.$Refresh$.register(_c30, "DECB");
-  __webpack_require__.$Refresh$.register(_c31, "ADDA");
-  __webpack_require__.$Refresh$.register(_c32, "ADDB");
-  __webpack_require__.$Refresh$.register(_c33, "ADDAB");
-  __webpack_require__.$Refresh$.register(_c34, "ADDBA");
-  __webpack_require__.$Refresh$.register(_c35, "SUBA");
-  __webpack_require__.$Refresh$.register(_c36, "SUBB");
-  __webpack_require__.$Refresh$.register(_c37, "SUBAB");
-  __webpack_require__.$Refresh$.register(_c38, "SUBBA");
-  __webpack_require__.$Refresh$.register(_c39, "MULAB");
-  __webpack_require__.$Refresh$.register(_c40, "MULBA");
-  __webpack_require__.$Refresh$.register(_c41, "DIVAB");
-  __webpack_require__.$Refresh$.register(_c42, "DIVBA");
-  __webpack_require__.$Refresh$.register(_c43, "NOTA");
-  __webpack_require__.$Refresh$.register(_c44, "NOTB");
-  __webpack_require__.$Refresh$.register(_c45, "READA");
-  __webpack_require__.$Refresh$.register(_c46, "READB");
-  __webpack_require__.$Refresh$.register(_c47, "WRITEA");
-  __webpack_require__.$Refresh$.register(_c48, "WRITEB");
-  __webpack_require__.$Refresh$.register(_c49, "CMP");
-  __webpack_require__.$Refresh$.register(_c50, "APUSH");
-  __webpack_require__.$Refresh$.register(_c51, "APUSHA");
-  __webpack_require__.$Refresh$.register(_c52, "APUSHB");
-  __webpack_require__.$Refresh$.register(_c53, "BPUSH");
-  __webpack_require__.$Refresh$.register(_c54, "BPUSHA");
-  __webpack_require__.$Refresh$.register(_c55, "BPUSHB");
-  __webpack_require__.$Refresh$.register(_c56, "APOP");
-  __webpack_require__.$Refresh$.register(_c57, "APOPA");
-  __webpack_require__.$Refresh$.register(_c58, "APOPB");
-  __webpack_require__.$Refresh$.register(_c59, "BPOP");
-  __webpack_require__.$Refresh$.register(_c60, "BPOPA");
-  __webpack_require__.$Refresh$.register(_c61, "BPOPB");
-  __webpack_require__.$Refresh$.register(_c62, "DO_INSTRUCTION");
-  __webpack_require__.$Refresh$.register(_c63, "MAIN_LOOP");
-  __webpack_require__.$Refresh$.register(_c64, "ASMTranspile");
-  
-  var $ReactRefreshModuleId$ = __webpack_require__.$Refresh$.moduleId;
-  var $ReactRefreshCurrentExports$ = __react_refresh_utils__.getModuleExports(
-    $ReactRefreshModuleId$
-  );
-  
-  function $ReactRefreshModuleRuntime$(exports) {
-    if (true) {
-      var errorOverlay;
-      if (true) {
-        errorOverlay = false;
-      }
-      var testMode;
-      if (typeof __react_refresh_test__ !== 'undefined') {
-        testMode = __react_refresh_test__;
-      }
-      return __react_refresh_utils__.executeRuntime(
-        exports,
-        $ReactRefreshModuleId$,
-        module.hot,
-        errorOverlay,
-        testMode
-      );
-    }
-  }
-  
-  if (typeof Promise !== 'undefined' && $ReactRefreshCurrentExports$ instanceof Promise) {
-    $ReactRefreshCurrentExports$.then($ReactRefreshModuleRuntime$);
-  } else {
-    $ReactRefreshModuleRuntime$($ReactRefreshCurrentExports$);
-  }
-  
-  /***/ }),
-  
-  /***/ "./src/brainmeta.tsx":
-  /*!***************************!*\
-    !*** ./src/brainmeta.tsx ***!
-    \***************************/
-  /***/ (function(module, __webpack_exports__, __webpack_require__) {
-  
-  "use strict";
-  __webpack_require__.r(__webpack_exports__);
-  /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-  /* harmony export */   "GetStackIndex": function() { return /* binding */ GetStackIndex; },
-  /* harmony export */   "MetaInterpreter": function() { return /* binding */ MetaInterpreter; },
-  /* harmony export */   "Transpile": function() { return /* binding */ Transpile; }
-  /* harmony export */ });
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js */ "./node_modules/@babel/runtime/helpers/esm/toConsumableArray.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_wrapRegExp_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/wrapRegExp.js */ "./node_modules/@babel/runtime/helpers/esm/wrapRegExp.js");
-  /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createForOfIteratorHelper.js */ "./node_modules/@babel/runtime/helpers/esm/createForOfIteratorHelper.js");
-  /* harmony import */ var _bf__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./bf */ "./src/bf.tsx");
-  /* harmony import */ var _brainasm__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./brainasm */ "./src/brainasm.tsx");
-  /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
-  __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
-  
-  
-  
-  
-  
-  
-  /*
-  Brain meta consists of four stacks:
-  A, B, C, D, E, F
-  
-  
-  It has the following commands.
-  MOV source, destin // Move the top of source to destin
-  CPY source, destin // Copy the top of source to destin
-  PUT stack, value   // Put a number on top of a stack
-  POP stack          // Pop a value off a stack
-  WHL stack          // While the top of stack is non-zero {
-  END                // }
-  INC stack, amount  // Increment the top of stack
-  DEC stack, amount  // Decrement the top of stack
-  ADD source, destin // Add the value at the top of source to the top of destin
-  SUB source, destin // Subtract the value at the top of source from the top of destin
-  MUL a, b           // Multiply a by b. Pops b.
-  DIV a, b           // Divide a by b. Store the qoutant on a, and the remainder on b.
-  ZER stack          // Set the top of stack to zero
-  INP stack          // Read the next char of STDIN to the top of stack
-  OUT stack          // Write the top of stack to STDOUT
-  */
-  
-  
-  
-  var CURRENTSTACK = "A";
-  function SelectStack(stack) {
-    if (!stack) return "";
-    if (!stack.length) return "";
-    var diff = stack.charCodeAt(0) - CURRENTSTACK.charCodeAt(0);
-    CURRENTSTACK = stack;
-    if (diff === 0) return "";
-    diff += 6; // This'll ensure we're on valid memory.
-    return "<" +
-    // Grip the rail
-    "[«]" +
-    // Slide to the start of the railing.
-    ">".repeat(diff * 2) +
-    // Select the new rail
-    "[»]" +
-    // Slide to the end of the current rail
-    "<<<<<<<<<<<" // And select the actually added element.
-    ;
-  }
-  _c = SelectStack;
-  function GenerateMOV(source, destin) {
-    if (source === destin) return SelectStack(source);
-    return SelectStack(destin) +
-    // Select the destination stack
-    ">>>>>>>>>>>+>" +
-    // Add a new value
-    SelectStack(source) +
-    // Select the source stack
-    "[" +
-    // While this stack is >0
-    "-" +
-    // Decrement
-    SelectStack(destin) + "+" +
-    // Increment the other stack
-    SelectStack(source) + "]" +
-    // Go back and repeat
-    "<[[-]«[«]]»[»]<<<<<<<<<<<" // And pop this value
-    ;
-  }
-  _c2 = GenerateMOV;
-  function GenerateCPY(source, destin) {
-    if (source === destin) {
-      return SelectStack(source) + "[-»+»+««]»»[-««+»»]«<+>";
-    }
-    return SelectStack(destin) +
-    // Select the destination stack
-    ">>>>>>>>>>>+»+>" +
-    // Add two new values
-    SelectStack(source) +
-    // Select the source stack
-    "[" +
-    // While this stack is >0
-    "-" +
-    // Decrement
-    SelectStack(destin) +
-    // Select the destination stack
-    "+«+" +
-    // Increment both this and the value under
-    SelectStack(source) + "]" +
-    // Go back and repeat
-    SelectStack(destin) +
-    // Go back to the destination
-    "[-" +
-    // Essentially an inverse mov from here on
-    SelectStack(source) + "+" + SelectStack(destin) + "]" + "<[[-]«[«]]»[»]<<<<<<<<<<<";
-  }
-  _c3 = GenerateCPY;
-  function GeneratePUT(stack, value) {
-    return SelectStack(stack) +
-    // Select the target stack
-    ">>>>>>>>>>>+>" +
-    // Enable the next value up
-    "+".repeat(value) // Add plus's for flavour
-    ;
-  }
-  _c4 = GeneratePUT;
-  function GeneratePOP(stack) {
-    return SelectStack(stack) + "[-]<[[-]«[«]]»[»]<<<<<<<<<<<" // Select the target stack // Clear the value and the rail
-    ;
-  }
-  _c5 = GeneratePOP;
-  var whileStack = [];
-  function GenerateWHL(stack) {
-    whileStack.push(stack);
-    return SelectStack(stack) + "[";
-  }
-  _c6 = GenerateWHL;
-  function GenerateEND() {
-    return SelectStack(whileStack.pop()) + "]";
-  }
-  _c7 = GenerateEND;
-  function GenerateINC(stack, amount) {
-    return SelectStack(stack) + "+".repeat(amount !== null && amount !== void 0 ? amount : 1);
-  }
-  _c8 = GenerateINC;
-  function GenerateDEC(stack, amount) {
-    return SelectStack(stack) + "-".repeat(amount !== null && amount !== void 0 ? amount : 1);
-  }
-  _c9 = GenerateDEC;
-  function GenerateADD(source, destin) {
-    // Identical to MOV without pushing a new value
-    return SelectStack(source) +
-    // Select the source stack
-    "[" +
-    // While this stack is >0
-    "-" +
-    // Decrement
-    SelectStack(destin) + "+" +
-    // Increment the other stack
-    SelectStack(source) + "]" +
-    // Go back and repeat
-    "<[[-]«[«]]»[»]<<<<<<<<<<<" // And pop this value
-    ;
-  }
-  _c10 = GenerateADD;
-  function GenerateSUB(source, destin) {
-    // Identical to ADD but decrements destin instead of increments
-    return SelectStack(source) +
-    // Select the source stack
-    "[" +
-    // While this stack is >0
-    "-" +
-    // Decrement
-    SelectStack(destin) + "-" +
-    // Decrement the other stack
-    SelectStack(source) + "]" +
-    // Go back and repeat
-    "<[[-]«[«]]»[»]<<<<<<<<<<<" // And pop this value
-    ;
-  }
-  _c11 = GenerateSUB;
-  function GenerateMUL(a, b) {
-    return SelectStack(a) +
-    // Select the first stack
-    ">>>>>>>>>>>+>" +
-    // Add a value to store b onto
-    SelectStack(b) + "[-" + SelectStack(a) + "+" + SelectStack(b) + "]" +
-    // Move the top of b unto a
-    "<[[-]«[«]]»[»]<<<<<<<<<<<" +
-    // Pop b
-    SelectStack(a) +
-    // Move back unto a, which is now [...a,b,t0,t1]
-    "«[»»»+«««-]" + "»»»[" + "««[«+»»+«-]»[«+»-]" + "»-]««[-]<-<<<<<<<<<<<";
-  }
-  _c12 = GenerateMUL;
-  function GenerateDIV(a, b) {
-    return SelectStack(a) +
-    // Select the first stack
-    ">>>>>>>>>>>+>" +
-    // Add a value to store b onto
-    SelectStack(b) + "[-" + SelectStack(a) + "+" + SelectStack(b) + "]" +
-    // Move the top of b unto a
-    SelectStack(a) +
-    // Move back unto a
-    "[-»+«]«" +
-    // "[>n,0,d]"
-    "[-»+»-[»+»»]»[+[-«+»]»+»»]««««««]" +
-    // [>0,n,d-n%d,n%d,n/d]
-    "»[-]»[-]»»[-««««+»»»»]«[-««+»»]««[-" + SelectStack(b) + "+" + SelectStack(a) + "]" + "<-<<<<<<<<<<<";
-  }
-  _c13 = GenerateDIV;
-  function GenerateZER(stack) {
-    return SelectStack(stack) + "[-]"; // Not rocket science
-  }
-  _c14 = GenerateZER;
-  function GenerateINP(stack) {
-    return SelectStack(stack) + ">>>>>>>>>>>+>,";
-  }
-  _c15 = GenerateINP;
-  function GenerateOUT(stack) {
-    return SelectStack(stack) + ".";
-  }
-  _c16 = GenerateOUT;
-  var ParseInstruction = {
-    MOV: GenerateMOV,
-    CPY: GenerateCPY,
-    PUT: GeneratePUT,
-    POP: GeneratePOP,
-    WHL: GenerateWHL,
-    END: GenerateEND,
-    INC: GenerateINC,
-    DEC: GenerateDEC,
-    ADD: GenerateADD,
-    SUB: GenerateSUB,
-    MUL: GenerateMUL,
-    DIV: GenerateDIV,
-    ZER: GenerateZER,
-    INP: GenerateINP,
-    OUT: GenerateOUT,
-    CDE: function CDE() {
-      return "";
-    }
-  };
-  function Transpile(code) {
-    var out = "";
-    CURRENTSTACK = "A";
-    var _iterator = (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createForOfIteratorHelper_js__WEBPACK_IMPORTED_MODULE_4__["default"])(code.matchAll( /*#__PURE__*/(0,_project_workspace_node_modules_babel_runtime_helpers_esm_wrapRegExp_js__WEBPACK_IMPORTED_MODULE_3__["default"])(/(MOV|CPY|PUT|POP|WHL|END|INC|DEC|ADD|SUB|MUL|DIV|ZER|INP|OUT|CDE)((?:,?[ \t]*(?:[A-F]|\d+|'.'))*)/g, {
-        instruction: 1,
-        arguments: 2
-      }))),
-      _step;
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var s = _step.value;
-        var instruction = s[1];
-        var args = Array.from(s[2].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g)).map(function (c) {
-          return c[1];
-        }).map(function (c) {
-          return c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c;
-        });
-        out += ":(\"".concat(s[0], "\"\t").concat(ParseInstruction[instruction].apply(ParseInstruction, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_2__["default"])(args)).replace(/«/g, "<<<<<<<<<<<<").replace(/»/g, ">>>>>>>>>>>>"), " )\n");
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
-    }
-    return out;
-  }
-  _c17 = Transpile;
-  function GetStackIndex(s) {
-    return Math.max("ABCDEF".indexOf("" + s), 0);
-  }
-  _c18 = GetStackIndex;
-  var MetaInterpreter = /*#__PURE__*/function () {
-    function MetaInterpreter(code) {
-      (0,_project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this, MetaInterpreter);
-      this.Stacks = [];
-      this.Code = void 0;
-      this.CodePointer = 0;
-      this.LastStack = 0;
-      this.WhileStack = [];
-      this.Input = "";
-      this.InputPointer = 0;
-      this.Output = "";
-      this.Code = Array.from(code.matchAll( /*#__PURE__*/(0,_project_workspace_node_modules_babel_runtime_helpers_esm_wrapRegExp_js__WEBPACK_IMPORTED_MODULE_3__["default"])(/(MOV|CPY|PUT|POP|WHL|END|INC|DEC|ADD|SUB|MUL|DIV|ZER|INP|OUT|CDE)((?:,?[ \t]*(?:[A-F]|\d+|'.'))*)/g, {
-        instruction: 1,
-        arguments: 2
-      }))).map(function (c) {
-        return [c[1], c[2]];
-      });
-      for (var i = 0; i < 6; i++) this.Stacks[i] = [];
-    }
-    (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_1__["default"])(MetaInterpreter, [{
-      key: "CodeWithPointerHighlight",
-      value: function CodeWithPointerHighlight() {
-        var s = "";
-        for (var i = 0; i < this.Code.length; i++) {
-          if (this.CodePointer === i) {
-            s += "<span class='pointer'>";
-          }
-          s += "".concat(this.Code[i][0], " ").concat(this.Code[i][1]);
-          if (this.CodePointer === i) {
-            s += "</span>";
-          }
-          s += "\n";
-        }
-        return s;
-      }
-    }, {
-      key: "ToBF",
-      value: function ToBF() {
-        // Stringify our code.
-        var code = Transpile(this.Code.map(function (c) {
-          return "".concat(c[0], " ").concat(c[1]);
-        }).join("\n"));
-        var bf = new _bf__WEBPACK_IMPORTED_MODULE_5__.Interpreter(code);
-  
-        // Move onto the Code Pointer
-        var codeLengths = code.split("\n").map(function (c) {
-          return c.length + 1;
-        });
-        bf.CodePointer = codeLengths.slice(0, this.CodePointer).reduce(function (a, b) {
-          return a + b;
-        }, 0);
-  
-        // Rebuild the while stack
-        for (var i = 0; i < this.WhileStack.length; i++) {
-          bf.LoopStack.push(codeLengths.slice(0, this.WhileStack[i][0]).reduce(function (a, b) {
-            return a + b;
-          }, 0));
-        }
-        bf.Input = this.Input;
-        bf.InputPointer = this.InputPointer;
-        bf.Output = this.Output;
-  
-        // Rebuild memory
-        var maxStack = Math.max.apply(Math, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_2__["default"])(this.Stacks.map(function (c) {
-          return c.length;
-        })));
-        for (var j = 0; j < 12; j++) {
-          bf.Tape[j] = 0;
-        }
-        for (var _i = 0; _i < maxStack; _i++) {
-          for (var _j = 0; _j < 6; _j++) {
-            var _this$Stacks$_j$_i;
-            bf.Tape[11 + _i * 12 + _j * 2] = _i < this.Stacks[_j].length ? 1 : 0;
-            bf.Tape[12 + _i * 12 + _j * 2] = (_this$Stacks$_j$_i = this.Stacks[_j][_i]) !== null && _this$Stacks$_j$_i !== void 0 ? _this$Stacks$_j$_i : 0;
-          }
-        }
-        bf.TapePointer = 12 * maxStack * this.Stacks[this.LastStack].length + this.LastStack * 2;
-        return bf;
-      }
-    }, {
-      key: "Step",
-      value: function Step() {
-        var codel = this.Code[this.CodePointer++];
-        if (codel === undefined) return true;
-        var instruction = codel[0];
-        var args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g)).map(function (c) {
-          return c[1];
-        }).map(function (c) {
-          return c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c;
-        });
-        var a = GetStackIndex(args[0]);
-        var b = GetStackIndex(args[1]);
-        for (var i = 0; i < 6; i++) {
-          if (this.Stacks[i].length === 0) this.Stacks[i].push(0);
-        }
-        switch (instruction) {
-          case "MOV":
-            {
-              var _this$Stacks$a$pop;
-              this.Stacks[b].push((_this$Stacks$a$pop = this.Stacks[a].pop()) !== null && _this$Stacks$a$pop !== void 0 ? _this$Stacks$a$pop : 0);
-              this.LastStack = a;
-              break;
-            }
-          case "CPY":
-            {
-              var _this$Stacks$a;
-              this.Stacks[b].push((_this$Stacks$a = this.Stacks[a][this.Stacks[a].length - 1]) !== null && _this$Stacks$a !== void 0 ? _this$Stacks$a : 0);
-              this.LastStack = b;
-              break;
-            }
-          case "PUT":
-            {
-              this.Stacks[a].push(+args[1] & 255);
-              this.LastStack = a;
-              break;
-            }
-          case "POP":
-            {
-              this.Stacks[a].pop();
-              this.LastStack = a;
-              break;
-            }
-          case "WHL":
-            {
-              var _this$Stacks$a2;
-              var val = (_this$Stacks$a2 = this.Stacks[a][this.Stacks[a].length - 1]) !== null && _this$Stacks$a2 !== void 0 ? _this$Stacks$a2 : 0;
-              if (val === 0) {
-                var depth = 1;
-                while (this.CodePointer < this.Code.length) {
-                  var p = this.Code[this.CodePointer++];
-                  if (p[0] === "WHL") depth++;
-                  if (p[0] === "END") {
-                    depth--;
-                    if (depth === 0) {
-                      break;
-                    }
-                  }
-                }
-              } else {
-                this.WhileStack.push([this.CodePointer, a]);
-              }
-              break;
-            }
-          case "END":
-            {
-              var _this$Stacks$this$Las;
-              this.LastStack = this.WhileStack[this.WhileStack.length - 1][1];
-              var _val = (_this$Stacks$this$Las = this.Stacks[this.LastStack][this.Stacks[this.LastStack].length - 1]) !== null && _this$Stacks$this$Las !== void 0 ? _this$Stacks$this$Las : 0;
-              if (_val === 0) this.WhileStack.pop();else this.CodePointer = this.WhileStack[this.WhileStack.length - 1][0];
-              break;
-            }
-          case "INC":
-            {
-              var _val2 = +args[1];
-              if (typeof args[1] !== "number") _val2 = 1;
-              this.Stacks[a][this.Stacks[a].length - 1] += _val2;
-              this.Stacks[a][this.Stacks[a].length - 1] = this.Stacks[a][this.Stacks[a].length - 1] & 255;
-              this.LastStack = a;
-              break;
-            }
-          case "DEC":
-            {
-              var _args$;
-              var _val3 = +((_args$ = args[1]) !== null && _args$ !== void 0 ? _args$ : 1);
-              if (typeof args[1] === "string") _val3 = 1;
-              this.Stacks[a][this.Stacks[a].length - 1] -= _val3;
-              this.Stacks[a][this.Stacks[a].length - 1] = this.Stacks[a][this.Stacks[a].length - 1] & 255;
-              this.LastStack = a;
-              break;
-            }
-          case "ADD":
-            {
-              var _this$Stacks$a$pop2;
-              this.Stacks[b][this.Stacks[b].length - 1] += (_this$Stacks$a$pop2 = this.Stacks[a].pop()) !== null && _this$Stacks$a$pop2 !== void 0 ? _this$Stacks$a$pop2 : 0;
-              this.Stacks[b][this.Stacks[b].length - 1] = this.Stacks[b][this.Stacks[b].length - 1] & 255;
-              this.LastStack = a;
-              break;
-            }
-          case "SUB":
-            {
-              var _this$Stacks$a$pop3;
-              this.Stacks[b][this.Stacks[b].length - 1] -= (_this$Stacks$a$pop3 = this.Stacks[a].pop()) !== null && _this$Stacks$a$pop3 !== void 0 ? _this$Stacks$a$pop3 : 0;
-              this.Stacks[b][this.Stacks[b].length - 1] = this.Stacks[b][this.Stacks[b].length - 1] & 255;
-              this.LastStack = a;
-              break;
-            }
-          case "MUL":
-            {
-              var _this$Stacks$b$pop;
-              this.Stacks[a][this.Stacks[a].length - 1] *= (_this$Stacks$b$pop = this.Stacks[b].pop()) !== null && _this$Stacks$b$pop !== void 0 ? _this$Stacks$b$pop : 0;
-              break;
-            }
-          case "DIV":
-            {
-              var _this$Stacks$a$pop4, _this$Stacks$b$pop2;
-              var aVal = (_this$Stacks$a$pop4 = this.Stacks[a].pop()) !== null && _this$Stacks$a$pop4 !== void 0 ? _this$Stacks$a$pop4 : 0;
-              var bVal = (_this$Stacks$b$pop2 = this.Stacks[b].pop()) !== null && _this$Stacks$b$pop2 !== void 0 ? _this$Stacks$b$pop2 : 0;
-              this.Stacks[a].push(Math.floor(aVal / bVal));
-              this.Stacks[b].push(Math.floor(aVal % bVal));
-              break;
-            }
-          case "ZER":
-            {
-              this.Stacks[a].pop();
-              this.Stacks[a].push(0);
-              break;
-            }
-          case "INP":
-            {
-              this.Stacks[a].push(this.Input.charCodeAt(this.InputPointer++));
-              this.LastStack = a;
-              break;
-            }
-          case "OUT":
-            {
-              var _this$Stacks$a3;
-              this.Output += String.fromCharCode((_this$Stacks$a3 = this.Stacks[a][this.Stacks[a].length - 1]) !== null && _this$Stacks$a3 !== void 0 ? _this$Stacks$a3 : 0);
-              this.LastStack = a;
-              break;
-            }
-          case "CDE":
-            {
-              return false;
-            }
-        }
-        return true;
-      }
-    }, {
-      key: "RenderBFMemory",
-      value: function RenderBFMemory() {
-        // Falsify BF memory
-        var tape = [];
-        var maxStack = Math.max.apply(Math, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_2__["default"])(this.Stacks.map(function (c) {
-          return c.length;
-        })));
-        for (var j = 0; j < 12; j++) {
-          tape[j] = 0;
-        }
-        for (var i = 0; i < maxStack; i++) {
-          for (var _j2 = 0; _j2 < 6; _j2++) {
-            var _this$Stacks$_j2$i;
-            tape[11 + i * 12 + _j2 * 2] = i < this.Stacks[_j2].length ? 1 : 0;
-            tape[12 + i * 12 + _j2 * 2] = (_this$Stacks$_j2$i = this.Stacks[_j2][i]) !== null && _this$Stacks$_j2$i !== void 0 ? _this$Stacks$_j2$i : 0;
-          }
-        }
-        var ptr = 12 + maxStack * (this.Stacks[this.LastStack].length - 1) + this.LastStack * 2;
-        var body = "<div class='tape'>";
-        for (var _i2 = 0; _i2 < tape.length; _i2++) {
-          body += "<span class='memorycell".concat(_i2 === ptr ? " selected" : "", "'><span class='character'>").concat(tape[_i2] >= 33 && tape[_i2] <= 126 ? String.fromCharCode(tape[_i2]) : "", "</span><span class='number'>").concat(tape[_i2], "</span></span>");
-        }
-        document.querySelector('div.tab[data-target="bfMemory"]').innerHTML = body;
-      }
-    }, {
-      key: "RenderBFBMMemory",
-      value: function RenderBFBMMemory() {
-        var body = "";
-        var stacks = [];
-        for (var i = 0; i < 6; i++) {
-          // 6 stacks
-          stacks[i] = "".concat(i, " <span class='tape").concat(i === this.LastStack ? " selected" : "", "'>");
-          for (var j = 0; j < this.Stacks[i].length; j++) {
-            var character = "<span class='character'>".concat(this.Stacks[i][j] >= 33 && this.Stacks[i][j] <= 126 ? String.fromCharCode(this.Stacks[i][j]) : "", "</span>");
-            var number = "<span class='number'>".concat(this.Stacks[i][j], "</span>");
-            stacks[i] += "<span class='memorycell'>".concat(character).concat(number, "</span>");
-          }
-          stacks[i] += "</span>";
-        }
-        body = stacks[0] + stacks[1] + stacks[2] + stacks[3] + stacks[4] + stacks[5];
-        document.querySelector('div.tab[data-target="bfbmMemory"]').innerHTML = body;
-      }
-    }, {
-      key: "RenderBSMemory",
-      value: function RenderBSMemory() {
-        var _regTape$, _regTape$2, _regTape$3, _regTape$4, _regTape$5, _regTape$6, _ref, _INSTRUCTIONS$heapSho, _INSTRUCTIONS$heapSho2, _ref2, _INSTRUCTIONS$, _INSTRUCTIONS, _regTape$7, _regTape$8, _regTape$9, _regTape$10, _regTape$11, _regTape$12, _regTape$13;
-        var regTape = this.Stacks[0].concat(this.Stacks[1].concat().reverse());
-        var heapTape = this.Stacks[2].concat(this.Stacks[3].concat().reverse());
-        var stack1 = this.Stacks[4];
-        var stack2 = this.Stacks[5];
-        var heapShorts = [];
-        for (var i = 0; i < heapTape.length; i += 2) {
-          heapShorts[i / 2] = heapTape[i] + (heapTape[i + 1] << 8);
-        }
-        var heapPtr = ((_regTape$ = regTape[0]) !== null && _regTape$ !== void 0 ? _regTape$ : 0) + (((_regTape$2 = regTape[1]) !== null && _regTape$2 !== void 0 ? _regTape$2 : 0) << 8);
-        var heapTargetPtr = ((_regTape$3 = regTape[2]) !== null && _regTape$3 !== void 0 ? _regTape$3 : 0) + (((_regTape$4 = regTape[3]) !== null && _regTape$4 !== void 0 ? _regTape$4 : 0) << 8);
-        var instructionPtr = ((_regTape$5 = regTape[4]) !== null && _regTape$5 !== void 0 ? _regTape$5 : 0) + (((_regTape$6 = regTape[5]) !== null && _regTape$6 !== void 0 ? _regTape$6 : 0) << 8);
-        var nextInstruction = (_ref = (_INSTRUCTIONS$heapSho = (_INSTRUCTIONS$heapSho2 = _brainasm__WEBPACK_IMPORTED_MODULE_6__.INSTRUCTIONS[heapShorts[instructionPtr]]) === null || _INSTRUCTIONS$heapSho2 === void 0 ? void 0 : _INSTRUCTIONS$heapSho2[0]) !== null && _INSTRUCTIONS$heapSho !== void 0 ? _INSTRUCTIONS$heapSho : heapShorts[instructionPtr]) !== null && _ref !== void 0 ? _ref : "NOP";
-        var loadedInstruction = (_ref2 = (_INSTRUCTIONS$ = (_INSTRUCTIONS = _brainasm__WEBPACK_IMPORTED_MODULE_6__.INSTRUCTIONS[(_regTape$7 = regTape[6]) !== null && _regTape$7 !== void 0 ? _regTape$7 : 0]) === null || _INSTRUCTIONS === void 0 ? void 0 : _INSTRUCTIONS[0]) !== null && _INSTRUCTIONS$ !== void 0 ? _INSTRUCTIONS$ : regTape[6]) !== null && _ref2 !== void 0 ? _ref2 : 0;
-        var instructionArgument = ((_regTape$8 = regTape[8]) !== null && _regTape$8 !== void 0 ? _regTape$8 : 0) + (((_regTape$9 = regTape[9]) !== null && _regTape$9 !== void 0 ? _regTape$9 : 0) << 8);
-        var regA = ((_regTape$10 = regTape[10]) !== null && _regTape$10 !== void 0 ? _regTape$10 : 0) + (((_regTape$11 = regTape[11]) !== null && _regTape$11 !== void 0 ? _regTape$11 : 0) << 8);
-        var regB = ((_regTape$12 = regTape[12]) !== null && _regTape$12 !== void 0 ? _regTape$12 : 0) + (((_regTape$13 = regTape[13]) !== null && _regTape$13 !== void 0 ? _regTape$13 : 0) << 8);
-        var body = "Heap PTR: ".concat(heapPtr, "<br>\nHeap Target PTR: ").concat(heapTargetPtr, "<br>\nInstruction PTR: ").concat(instructionPtr, "<br>\nNext Instruction: ").concat(nextInstruction, "<br>\nLoaded Instruction: ").concat(loadedInstruction, "<br>\nInstruction Argument: ").concat(instructionArgument, "<br>\nRegister A: ").concat(regA, "<br>\nRegister B: ").concat(regB, "<br><br>\nHeap: ").concat(heapShorts, "<br><br>\nStack1: ").concat(stack1, "<br>\nStack2: ").concat(stack2);
-        document.querySelector('div.tab[data-target="baMemory"]').innerHTML = body;
-      }
-    }, {
-      key: "RenderMemory",
-      value: function RenderMemory(style) {
-        switch (style) {
-          case "bfMemory":
-            this.RenderBFMemory();
-            break;
-          case "bfbmMemory":
-            this.RenderBFBMMemory();
-            break;
-          case "baMemory":
-            this.RenderBSMemory();
-            break;
-        }
-      }
-    }], [{
-      key: "FromBF",
-      value: function FromBF(bf) {
-        var interp = new MetaInterpreter(bf.Code);
-        // Step the BF interpreter until we're SURE we're on a meta line.
-        while (bf.CodePointer < bf.Code.length && bf.Code.charAt(bf.CodePointer - 1) !== ":") {
-          bf.Step();
-        }
-        // Find out what Codel line we're on
-        var line = bf.Code.substr(0, bf.CodePointer).replace(/[^\n]/g, "").length;
-        interp.CodePointer = line;
-        interp.Input = bf.Input;
-        interp.InputPointer = bf.InputPointer;
-        interp.Output = bf.Output;
-  
-        // Parse the memory
-        for (var i = 0; i < 6; i++) {
-          // 6 stacks
-          for (var j = i * 2 + 11; j < bf.Tape.length; j += 12) {
-            if (bf.Tape[j] === 0) continue;
-            interp.Stacks[i].push(bf.Tape[j + 1]);
-          }
-        }
-  
-        // Rebuild the WhileStack
-        for (var _i3 = 0; _i3 < interp.CodePointer; _i3++) {
-          var codel = interp.Code[_i3];
-          if (codel[0] === "WHL") {
-            var args = Array.from(codel[1].matchAll(/(?:,?\s*([A-F]|\d+|'.'))/g)).map(function (c) {
-              return c[1];
-            }).map(function (c) {
-              return c[0] === "'" ? c.charCodeAt(1) : c.match(/\d/) ? +c : c;
-            });
-            var a = GetStackIndex(args[0]);
-            interp.WhileStack.push([_i3, a]);
-          } else if (codel[0] === "END") {
-            interp.WhileStack.pop();
-          }
-        }
-        interp.LastStack = Math.floor(bf.TapePointer % 12 / 2);
-        return interp;
-      }
-    }]);
-    return MetaInterpreter;
-  }();
-  var _c, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c10, _c11, _c12, _c13, _c14, _c15, _c16, _c17, _c18;
-  __webpack_require__.$Refresh$.register(_c, "SelectStack");
-  __webpack_require__.$Refresh$.register(_c2, "GenerateMOV");
-  __webpack_require__.$Refresh$.register(_c3, "GenerateCPY");
-  __webpack_require__.$Refresh$.register(_c4, "GeneratePUT");
-  __webpack_require__.$Refresh$.register(_c5, "GeneratePOP");
-  __webpack_require__.$Refresh$.register(_c6, "GenerateWHL");
-  __webpack_require__.$Refresh$.register(_c7, "GenerateEND");
-  __webpack_require__.$Refresh$.register(_c8, "GenerateINC");
-  __webpack_require__.$Refresh$.register(_c9, "GenerateDEC");
-  __webpack_require__.$Refresh$.register(_c10, "GenerateADD");
-  __webpack_require__.$Refresh$.register(_c11, "GenerateSUB");
-  __webpack_require__.$Refresh$.register(_c12, "GenerateMUL");
-  __webpack_require__.$Refresh$.register(_c13, "GenerateDIV");
-  __webpack_require__.$Refresh$.register(_c14, "GenerateZER");
-  __webpack_require__.$Refresh$.register(_c15, "GenerateINP");
-  __webpack_require__.$Refresh$.register(_c16, "GenerateOUT");
-  __webpack_require__.$Refresh$.register(_c17, "Transpile");
-  __webpack_require__.$Refresh$.register(_c18, "GetStackIndex");
   
   var $ReactRefreshModuleId$ = __webpack_require__.$Refresh$.moduleId;
   var $ReactRefreshCurrentExports$ = __react_refresh_utils__.getModuleExports(
@@ -13110,7 +11692,7 @@
     var oop = require("../lib/oop");
     var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
     var BrainChildHighlightRules = function BrainChildHighlightRules() {
-      var keywords = "abstract|asm|class|const|discard|else|func|function|if|int|label|macro|metamethod|new|params|reserve|return|static|var|void|while|virtual";
+      var keywords = "abstract|asm|class|const|discard|else|func|function|if|int|label|macro|metamethod|new|params|reserve|return|static|struct|var|void|while|virtual";
       var functions =
       // builtinFunctions
       "write";
@@ -86109,6 +84691,35 @@
   }
   
   /***/ }),
+    
+  /***/ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/client/ReactRefreshEntry.js":
+  /*!***************************************************************************************!*\
+    !*** ./node_modules/@pmmmwh/react-refresh-webpack-plugin/client/ReactRefreshEntry.js ***!
+    \***************************************************************************************/
+  /***/ (function(__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
+  
+  /* global __react_refresh_library__ */
+  
+  var safeThis = __webpack_require__(/*! core-js-pure/features/global-this */ "./node_modules/core-js-pure/features/global-this.js");
+  var RefreshRuntime = __webpack_require__(/*! react-refresh/runtime */ "./node_modules/react-refresh/runtime.js");
+  if (true) {
+    if (typeof safeThis !== 'undefined') {
+      var $RefreshInjected$ = '__reactRefreshInjected';
+      // Namespace the injected flag (if necessary) for monorepo compatibility
+      if (false) {}
+  
+      // Only inject the runtime if it hasn't been injected
+      if (!safeThis[$RefreshInjected$]) {
+        // Inject refresh runtime into global scope
+        RefreshRuntime.injectIntoGlobalHook(safeThis);
+  
+        // Mark the runtime as injected to prevent double-injection
+        safeThis[$RefreshInjected$] = true;
+      }
+    }
+  }
+  
+  /***/ }),
   
   /***/ "./node_modules/@babel/runtime/helpers/esm/arrayLikeToArray.js":
   /*!*********************************************************************!*\
@@ -87157,73 +85768,6 @@
     return _wrapNativeSuper(Class);
   }
   
-  /***/ }),
-  
-  /***/ "./node_modules/@babel/runtime/helpers/esm/wrapRegExp.js":
-  /*!***************************************************************!*\
-    !*** ./node_modules/@babel/runtime/helpers/esm/wrapRegExp.js ***!
-    \***************************************************************/
-  /***/ (function(__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
-  
-  "use strict";
-  __webpack_require__.r(__webpack_exports__);
-  /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-  /* harmony export */   "default": function() { return /* binding */ _wrapRegExp; }
-  /* harmony export */ });
-  /* harmony import */ var _typeof_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./typeof.js */ "./node_modules/@babel/runtime/helpers/esm/typeof.js");
-  /* harmony import */ var _setPrototypeOf_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./setPrototypeOf.js */ "./node_modules/@babel/runtime/helpers/esm/setPrototypeOf.js");
-  /* harmony import */ var _inherits_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./inherits.js */ "./node_modules/@babel/runtime/helpers/esm/inherits.js");
-  
-  
-  
-  function _wrapRegExp() {
-    _wrapRegExp = function _wrapRegExp(re, groups) {
-      return new BabelRegExp(re, void 0, groups);
-    };
-    var _super = RegExp.prototype,
-      _groups = new WeakMap();
-    function BabelRegExp(re, flags, groups) {
-      var _this = new RegExp(re, flags);
-      return _groups.set(_this, groups || _groups.get(re)), (0,_setPrototypeOf_js__WEBPACK_IMPORTED_MODULE_1__["default"])(_this, BabelRegExp.prototype);
-    }
-    function buildGroups(result, re) {
-      var g = _groups.get(re);
-      return Object.keys(g).reduce(function (groups, name) {
-        var i = g[name];
-        if ("number" == typeof i) groups[name] = result[i];else {
-          for (var k = 0; void 0 === result[i[k]] && k + 1 < i.length;) k++;
-          groups[name] = result[i[k]];
-        }
-        return groups;
-      }, Object.create(null));
-    }
-    return (0,_inherits_js__WEBPACK_IMPORTED_MODULE_2__["default"])(BabelRegExp, RegExp), BabelRegExp.prototype.exec = function (str) {
-      var result = _super.exec.call(this, str);
-      if (result) {
-        result.groups = buildGroups(result, this);
-        var indices = result.indices;
-        indices && (indices.groups = buildGroups(indices, this));
-      }
-      return result;
-    }, BabelRegExp.prototype[Symbol.replace] = function (str, substitution) {
-      if ("string" == typeof substitution) {
-        var groups = _groups.get(this);
-        return _super[Symbol.replace].call(this, str, substitution.replace(/\$<([^>]+)>/g, function (_, name) {
-          var group = groups[name];
-          return "$" + (Array.isArray(group) ? group.join("$") : group);
-        }));
-      }
-      if ("function" == typeof substitution) {
-        var _this = this;
-        return _super[Symbol.replace].call(this, str, function () {
-          var args = arguments;
-          return "object" != (0,_typeof_js__WEBPACK_IMPORTED_MODULE_0__["default"])(args[args.length - 1]) && (args = [].slice.call(args)).push(buildGroups(args, _this)), substitution.apply(this, args);
-        });
-      }
-      return _super[Symbol.replace].call(this, str, substitution);
-    }, _wrapRegExp.apply(this, arguments);
-  }
-  
   /***/ })
   
   /******/ 	});
@@ -87321,7 +85865,7 @@
   /******/ 	
   /******/ 	/* webpack/runtime/getFullHash */
   /******/ 	!function() {
-  /******/ 		__webpack_require__.h = function() { return "b9e8a540e1ca6af7c537"; }
+  /******/ 		__webpack_require__.h = function() { return "ff2905b0bf27bf9683ec"; }
   /******/ 	}();
   /******/ 	
   /******/ 	/* webpack/runtime/global */

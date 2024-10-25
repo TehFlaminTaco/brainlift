@@ -61,7 +61,7 @@ export class Block extends Expression implements Simplifyable {
       var res = this.Expressions[i].TryEvaluate(subScope);
       o.push(...res[1]);
       if (i < this.Expressions.length - 1) {
-        for (let j = 0; j < res[0].length; j++) o.push(`apop`);
+        for (let j = 0; j < res[0].length; j++) o.push(...res[0][j].APop())
       } else {
         lastTypes = res[0];
       }

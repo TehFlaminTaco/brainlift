@@ -2,14 +2,25 @@ import { Claimer } from "./brainchild";
 import { Identifier } from "./identifier";
 import { Scope } from "./Scope";
 import { FuncType, VarType } from "./vartype";
-import { Assignable, SimpleAssignable, Variable } from "./variable";
+import { Assignable, ReadWritable, Referenceable, SimpleAssignable, Variable } from "./variable";
 import { Expression } from "./expression";
 import { Simplifyable } from "./Simplifyable";
 
 export class VariableDecleration
   extends Expression
-  implements Assignable, Simplifyable, SimpleAssignable
+  implements ReadWritable, Referenceable, Simplifyable, SimpleAssignable
 {
+  Read(scope: Scope): string[] {
+    return this.Evaluate(scope)[1];
+  }
+  GetPointer(scope: Scope): string[] {
+    // Ensure we're set up.
+    this.Evaluate(scope);
+    return [`apush ${this.Label}`];
+  }
+  GetReferenceTypes(scope: Scope): VarType[] {
+    return [this.Type!.WithDeltaPointerDepth(1)];
+  }
   Type: VarType | null = null;
   Identifier: Identifier | null = null;
   Label: string = "";
@@ -113,7 +124,7 @@ export class VariableDecleration
       this.LastScope = scope;
     }
     this.Label ||= scope.Set(this.Identifier!.Name, this.Type!);
-    return [[this.Type!], [`seta ${this.Label}`, `ptra`, `apusha`]];
+    return [[this.Type!], [`seta ${this.Label}`, ...this.Type!.Get("a","a")]];
   }
 
   Assign(scope: Scope, anyType: VarType): string[] {
@@ -135,7 +146,7 @@ export class VariableDecleration
       this.Identifier!.Name,
       this.Type!.TypeName === "var" ? anyType : this.Type!
     );
-    return [`apopb`, `seta ${this.Label}`, `putbptra`];
+    return [`seta ${this.Label}`, ...this.Type!.Put("a","a")];
   }
 
   GetTypes(scope: Scope): VarType[] {
@@ -171,4 +182,5 @@ export class VariableDecleration
 }
 
 Expression.Register(VariableDecleration.Claim);
-Variable.RegisterAssignable(VariableDecleration.Claim);
+Variable.RegisterReadWritable(VariableDecleration.Claim);
+Variable.RegisterReferenceable(VariableDecleration.Claim);

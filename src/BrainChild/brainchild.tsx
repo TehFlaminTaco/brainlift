@@ -45,6 +45,7 @@ export var Keywords = [
   "reserve",
   "return",
   "static",
+  "struct",
   "var",
   "void",
   "while",
@@ -234,6 +235,8 @@ export async function Parse(files: { [file: string]: string }): Promise<Scope> {
         for (var i = 0; i < Include.Parsed["main.bc"].length; i++) {
           o.push(...Include.Parsed["main.bc"][i].TryEvaluate(scope));
         }
+        if(scope.MaxScratchRequired > 0)
+          scope.Assembly.push(`${scope.GetScratch(0)}: db ${new Array(scope.MaxScratchRequired).fill(0).join(",")}`);
         scope.Assembly.push("postdata:", ...o);
         scope.Assembly.push(`halt`);
         if (scope.UsingAllocator()) scope.Assembly.push(`aftercode: db 1, 0`);

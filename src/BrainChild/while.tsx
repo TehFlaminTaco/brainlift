@@ -76,7 +76,7 @@ export class While extends Expression implements Simplifyable {
     o.push(`${condition}:`);
     o.push(...valueRes[1]);
     for (var i = 1; i < valueRes[0].length; i++) {
-      o.push(`apop`);
+      o.push(...valueRes[0][i].APop());
     }
     var resType = valueRes[0][0];
     var meta = scope.GetMetamethod("truthy", [resType]);

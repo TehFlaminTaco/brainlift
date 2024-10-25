@@ -160,20 +160,26 @@ export class Call extends Expression implements LeftDonor {
         mapped.push(targetType);
         spareSize++;
       }
+      let def = targetType.GetDefinition();
+      let elementCount = spareSize;
+      let size = 1;
+      if(def.Wide)
+        size = def.Size;
+      spareSize *= size;
       o.push(...VarType.Coax(mapped, callArgumentTypes)[0]);
       // Push the spare values to a reserved array
       let paramsName = scope.GetSafeName(`params${targetType.TypeName}`);
       scope.Assembly.push(`${paramsName}:`, `db ${Array(spareSize).fill(0)}`);
       // We're going to set every value in the array to the values off the top of the stack, casted to the target type.
       // Because it's on a stack, we're doing this in reverse.
-      for (let i = spareSize - 1; i >= 0; i--) {
+      for (let i = elementCount - 1; i >= 0; i--) {
         // First, Coax
         // o.push(...VarType.Coax([targetType], [callArgumentTypes[i]])[0]);
         // Then, store
-        o.push(`setb ${paramsName}`, `addb ${i}`, `apopa`, `putaptrb`);
+        o.push(`setb ${paramsName}`, `addb ${i * size}`, ...targetType.Put("a","b"));
       }
       // Then, add the length of the array, and the array itself
-      o.push(`apush ${spareSize}`, `apush ${paramsName}`);
+      o.push(`apush ${elementCount}`, `apush ${paramsName}`);
     } else {
       o.push(...VarType.Coax(funcType.ArgTypes, callArgumentTypes)[0]);
     }

@@ -8,6 +8,7 @@ import { FuncType, VarType } from "./vartype";
 import { Call } from "./call";
 import { Block } from "./block";
 import { Expression } from "./expression";
+import { Return } from "./return";
 
 export class FunctionDefinition extends Expression {
   Args: VariableDecleration[] = [];
@@ -319,16 +320,7 @@ export class FunctionDefinition extends Expression {
       VarType.CurrentGenericArgs = oldGenericTypes;
       return null;
     }
-    var retTypes = [];
-
-    if (claimer.Claim(/->/).Success) {
-      var retType = VarType.Claim(claimer);
-      while (retType !== null) {
-        retTypes.push(retType);
-        if (!claimer.Claim(/,/).Success) break;
-        retType = VarType.Claim(claimer);
-      }
-    }
+    var retTypes = [fakeArg.Type];
 
     var body = Expression.Claim(claimer);
     VarType.CurrentGenericArgs = oldGenericTypes;
@@ -336,16 +328,20 @@ export class FunctionDefinition extends Expression {
       fnc.Fail();
       return null;
     }
-    if (body instanceof Block) {
-      if (body.Expressions.length > 0) {
-        var last = body.Expressions[body.Expressions.length - 1];
-        if (last instanceof Call) {
-          last.IsFinalExpression = true;
-        }
-      }
-    } else if (body instanceof Call) {
-      body.IsFinalExpression = true;
+    if (!(body instanceof Block)) {
+      // Wrap the body in a fake block for constructors
+      let fakeBlock = new Block(fakeClaimer, fakeClaim);
+      fakeBlock.Expressions.push(body);
+      body = fakeBlock;
     }
+    // Add a return statement to the end of the block
+    let fakeReturn = new Return(fakeClaimer, fakeClaim);
+    // "this" identifier
+    let thisIdentifier = new Identifier(fakeClaimer, fakeClaim);
+    thisIdentifier.Name = "this";
+    fakeReturn.Values = [thisIdentifier];
+    (body as Block).Expressions.push(fakeReturn);
+
     var funct = new FunctionDefinition(claimer, fnc);
     funct.Args = args;
     funct.RetTypes = retTypes;
@@ -391,7 +387,7 @@ export class FunctionDefinition extends Expression {
       this.Args[i].TryEvaluate(bodyScope)[1].map((c) => "  " + c);
     }
     for (let i = this.Args.length - 1; i >= 0; i--) {
-      o.push(`  seta ${this.Args[i].Label}`, `  apopb`, `  putbptra`);
+      o.push(`  seta ${this.Args[i].Label}`, ...this.Args[i].Type!.Put("a", "a"));
     }
     var res = this.Body!.TryEvaluate(bodyScope);
     if (

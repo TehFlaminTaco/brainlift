@@ -61,7 +61,7 @@ export class Identifier
     if (t.Name.startsWith("type")) {
       throw new Error("Cannot assign over class");
     }
-    return [`apopb`, `seta ${res[1]}`, `putbptra`];
+    return [`setb ${res[1]}`, ...res[0].Put("a","b")];//[`apopb`, `seta ${res[1]}`, `putbptra`];
   }
 
   Read(scope: Scope): string[] {
@@ -69,7 +69,7 @@ export class Identifier
     if(res[0].TypeName === "discard")
       return ["apush 0"];
     if (res[2] !== null) return [`apush ${(res[2] & 0xffffffff) >>> 0}`];
-    return [`seta ${res[1]}`, `ptra`, `apusha`];
+    return [`seta ${res[1]}`, ...res[0].Get("a", "a")];
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
@@ -78,7 +78,7 @@ export class Identifier
       return [[VarType.Discard], ["apush 0"]];
     if (res[2] !== null)
       return [[res[0]], [`apush ${(res[2] & 0xffffffff) >>> 0}`]];
-    return [[res[0]], [this.GetLine(), `seta ${res[1]}`, `ptra`, `apusha`]];
+    return [[res[0]], [this.GetLine(), `seta ${res[1]}`, ...res[0].Get("a", "a")]];
   }
 
   GetPointer(scope: Scope): string[] {

@@ -59,8 +59,8 @@ export class Parenthetical extends Expression implements Simplifyable {
     var outTypes: VarType[] =
       this.Types.length > 0 ? this.Types : [receivedTypes[0]];
 
-    for (let i = 0; i < receivedTypes.length - outTypes.length; i++) {
-      o.push(`apop`);
+    for (let i = outTypes.length; i < receivedTypes.length; i++) {
+      o.push(...receivedTypes[i].APop());
     }
 
     return [outTypes, o];

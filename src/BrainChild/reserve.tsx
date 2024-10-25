@@ -124,6 +124,7 @@ export class Reserve extends Expression {
     } else {
       // We're going to copy the top of the A stack to the B stack, which contains a pointer to this, so we can access once all the arguments are resolved.
       // (Because the A stack contains a reference to where we are editing, that we must preserve)
+      // Knowing it's a pointer means we know it isn't wide, and we can do this the ugly way.
       asm.push(`apopb`, `apushb`, `bpushb`);
     }
     // Push the arguments to the stack
@@ -160,6 +161,7 @@ export class Reserve extends Expression {
     for (let i = 0; i < childrenByOffset.length; i++) {
       let child = childrenByOffset[i];
       if (child) {
+        let childType = (child[1][0] as VarType);
         // Check if there's a non-static assignment for this child.
         let possibleAssignments = typeDef.Assignments.filter(
           (c) => (c.Left as VariableDecleration).Identifier!.Name === child[0]
@@ -171,11 +173,17 @@ export class Reserve extends Expression {
           let res = possibleAssignments[0].Right!.TryEvaluate(scope);
           asm.push(...res[1]);
           for (let spare = 1; spare < res[0].length; spare++)
-            asm.push(`    apop`);
-          asm.push(`    apopa`, `    apopb`, `    putaptrb`);
+            asm.push(...res[0][spare].APop());
+          asm.push(...res[0][0].FlipAB(), `apopb`, ...res[0][0].FlipBA(), ...res[0][0].Put("a", "b"))
         } else {
-          asm.push(`  seta ${child[1][2]}`, `  putaptrb`);
+          if(childType?.GetDefinition().Wide ?? false){
+            asm.push(`seta 0`, ...Array(childType.GetDefinition().Size).fill(['putaptrb','incb']).flat());
+          }else{
+            asm.push(`  seta ${child[1][2]}`, `  putaptrb`);
+          }
         }
+        if(childType?.GetDefinition().Wide ?? false)
+          i += childType.GetDefinition().Size-1;
       }
       if (i < childrenByOffset.length - 1) asm.push(`  incb`);
     }

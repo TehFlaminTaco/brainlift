@@ -24,6 +24,7 @@ export class Class extends Statement {
   GenericArgs: string[] = [];
   IsAbstract: boolean = false;
   FromFile: string = "";
+  Wide: boolean = false;
 
   private static ClaimMember(
     claimer: Claimer,
@@ -81,6 +82,8 @@ export class Class extends Statement {
     var abstract = false;
     if (claimer.Claim(/abstract\b/).Success) abstract = true;
     var c = claimer.Claim(/class\b/);
+    let wide = false;
+    if (wide=!c.Success) c = claimer.Claim(/struct\b/);
     if (!c.Success) return null;
     var className = Identifier.Claim(claimer);
     if (className === null) {
@@ -211,11 +214,67 @@ export class Class extends Statement {
     cls.Parent = parent;
     cls.IsAbstract = abstract;
     cls.FromFile = claimer.File;
+    cls.Wide = wide;
     return cls;
+  }
+
+  GenerateWideNewMethod(scope: Scope): string {
+    let typeDef = scope.UserTypes[this.Name!.Name];
+    let label = scope.GetSafeName(`new${this.Name!.Name}`);
+    scope.RequireAllocator();
+    let asm: string[] = [];
+    asm.push(`${label}:`);
+    let childrenByOffset = [];
+    for (let id in typeDef.Children) {
+      let child = typeDef.Children[id];
+      childrenByOffset[child[1]] = [id, child];
+    }
+    let childrenInOrder = [];
+    for (let i = 0; i < childrenByOffset.length; i++) {
+      let child = childrenByOffset[i];
+      childrenInOrder.push(i);
+      if (child) {
+        let childType = (child[1][0] as VarType);
+        if((childType?.IsDefined()??false) && (childType?.GetDefinition().Wide ?? false))
+          i += childType.GetDefinition().Size-1;
+      }
+    }
+    for (let j = childrenInOrder.length-1; j >= 0; j--) {
+      let i = childrenInOrder[j];
+      let child = childrenByOffset[i];
+      if (child) {
+        let childType = (child[1][0] as VarType);
+        // Check if there's a non-static assignment for this child.
+        let possibleAssignments = this.Assignments.filter(
+          (c) => (c.Left as VariableDecleration).Identifier!.Name === child[0]
+        );
+        if (possibleAssignments.length > 0) {
+          if (possibleAssignments.length > 1)
+            throw new Error(`Ambiguous default value for ${child[0]}`);
+          let res = possibleAssignments[0].Right!.TryEvaluate(scope);
+          asm.push(...res[1]);
+          for (let spare = 1; spare < res[0].length; spare++)
+            asm.push(...res[0][spare].APop());
+        } else {
+          if((childType?.IsDefined()??false) && (childType?.GetDefinition().Wide ?? false)){
+            asm.push(...Array(childType.GetDefinition().Size).fill(`apush 0`));
+          }else{
+            asm.push(`apush ${child[1][2]}`);
+          }
+        }
+      }else{
+        asm.push(`apush 0`);
+      }
+    }
+    asm.push(`  ret`);
+    scope.Assembly.push(...asm);
+    return label;
   }
 
   GenerateNewMethod(scope: Scope): string {
     var typeDef = scope.UserTypes[this.Name!.Name];
+    if(typeDef.Wide)
+      return this.GenerateWideNewMethod(scope);
     var label = scope.GetSafeName(`new${this.Name!.Name}`);
     scope.RequireAllocator();
     var asm: string[] = [];
@@ -234,6 +293,7 @@ export class Class extends Statement {
     for (let i = 0; i < childrenByOffset.length; i++) {
       let child = childrenByOffset[i];
       if (child) {
+        let childType = (child[1][0] as VarType);
         // Check if there's a non-static assignment for this child.
         let possibleAssignments = this.Assignments.filter(
           (c) => (c.Left as VariableDecleration).Identifier!.Name === child[0]
@@ -245,11 +305,18 @@ export class Class extends Statement {
           let res = possibleAssignments[0].Right!.TryEvaluate(scope);
           asm.push(...res[1]);
           for (let spare = 1; spare < res[0].length; spare++)
-            asm.push(`    apop`);
-          asm.push(`    apopa`, `    apopb`, `    putaptrb`);
+            asm.push(...res[0][spare].APop());
+          ///asm.push(`    apopa`, `    apopb`, `    putaptrb`);
+          asm.push(...res[0][0].FlipAB(), `apopb`, ...res[0][0].FlipBA(), ...res[0][0].Put("a","b"));
         } else {
-          asm.push(`  seta ${child[1][2]}`, `  putaptrb`);
+          if((childType?.IsDefined()??false) && (childType?.GetDefinition().Wide ?? false)){
+            asm.push(`seta 0`, ...Array(childType.GetDefinition().Size).fill(['putaptrb','incb']).flat());
+          }else{
+            asm.push(`  seta ${child[1][2]}`, `  putaptrb`);
+          }
         }
+        if((childType?.IsDefined()??false) && (childType?.GetDefinition().Wide ?? false))
+          i += childType.GetDefinition().Size-1;
       }
       if (i < childrenByOffset.length - 1) asm.push(`  incb`);
     }
@@ -269,6 +336,7 @@ export class Class extends Statement {
     objectType.Name = this.Name!.Name;
     classType.Name = `type${this.Name!.Name}`;
     objectType.TypeType = classType;
+    objectType.Wide = this.Wide;
     if (this.Parent !== null) {
       var parent = this.Parent!.GetDefinition();
       var classParent = parent.TypeType;
@@ -319,9 +387,10 @@ export class Class extends Statement {
       }
       classType.Children[name.Name] = [
         type,
-        classType.Size++,
+        classType.Size,
         member instanceof FunctionDefinition ? member.Label : "0",
       ];
+      classType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
       // Check for a Assignment baring this name, that assigns to a Reserve
       if (member instanceof VariableDecleration) {
         this.StaticAssignments.filter(
@@ -367,9 +436,10 @@ export class Class extends Statement {
       objectType.VirtualChildren[name.Name] = [
         type,
         classType,
-        classType.Size++,
+        classType.Size,
         member instanceof FunctionDefinition ? member.Label : "0",
       ];
+      classType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
     }
     for (let i = 0; i < this.Members.length; i++) {
       let member = this.Members[i];
@@ -398,9 +468,10 @@ export class Class extends Statement {
       } else {
         objectType.Children[name.Name] = [
           type,
-          objectType.Size++,
+          objectType.Size,
           member instanceof FunctionDefinition ? member.Label : "0",
         ];
+        objectType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
       }
       // Check for a Assignment baring this name, that assigns to a Reserve
       if (member instanceof VariableDecleration) {
@@ -513,7 +584,11 @@ export class Class extends Statement {
       var child = classDef.Children[id];
       vars[child[1]] = child[2];
     }
-    asm.push(`db ${vars}`.replace(/,(?=,)/gm, ",0"));
+    let varsOrZeros = [];
+    for(let i=0; i<classDef.Size; i++){
+      varsOrZeros.push(vars[i] ?? "0");
+    }
+    asm.push(`db ${varsOrZeros.join(",")}`);
     scope.Assembly.push(...asm);
     // Execute all static assignments
     asm = [];
@@ -535,10 +610,11 @@ export class Class extends Statement {
       }
       // Find which static-child this belongs to.
       let child = classDef.Children[declr.Identifier!.Name];
-      let res = assignment.TryEvaluate(scope);
+      let res = assignment.Right!.TryEvaluate(scope);
       asm.push(`setb ${classDef.ClassLabel}`, `addb ${child[1]}`, `apushb`);
       asm.push(...res[1]);
-      for (let spare = 1; spare < res[0].length; spare++) asm.push(`apop`);
+      asm.push(...(VarType.Coax([child[0]], res[0])[0]))
+      //for (let spare = 1; spare < res[0].length; spare++) asm.push(...res[0][spare].APop());
       asm.push(`apopa`, `apopb`, `putaptrb`);
     }
     // Also perform non-static constant assignments

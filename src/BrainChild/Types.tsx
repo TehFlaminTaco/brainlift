@@ -2,13 +2,6 @@ import { Assignment } from "./assignment";
 import { FuncType, VarType } from "./vartype";
 
 export class TypeDefinition {
-  /*MetaMethods: {
-    [id: string]: [
-      ReturnTypes: VarType[],
-      ArgTypes: VarType[],
-      Code: string[]
-    ][];
-  } = {};*/
   Assignments: Assignment[] = [];
   Children: { [id: string]: [type: VarType, offset: number, initial: string] } =
     {};
@@ -27,6 +20,7 @@ export class TypeDefinition {
   TypeType: TypeDefinition | null = null;
   ClassLabel: string = "";
   Name: string = "";
+  Wide: boolean = false; // For structs
 
   IsParent(other: TypeDefinition): boolean {
     if (other.Name === this.Name) return true;
@@ -66,19 +60,12 @@ export class TypeDefinition {
       let child = this.VirtualChildren[i];
       t.VirtualChildren[i] = [child[0], child[1], child[2], child[3]];
     }
-    /*for (let i in this.MetaMethods) {
-      let meta = this.MetaMethods[i];
-      t.MetaMethods[i] = [];
-      for (let j in meta) {
-        let m = this.MetaMethods[i][j];
-        t.MetaMethods[i][j] = [m[0], m[1], m[2]];
-      }
-    }*/
     t.Size = this.Size;
     if (this.Parent) t.Parent = this.Parent.Clone();
     if (this.TypeType) t.TypeType = this.TypeType.Clone();
     t.ClassLabel = this.ClassLabel;
     t.Name = this.Name;
+    t.Wide = this.Wide;
     return t;
   }
 }

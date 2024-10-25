@@ -95,6 +95,10 @@ export class VarType extends Token {
     );
   }
 
+  IsWide(): boolean {
+    return this.IsDefined() && (this.GetDefinition()?.Wide ?? false);
+  }
+
   CastableFrom(other: VarType): boolean {
     if (this.TypeName === "var") return true;
     if (this.TypeName === "discard") return true;
@@ -123,10 +127,10 @@ export class VarType extends Token {
     if (this.TypeName === "discard") return true;
     if (other.TypeName === "discard") return false;
     if (this.TypeName === "void") {
-      return this.PointerDepth <= other.PointerDepth;
+      return !other.IsWide() && this.PointerDepth <= other.PointerDepth;
     }
     if (other.TypeName === "void") {
-      return this.PointerDepth >= other.PointerDepth;
+      return !this.IsWide() && this.PointerDepth >= other.PointerDepth;
     }
     if (
       !(other instanceof FuncType) &&
@@ -173,14 +177,15 @@ export class VarType extends Token {
         8
       )}`;
     scope.DebuggedVals.add(location);
+    let t: TypeDefinition;
     if (
       this.PointerDepth === 0 &&
-      valAtLocation > 0 &&
-      scope.UserTypes[this.TypeName]
+      (t = scope.UserTypes[this.TypeName]) &&
+      (t.Wide || valAtLocation > 0)
     ) {
-      let t = scope.UserTypes[this.TypeName];
-      let cls = bs.Heap[valAtLocation];
-      let val = hexPad(valAtLocation, 8);
+      let ptr = t.Wide ? location : valAtLocation;
+      let cls = t.Wide ? valAtLocation : bs.Heap[valAtLocation];
+      let val = hexPad(ptr, 8);
       let s = `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${val} {<br>`;
       let childrenByOffset: [VarType, number, string, string][] = [];
       let className = "undefined";
@@ -215,14 +220,14 @@ export class VarType extends Token {
           s += `\t<b>class</b> = <b>${className}</b><br>`;
           continue;
         }
-        let v = ((bs.Heap[(valAtLocation + child[1])*4]??0) << 24) + ((bs.Heap[(valAtLocation + child[1])*4 + 1]??0) << 16) + ((bs.Heap[(valAtLocation + child[1])*4 + 2]??0) << 8) + ((bs.Heap[(valAtLocation + child[1])*4 + 3]??0) << 0);
+        let v = ((bs.Heap[(ptr + child[1])*4]??0) << 24) + ((bs.Heap[(ptr + child[1])*4 + 1]??0) << 16) + ((bs.Heap[(ptr + child[1])*4 + 2]??0) << 8) + ((bs.Heap[(ptr + child[1])*4 + 3]??0) << 0);
         let expected = +child[2];
         if (bs.Labels[child[2]]) expected = bs.Labels[child[2]];
         if (v !== expected)
           s +=
             "\t" +
             child[0]
-              .Debug(scope, bs, "", child[3], valAtLocation + child[1])
+              .Debug(scope, bs, "", child[3], ptr + child[1])
               .replace(/<br>(?!$)/g, "<br>\t") +
             "<br>";
       }
@@ -319,7 +324,7 @@ export class VarType extends Token {
         for (let t in scope.UserTypes) {
           scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
         }
-        let metasArr = [...metas];
+        let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
         // That are casts to and from
         metasArr = metasArr.filter((c) => !restricted.has(c));
         metasArr = metasArr.filter((c) =>
@@ -374,46 +379,6 @@ export class VarType extends Token {
     return [true, receivedPtr];
   }
 
-  static oldCoax(targetStack: VarType[], receivedStack: VarType[]): string[] {
-    var o = [];
-    var targetLookup: { [id: number]: number } = {};
-    var maxRet = 0;
-    for (let i = 0; i < targetStack.length; i++) {
-      if (targetStack[i].TypeName === "var") {
-        targetStack[i] = receivedStack[maxRet];
-        targetLookup[maxRet++] = i;
-        continue;
-      }
-      while (
-        maxRet < receivedStack.length &&
-        !targetStack[i].AssignableFrom(receivedStack[maxRet])
-      )
-        maxRet++;
-      if (maxRet >= receivedStack.length) {
-        throw new Error(
-          `Too many/Incorrect targets for expression. Expected: ${targetStack} Got: ${receivedStack}`
-        );
-      }
-      targetLookup[maxRet++] = i;
-    }
-
-    for (let i = receivedStack.length - 1; i >= 0; i--) {
-      if (targetLookup[i] !== undefined) {
-        o.push(...targetStack[targetLookup[i]].ConvertFrom(receivedStack[i]));
-        if (i > 0) o.push(`apopa`, `bpusha`);
-      } else {
-        o.push(`apop`);
-        if (i === 0) {
-          o.push(`bpopa`, `apusha`);
-        }
-      }
-    }
-    for (var i = 1; i < targetStack.length; i++) {
-      o.push(`bpopa`, `apusha`);
-    }
-    return o;
-  }
-
   static Coax(
     targetStack: VarType[],
     receivedStack: VarType[],
@@ -428,7 +393,7 @@ export class VarType extends Token {
     var asm: string[] = [];
     // Cycle everything to the B stack (So we handle it from left to right)
     for (let i = 0; i < receivedStack.length; i++) {
-      asm.push(`apopa`, `bpusha`);
+      asm.push(...receivedStack[i].FlipAB());
     }
     let converted: VarType[] = [];
     let targetPtr = 0;
@@ -441,7 +406,7 @@ export class VarType extends Token {
         }
         // Directly assignable
         if (targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr])) {
-          asm.push(`bpopa`, `apusha`);
+          asm.push(...receivedStack[receivedPtr].FlipBA());
           asm.push(
             ...targetStack[targetPtr].ConvertFrom(receivedStack[receivedPtr])
           );
@@ -458,7 +423,7 @@ export class VarType extends Token {
         for (let t in scope.UserTypes) {
           scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
         }
-        let metasArr = [...metas];
+        let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
         // That are casts to and from
         metasArr = metasArr.filter((c) => !restricted.has(c));
         metasArr = metasArr.filter((c) =>
@@ -508,7 +473,7 @@ export class VarType extends Token {
           true
         )[1]!;
         for (let i = 0; i < c; i++) {
-          asm.push(`bpopa`, `apusha`);
+          asm.push(...receivedStack[receivedPtr+i].FlipBA());
         }
         asm.push(
           ...VarType.Coax(
@@ -528,7 +493,7 @@ export class VarType extends Token {
       sticky = false;
     }
     if (cleanup) {
-      while (receivedPtr++ < receivedStack.length) asm.push(`bpop`);
+      while (receivedPtr < receivedStack.length) asm.push(...receivedStack[receivedPtr++].BPop());
     }
     return [asm, receivedPtr, converted];
   }
@@ -573,6 +538,17 @@ export class VarType extends Token {
     return true;
   }
 
+  IsDefined(): boolean {
+    if (this.PointerDepth > 0) {
+      return true;
+    }
+    if (this.TypeName === "int") return true;
+    if (this.TypeName === "void") return true;
+    if (this.TypeName === "discard") return true;
+    if (this.TypeName.startsWith("$")) return true;
+    return !!Scope.CURRENT.UserTypes[this.TypeName];
+  }
+
   GetDefinition(): TypeDefinition {
     if (this.PointerDepth > 0) {
       return GeneratePointerType(this);
@@ -592,6 +568,7 @@ export class VarType extends Token {
   WithGenerics(genericArgs: VarType[], recurse: boolean = true): VarType {
     if (this.TypeName.startsWith("$") && !this.TypeName.startsWith("$$")) {
       let v = genericArgs[+this.TypeName.substr(1)].Clone();
+      if(v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
       v.PointerDepth += this.PointerDepth;
       return v;
     } else {
@@ -607,6 +584,7 @@ export class VarType extends Token {
   WithFunctionGenerics(genericArgs: VarType[]): VarType {
     if (this.TypeName.startsWith("$$")) {
       let v = genericArgs[+this.TypeName.substr(2)].Clone();
+      if(v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
       v.PointerDepth += this.PointerDepth;
       for (let i = 0; i < v.Generics.length; i++) {
         v.Generics[i] = v.Generics[i].WithFunctionGenerics(genericArgs);
@@ -615,6 +593,77 @@ export class VarType extends Token {
     }
     return this;
   }
+
+  APop(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['apop'];
+    return new Array(def.Size).fill('apop');
+  }
+  BPop(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['bpop'];
+    return new Array(def.Size).fill('bpop');
+  }
+  // Flip from the A stack to the B stack
+  FlipAB(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['apopa', 'bpusha'];
+    return new Array(def.Size).fill(['apopa', 'bpusha']).flat();
+  }
+  // Flip from the B stack to the A stack
+  FlipBA(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['bpopa', 'apusha'];
+    return new Array(def.Size).fill(['bpopa', 'apusha']).flat();
+  }
+  // Puts the value from the top of the selected stack to the location pointed to by the selected register
+  // Move the location register to the end of the value
+  Put(fromStack: "a"|"b" = "a", toLocation: "a"|"b" = "b"): string[] {
+    let def = this.GetDefinition();
+    let other = toLocation === "a" ? "b" : "a";
+    if(!def.Wide) return [`${fromStack}pop${other}`, `put${other}ptr${toLocation}`];
+    return new Array(def.Size).fill([`${fromStack}pop${other}`, `put${other}ptr${toLocation}`, `inc${toLocation}`]).flat().slice(0,-1);
+  }
+  // Grabs the value from the location pointed to by the selected register and puts it on the selected stack
+  // Move the location register to the end of the value
+  // Reversed is used purely to allow flipping the stack order. It assumes the b register points to the START of the location.
+  Get(toStack: "a"|"b" = "a", fromLocation: "a"|"b" = "b", reversed: boolean = false): string[] {
+    let def = this.GetDefinition();
+    let other = fromLocation === "a" ? "b" : "a";
+    if(!def.Wide) return [`cpy${fromLocation}${other}`, `ptr${other}`, `${toStack}push${other}`];
+    let o:string[] = [];
+    if(!reversed)
+      o.push(`add${fromLocation} ${def.Size-1}`)
+    o.push(...new Array(def.Size).fill([`cpy${fromLocation}${other}`, `ptr${other}`, `${toStack}push${other}`, reversed ? `inc${fromLocation}` : `dec${fromLocation}`]).flat().slice(0,-1));
+    return o;
+  }
+  // Flip the top of the A stack, uses scratch as temporary storage
+  FlipA(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return []; // Do nothing :D
+    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put(), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("a","b",true)]
+  }
+  // Flip the top of the B stack, uses scratch as temporary storage
+  FlipB(): string[] {
+    let def = this.GetDefinition();
+    if(def.Wide) return []; // Do nothing :D
+    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put("b"), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("b","a",true)]
+  }
+  // Clone the top of the A stack, uses scratch as temporary storage
+  CloneA(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    let scratch = Scope.CURRENT.GetScratch(def.Size);
+    return [`setb ${scratch}`, ...this.Put(), `setb ${scratch}`, ...this.Get("b","a"), `setb ${scratch}`, ...this.Get("b","a")];
+  }
+  // Clone the top of the B stack, uses scratch as temporary storage
+  CloneB(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    let scratch = Scope.CURRENT.GetScratch(def.Size);
+    return [`setb ${scratch}`, ...this.Put("b"), `setb ${scratch}`, ...this.Get("a","b"), `setb ${scratch}`, ...this.Get("a","b")];
+  }
+
 }
 
 export class FuncType extends VarType {

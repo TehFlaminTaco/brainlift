@@ -590,6 +590,10 @@ export default function App() {
       event.target.innerHTML = "⏸";
       document.getElementById("bf")!.classList.add("running");
       asmRunTimer = setInterval(() => {
+        if(!(bsInterp?.running ?? false)){
+          event.target.click();
+          return;
+        }
         PushEvent(Event.Frame);
         if (bsInterp !== undefined) {
           for (var id in editors) {

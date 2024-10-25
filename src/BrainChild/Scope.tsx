@@ -56,6 +56,14 @@ export class Scope {
   CurrentFile: string = "main.bc";
   CurrentFunction: string = "";
 
+  private ScratchLabel: string|null = null;
+  MaxScratchRequired: number = 0;
+  GetScratch(size: number): string {
+    if(this.Parent) return this.Parent.GetScratch(size);
+    this.MaxScratchRequired = Math.max(this.MaxScratchRequired, size);
+    return this.ScratchLabel ??= this.GetSafeName("scratch");
+  }
+
   // Metamethods are By name, and by FuncType.
   // Collisions are forbidden
   SoftInitilizedMetamethods: VarType[] = [];
@@ -104,7 +112,7 @@ export class Scope {
       if (name === inv[0]) {
         try {
           let other = this.GetMetamethod(inv[1], argTypes, false);
-          if (other !== null) {
+          if (other !== null && VarType.AllEquals(other[0], [VarType.Int])) {
             let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
             return [other[0], other[1], newMethod];
           }
@@ -114,7 +122,7 @@ export class Scope {
       } else if (name === inv[1]) {
         try {
           let other = this.GetMetamethod(inv[0], argTypes, false);
-          if (other !== null) {
+          if (other !== null && VarType.AllEquals(other[0], [VarType.Int])) {
             let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
             return [other[0], other[1], newMethod];
           }
@@ -137,6 +145,7 @@ export class Scope {
       return;
     }
     if (t.PointerDepth > 0) {
+      let t1 = t.WithDeltaPointerDepth(-1);
       // Same as basic math, but with Pointers.
       simpleOps.forEach((c) => {
         this.AddMetamethodSoft(c[0], [t], [t, VarType.Int], c[1]);
@@ -172,9 +181,18 @@ export class Scope {
       this.AddMetamethodSoft("not", [VarType.Int], [t], simpleNot);
       this.AddMetamethodSoft("unm", [t], [t], simpleUnm);
       this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
-      this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int], ["apopa", "apopb", "addab", "ptrb", "apushb"]);
-      this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int, t.WithDeltaPointerDepth(-1)], ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
-      this.AddMetamethodSoft("ptrindex", [t], [t, VarType.Int], simpleAdd);
+      this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int],
+        t1.IsWide()
+        ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, ...t1.Get('a', 'a')]
+        : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
+      this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int, t.WithDeltaPointerDepth(-1)],
+        t1.IsWide()
+        ? [`REM Wide set metamethod`, ...t1.FlipAB(), `apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addab`, ...t1.FlipBA(), ...t1.Put("a","b"), `REM end wide set metamethod`]
+        : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
+      this.AddMetamethodSoft("ptrindex", [t], [t, VarType.Int],
+        t1.IsWide()
+        ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, `apusha`]
+        : simpleAdd);
       return;
     }
   }
@@ -569,7 +587,7 @@ free:
     allocType.ArgTypes = [VarType.Int];
     allocType.RetTypes = [VarType.VoidPtr];
     var freeType = new FuncType(falseClaimer, falseFlag);
-    freeType.ArgTypes = [VarType.VoidPtr];
+    freeType.ArgTypes = [VarType.Void];
     freeType.RetTypes = [];
     let putcharType = new FuncType(falseClaimer, falseFlag);
     putcharType.ArgTypes = [VarType.Int];
@@ -617,7 +635,8 @@ free:
     if (Type.TypeName === "discard") setup = false;
     var name = this.GetSafeName(`var${Type}${Identifier}`);
     this.Vars[Identifier] = [Type, name, null];
-    if (setup) this.Assembly.push(`${name}: db 0`);
+    let typeDef = Type.GetDefinition();
+    if (setup) this.Assembly.push(`${name}: db ${typeDef.Wide ? new Array(typeDef.Size).fill('0').join(',') : 0}`);
     this.AllVars[name] = [
       Type,
       Identifier,

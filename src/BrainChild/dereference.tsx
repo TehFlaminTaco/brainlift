@@ -32,7 +32,7 @@ export class Dereference
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
@@ -50,7 +50,7 @@ export class Dereference
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
@@ -66,7 +66,7 @@ export class Dereference
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);

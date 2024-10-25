@@ -58,7 +58,7 @@ export class Cumulate extends Expression implements Donor {
     ts.forEach((t) => {
       o.push(...this.Target!.Read(scope));
       if (this.PostFix) {
-        o.push(`apopa`, `apusha`, `apusha`);
+        o.push(...t.CloneA());
       }
       var metaName = (this.Operator === "add" ? "in" : "de") + `crement`;
       var meta = scope.GetMetamethod(metaName, [t]);
@@ -78,7 +78,7 @@ export class Cumulate extends Expression implements Donor {
       }
       o.push(...meta[2]);
       if (!this.PostFix) {
-        o.push(`apopa`, `apusha`, `apusha`);
+        o.push(...t.CloneA());
       }
       o.push(...this.Target!.Assign(scope, t));
     });

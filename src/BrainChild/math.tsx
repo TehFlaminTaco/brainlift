@@ -83,10 +83,54 @@ export class MathExp
       ];
     let o: string[] = [this.GetLine()];
     if (this.Operator === "and") {
-      throw new Error("TODO");
+      let leftRes = this.Left!.TryEvaluate(scope);
+      let rightRes = this.Right!.TryEvaluate(scope);
+      // Run any truthy metamethod on the left
+      let meta = scope.GetMetamethod("truthy", leftRes[0]);
+      if (meta === null) throw new Error(`No truthy metamethod for type ${leftRes[0]}`);
+      o.push(...leftRes[1]);
+      o.push(...VarType.Coax(meta[1], leftRes[0])[0]);
+      o.push(...meta[2]);
+      o.push(...VarType.Coax([VarType.Int], meta[0])[0]);
+      // If the top of the astack is truthy, run the right side and leave it's truthy value on the stack
+      // Otherwise, leave this falsey value on the stack
+      let rightSideLabel = scope.GetSafeName("rightSide");
+      let afterRightSideLabel = scope.GetSafeName("afterRightSide");
+      o.push(`apopa`, `jnza ${rightSideLabel}`, `apush 0`, `jmp ${afterRightSideLabel}`, `${rightSideLabel}:`);
+      o.push(...rightRes[1]);
+      meta = scope.GetMetamethod("truthy", rightRes[0]);
+      if (meta === null) throw new Error(`No truthy metamethod for type ${rightRes[0]}`);
+      o.push(...VarType.Coax(meta[1], rightRes[0])[0]);
+      o.push(...meta[2]);
+      o.push(...VarType.Coax([VarType.Int], meta[0])[0]);
+      o.push(`${afterRightSideLabel}:`);
+      return [[VarType.Int], o];
     }
     if (this.Operator === "or") {
-      throw new Error("TODO");
+      // Like and, but opposite
+      let leftRes = this.Left!.TryEvaluate(scope);
+      let rightRes = this.Right!.TryEvaluate(scope);
+      // Run any truthy metamethod on the left
+      let meta = scope.GetMetamethod("truthy", leftRes[0]);
+      if (meta === null) throw new Error(`No truthy metamethod for type ${leftRes[0]}`);
+      o.push(...leftRes[1]);
+      o.push(...VarType.Coax(meta[1], leftRes[0])[0]);
+      o.push(...meta[2]);
+      o.push(...VarType.Coax([VarType.Int], meta[0])[0]);
+      // If the top of the astack is truthy, leave this truthy value on the stack
+      // Otherwise, run the right side and leave it's truthy value on the stack
+      // We have to leave the truthy value on the stack  by duplicating it, and destroying it if the left side is falsey
+      let afterRightSideLabel = scope.GetSafeName("afterRightSide");
+      o.push(`apopa`, `apusha`, `jnza ${afterRightSideLabel}`);
+      o.push(`apop`);
+      o.push(...rightRes[1]);
+      meta = scope.GetMetamethod("truthy", rightRes[0]);
+      if (meta === null) throw new Error(`No truthy metamethod for type ${rightRes[0]}`);
+      o.push(...VarType.Coax(meta[1], rightRes[0])[0]);
+      o.push(...meta[2]);
+      o.push(...VarType.Coax([VarType.Int], meta[0])[0]);
+      o.push(`${afterRightSideLabel}:`);
+      return [[VarType.Int], o];
     }
     let left = this.Left!.TryEvaluate(scope);
     if (left[0].length < 1)
@@ -114,12 +158,7 @@ export class MathExp
 
   GetTypes(scope: Scope): VarType[] {
     if (this.Simplify(scope) !== null) return [VarType.Int];
-    if (this.Operator === "and") {
-      throw new Error("TODO");
-    }
-    if (this.Operator === "or") {
-      throw new Error("TODO");
-    }
+    if (this.Operator === "and" || this.Operator === "or") return [VarType.Int];
     let left = this.Left!.GetTypes(scope);
     if (left.length < 1)
       throw new Error(`Leftside expression does not resolve to any value.`);
@@ -140,11 +179,32 @@ export class MathExp
   }
 
   Simplify(scope: Scope): number | null {
+    if (this.Operator === "and" || this.Operator === "or") {
+      if (!IsSimplifyable(this.Left)) return null;
+      let left = this.Left!.TrySimplify(scope);
+      if (left === null) return null;
+      if (this.Operator === "or" && left) return left;
+      if (this.Operator === "and" && !left) return 0;
+      if (!IsSimplifyable(this.Right)) return null;
+      return this.Right!.TrySimplify(scope);
+    }
     if (IsSimplifyable(this.Left) && IsSimplifyable(this.Right)) {
-      let left = (this.Left as unknown as Simplifyable).Simplify(scope);
-      let right = (this.Right as unknown as Simplifyable).Simplify(scope);
+      let left = (this.Left!).TrySimplify(scope);
+      let right = (this.Right!).TrySimplify(scope);
       if (left !== null && right !== null) {
         switch (this.Operator) {
+          case "pow":
+            return (Math.pow(left, right) & 0xffffffff) >>> 0;
+          case "bshl":
+            return ((left << right) & 0xffffffff) >>> 0;
+          case "bshr":
+            return ((left >> right) & 0xffffffff) >>> 0;
+          case "band":
+            return ((left & right) & 0xffffffff) >>> 0;
+          case "bxor":
+            return ((left ^ right) & 0xffffffff) >>> 0;
+          case "bor":
+            return ((left | right) & 0xffffffff) >>> 0;
           case "mul":
             return ((left * right) & 0xffffffff) >>> 0;
           case "div":
@@ -216,12 +276,6 @@ export class UnaryMathExp
         [this.GetLine(), `apush ${(v & 0xffffffff) >>> 0}`],
       ];
     let o: string[] = [this.GetLine()];
-    if (this.Operator === "and") {
-      throw new Error("TODO");
-    }
-    if (this.Operator === "or") {
-      throw new Error("TODO");
-    }
     let bothArgs = [];
     let right = this.Right!.TryEvaluate(scope);
     o.push(...right[1]);
@@ -270,6 +324,8 @@ export class UnaryMathExp
             return -right;
           case "unp":
             return +right;
+          case "bnot":
+            return ~right;
         }
       }
     }
