@@ -250,40 +250,40 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     "PTRA",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegA = ((interp.Heap[interp.RegA * 4 + 0] ?? 0) << 24)
+      interp.RegA = (((interp.Heap[interp.RegA * 4 + 0] ?? 0) << 24)
                   + ((interp.Heap[interp.RegA * 4 + 1] ?? 0) << 16)
                   + ((interp.Heap[interp.RegA * 4 + 2] ?? 0) <<  8)
-                  + ((interp.Heap[interp.RegA * 4 + 3] ?? 0) <<  0);
+                  + ((interp.Heap[interp.RegA * 4 + 3] ?? 0) <<  0))>>>0;
     },
   ],
   [
     "PTRB",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegB = ((interp.Heap[interp.RegB * 4 + 0] ?? 0) << 24)
+      interp.RegB = (((interp.Heap[interp.RegB * 4 + 0] ?? 0) << 24)
                   + ((interp.Heap[interp.RegB * 4 + 1] ?? 0) << 16)
                   + ((interp.Heap[interp.RegB * 4 + 2] ?? 0) <<  8)
-                  + ((interp.Heap[interp.RegB * 4 + 3] ?? 0) <<  0);
+                  + ((interp.Heap[interp.RegB * 4 + 3] ?? 0) <<  0))>>>0;
     },
   ],
   [
     "PUTBPTRA",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.Heap[interp.RegA * 4 + 0] = (interp.RegB >> 24) & 0xff;
-      interp.Heap[interp.RegA * 4 + 1] = (interp.RegB >> 16) & 0xff;
-      interp.Heap[interp.RegA * 4 + 2] = (interp.RegB >> 8) & 0xff;
-      interp.Heap[interp.RegA * 4 + 3] = (interp.RegB >> 0) & 0xff;
+      interp.Heap[interp.RegA * 4 + 0] = (interp.RegB >>> 24) & 0xff;
+      interp.Heap[interp.RegA * 4 + 1] = (interp.RegB >>> 16) & 0xff;
+      interp.Heap[interp.RegA * 4 + 2] = (interp.RegB >>> 8) & 0xff;
+      interp.Heap[interp.RegA * 4 + 3] = (interp.RegB >>> 0) & 0xff;
     },
   ],
   [
     "PUTAPTRB",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.Heap[interp.RegB * 4 + 0] = (interp.RegA >> 24) & 0xff;
-      interp.Heap[interp.RegB * 4 + 1] = (interp.RegA >> 16) & 0xff;
-      interp.Heap[interp.RegB * 4 + 2] = (interp.RegA >> 8) & 0xff;
-      interp.Heap[interp.RegB * 4 + 3] = (interp.RegA >> 0) & 0xff;
+      interp.Heap[interp.RegB * 4 + 0] = (interp.RegA >>> 24) & 0xff;
+      interp.Heap[interp.RegB * 4 + 1] = (interp.RegA >>> 16) & 0xff;
+      interp.Heap[interp.RegB * 4 + 2] = (interp.RegA >>> 8) & 0xff;
+      interp.Heap[interp.RegB * 4 + 3] = (interp.RegA >>> 0) & 0xff;
     },
   ],
   [

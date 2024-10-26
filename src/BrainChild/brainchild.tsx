@@ -167,6 +167,7 @@ export async function Parse(files: { [file: string]: string }): Promise<Scope> {
           KnownCodes = {};
           Include.Parsed = {};
           Include.Includes = {};
+          Include.Evaluated = {};
           Macro.Macros = {};
           break;
         }
@@ -232,6 +233,7 @@ export async function Parse(files: { [file: string]: string }): Promise<Scope> {
     waitTimeout = setTimeout(() => {
       try {
         var o: string[] = [];
+        Include.Evaluated = {};
         for (var i = 0; i < Include.Parsed["main.bc"].length; i++) {
           o.push(...Include.Parsed["main.bc"][i].TryEvaluate(scope));
         }

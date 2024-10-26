@@ -85,6 +85,7 @@ export class Assignment
       ...this.Targets,
     ];
     for (let i = 0; i < targs.length; i++) {
+      targs[i].InformType(scope, res[0][0]);
       targetTypes.push(...targs[i].GetTypes(scope));
     }
     // Match targetTypes to next fit returnType.
@@ -114,7 +115,10 @@ export class Assignment
       this.Left as unknown as Assignable,
       ...this.Targets,
     ];
+    let rightTypes = this.Right!.GetTypes(scope);
+    
     for (let i = 0; i < targs.length; i++) {
+      targs[i].InformType(scope, rightTypes[0]);
       targetTypes.push(...targs[i].GetTypes(scope));
     }
     return targetTypes;

@@ -23,6 +23,7 @@ export class Index
     Simplifyable,
     SimpleAssignable
 {
+  InformType(scope: Scope, anyType: VarType): void {}
   Simplify(scope: Scope): number | null {
     let valRes = this.Left!.GetTypes(scope);
     if (valRes.length === 0)

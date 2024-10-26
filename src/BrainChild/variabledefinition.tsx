@@ -10,6 +10,11 @@ export class VariableDecleration
   extends Expression
   implements ReadWritable, Referenceable, Simplifyable, SimpleAssignable
 {
+  InformType(scope: Scope, anyType: VarType): void {
+    if (this.Type!.TypeName === "var") {
+      this.Type = anyType;
+    }
+  }
   Read(scope: Scope): string[] {
     return this.Evaluate(scope)[1];
   }
@@ -150,6 +155,12 @@ export class VariableDecleration
   }
 
   GetTypes(scope: Scope): VarType[] {
+    // Potentially set up.
+    if (scope !== this.LastScope) {
+      this.Label = "";
+      this.LastScope = scope;
+    }
+    this.Label ||= scope.Set(this.Identifier!.Name, this.Type!);
     return [this.Type!];
   }
 

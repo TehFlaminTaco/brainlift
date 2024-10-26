@@ -1,5 +1,5 @@
 import { Guid } from "js-guid";
-import { TypeDefinition } from "./Types";
+import { TypeDefinition, TypeVoid } from "./Types";
 import { Claimer } from "./brainchild";
 import { VarType, FuncType } from "./vartype";
 import { ASMInterpreter } from "../brainasm";
@@ -635,7 +635,8 @@ free:
     if (Type.TypeName === "discard") setup = false;
     var name = this.GetSafeName(`var${Type}${Identifier}`);
     this.Vars[Identifier] = [Type, name, null];
-    let typeDef = Type.GetDefinition();
+    let typeDef: TypeDefinition = TypeVoid;
+    try {typeDef = Type.GetDefinition();}catch{};
     if (setup) this.Assembly.push(`${name}: db ${typeDef.Wide ? new Array(typeDef.Size).fill('0').join(',') : 0}`);
     this.AllVars[name] = [
       Type,

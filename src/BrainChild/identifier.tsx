@@ -16,6 +16,7 @@ export class Identifier
   extends Expression
   implements ReadWritable, Referenceable, SimpleAssignable, Simplifyable
 {
+  InformType(scope: Scope, anyType: VarType): void {}
   AssignSimple(scope: Scope, value: number): boolean {
     let res = scope.Get(this.Name);
     if(res[0].TypeName === "discard") return true;

@@ -88,6 +88,10 @@ export class Block extends Expression implements Simplifyable {
     this.TrySimplify(scope); // Apparently, this matters :\
     var subScope = this.GetSubScope(scope);
     if (this.Expressions.length === 0) return [];
+    // Run GetTypes on all the sub-expersions, just in case
+    for (var i = 0; i < this.Expressions.length - 1; i++) {
+      this.Expressions[i].GetTypes(subScope);
+    }
     var res = this.Expressions[this.Expressions.length - 1].GetTypes(subScope);
     return res;
   }

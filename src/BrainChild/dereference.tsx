@@ -8,6 +8,7 @@ export class Dereference
   extends Expression
   implements ReadWritable, RightDonor
 {
+  InformType(scope: Scope, anyType: VarType): void {}
   Right: Expression | null = null;
   Precedence: number = 18;
   LeftRightAssociative = false;

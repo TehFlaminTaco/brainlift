@@ -21,7 +21,7 @@ export class Include extends Statement {
     var inc = new Include(claimer, ic);
     inc.Path = c.Body![1];
     if (!KnownCodes[inc.Path]) {
-      DoParse(inc.Path![1]);
+      DoParse(inc.Path);
     }
     Include.Includes[claimer.File] ??= new Set();
     Include.Includes[claimer.File].add(inc.Path!);
@@ -53,7 +53,7 @@ export class Include extends Statement {
     if (scope.Assembly.length > lastLength)
       scope.Assembly.push(`file ${this.Claimer.File}`);
     else scope.Assembly.pop();
-
+    Include.Evaluated[this.Path] = true;
     return o;
   }
 

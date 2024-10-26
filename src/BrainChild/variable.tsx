@@ -5,6 +5,7 @@ import { VarType } from "./vartype";
 export interface Assignable {
   Assign(scope: Scope, anyType: VarType): string[];
   GetTypes(scope: Scope): VarType[];
+  InformType(scope: Scope, anyType: VarType): void;
 }
 
 export interface SimpleAssignable {
@@ -22,7 +23,7 @@ export interface Referenceable {
 }
 
 export function IsAssignable(A: any) {
-  return "Assign" in A && "GetTypes" in A;
+  return "Assign" in A && "GetTypes" in A && "InformType" in A;
 }
 export function IsSimpleAssignable(A: any) {
   return "AssignSimple" in A;
@@ -31,7 +32,7 @@ export function IsReadable(A: any) {
   return "Read" in A && "GetTypes" in A;
 }
 export function IsReadWritable(A: any) {
-  return "Read" in A && "Assign" in A && "GetTypes" in A;
+  return "Read" in A && "Assign" in A && "GetTypes" in A && "InformType" in A;
 }
 export function IsReferenceable(A: any) {
   return "GetPointer" in A && "GetReferenceTypes" in A;

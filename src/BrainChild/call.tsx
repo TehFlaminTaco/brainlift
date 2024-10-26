@@ -66,6 +66,12 @@ export class Call extends Expression implements LeftDonor {
       var resolveArgument = this.Arguments[i].GetTypes(scope);
       callArgumentTypes.push(...resolveArgument);
     }
+
+    let meta = scope.GetMetamethod("call", [...resolveTarget, ...callArgumentTypes]);
+    if(meta){
+      return meta[0];
+    }
+
     var functionTypes: FuncType[] = resolveTarget.filter(
       (c) => c instanceof FuncType
     ) as FuncType[];
@@ -96,6 +102,15 @@ export class Call extends Expression implements LeftDonor {
       o.push(...resolveArgument[1]);
       callArgumentTypes.push(...resolveArgument[0]);
     }
+
+    let meta = scope.GetMetamethod("call", [...resolveTarget[0], ...callArgumentTypes]);
+    if(meta){
+      o = resolveTarget[1].concat(o);
+      o.push(...VarType.Coax(meta[1], [...resolveTarget[0], ...callArgumentTypes])[0])
+      o.push(...meta[2]);
+      return [meta[0], o];
+    }
+
     var functionTypes: FuncType[] = resolveTarget[0].filter(
       (c) => c instanceof FuncType
     ) as FuncType[];

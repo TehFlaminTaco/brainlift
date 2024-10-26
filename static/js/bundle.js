@@ -1132,10 +1132,12 @@
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_classCallCheck_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/classCallCheck.js */ "./node_modules/@babel/runtime/helpers/esm/classCallCheck.js");
   /* harmony import */ var _project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/@babel/runtime/helpers/esm/createClass.js */ "./node_modules/@babel/runtime/helpers/esm/createClass.js");
   /* harmony import */ var js_guid__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! js-guid */ "./node_modules/js-guid/dist/index.js");
-  /* harmony import */ var _brainchild__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./brainchild */ "./src/BrainChild/brainchild.tsx");
-  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
+  /* harmony import */ var _Types__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Types */ "./src/BrainChild/Types.tsx");
+  /* harmony import */ var _brainchild__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./brainchild */ "./src/BrainChild/brainchild.tsx");
+  /* harmony import */ var _vartype__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./vartype */ "./src/BrainChild/vartype.tsx");
   /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
   __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
+  
   
   
   
@@ -1197,13 +1199,13 @@
       value: function SetupIntMetamethods() {
         var _this = this;
         simpleOps.forEach(function (c) {
-          _this.AddMetamethodSoft(c[0], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], c[1]);
+          _this.AddMetamethodSoft(c[0], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], c[1]);
         });
-        this.AddMetamethodSoft("divmod", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], simpleDivMod);
-        this.AddMetamethodSoft("truthy", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], []);
-        this.AddMetamethodSoft("not", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], simpleNot);
-        this.AddMetamethodSoft("unm", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], simpleUnm);
-        this.AddMetamethodSoft("unp", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], simpleUnp);
+        this.AddMetamethodSoft("divmod", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], simpleDivMod);
+        this.AddMetamethodSoft("truthy", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], []);
+        this.AddMetamethodSoft("not", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], simpleNot);
+        this.AddMetamethodSoft("unm", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], simpleUnm);
+        this.AddMetamethodSoft("unp", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], simpleUnp);
       }
     }, {
       key: "TryFallbacks",
@@ -1214,7 +1216,7 @@
           if (name === inv[0]) {
             try {
               var other = this.GetMetamethod(inv[1], argTypes, false);
-              if (other !== null && _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.AllEquals(other[0], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int])) {
+              if (other !== null && _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.AllEquals(other[0], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int])) {
                 var newMethod = other[2].concat("apopa", "nota", "apusha");
                 return [other[0], other[1], newMethod];
               }
@@ -1224,7 +1226,7 @@
           } else if (name === inv[1]) {
             try {
               var _other = this.GetMetamethod(inv[0], argTypes, false);
-              if (_other !== null && _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.AllEquals(_other[0], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int])) {
+              if (_other !== null && _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.AllEquals(_other[0], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int])) {
                 var _newMethod = _other[2].concat("apopa", "nota", "apusha");
                 return [_other[0], _other[1], _newMethod];
               }
@@ -1244,30 +1246,30 @@
           this.SetupIntMetamethods();
           return;
         }
-        if (t instanceof _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType) {
-          this.AddMetamethodSoft("truthy", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [t], []);
+        if (t instanceof _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType) {
+          this.AddMetamethodSoft("truthy", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [t], []);
           return;
         }
         if (t.PointerDepth > 0) {
           var t1 = t.WithDeltaPointerDepth(-1);
           // Same as basic math, but with Pointers.
           simpleOps.forEach(function (c) {
-            _this2.AddMetamethodSoft(c[0], [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], c[1]);
-            _this2.AddMetamethodSoft(c[0], [t], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, t], c[1]);
-            _this2.AddMetamethodSoft(c[0], [t], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.VoidPtr, t], c[1]);
-            _this2.AddMetamethodSoft(c[0], [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.VoidPtr], c[1]);
+            _this2.AddMetamethodSoft(c[0], [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], c[1]);
+            _this2.AddMetamethodSoft(c[0], [t], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int, t], c[1]);
+            _this2.AddMetamethodSoft(c[0], [t], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.VoidPtr, t], c[1]);
+            _this2.AddMetamethodSoft(c[0], [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.VoidPtr], c[1]);
           });
-          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], simpleDivMod);
-          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, t], simpleDivMod);
-          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.VoidPtr, t], simpleDivMod);
-          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.VoidPtr], simpleDivMod);
-          this.AddMetamethodSoft("truthy", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [t], []);
-          this.AddMetamethodSoft("not", [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], [t], simpleNot);
+          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], simpleDivMod);
+          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int, t], simpleDivMod);
+          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.VoidPtr, t], simpleDivMod);
+          this.AddMetamethodSoft("divmod", [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.VoidPtr], simpleDivMod);
+          this.AddMetamethodSoft("truthy", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [t], []);
+          this.AddMetamethodSoft("not", [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], [t], simpleNot);
           this.AddMetamethodSoft("unm", [t], [t], simpleUnm);
           this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
-          this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], t1.IsWide() ? ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addba"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.Get('a', 'a'))) : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
-          this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int, t.WithDeltaPointerDepth(-1)], t1.IsWide() ? ["REM Wide set metamethod"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.FlipAB()), ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addab"], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.FlipBA()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.Put("a", "b")), ["REM end wide set metamethod"]) : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
-          this.AddMetamethodSoft("ptrindex", [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int], t1.IsWide() ? ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addba", "apusha"] : simpleAdd);
+          this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], t1.IsWide() ? ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addba"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.Get('a', 'a'))) : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
+          this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int, t.WithDeltaPointerDepth(-1)], t1.IsWide() ? ["REM Wide set metamethod"].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.FlipAB()), ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addab"], (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.FlipBA()), (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(t1.Put("a", "b")), ["REM end wide set metamethod"]) : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
+          this.AddMetamethodSoft("ptrindex", [t], [t, _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int], t1.IsWide() ? ["apopa", "setb ".concat(t1.GetDefinition().Size), "mulba", "apopb", "addba", "apusha"] : simpleAdd);
           return;
         }
       }
@@ -1293,12 +1295,12 @@
             if (inMM.TypeName in genericifiedMap) {
               var mapped = genericifiedMap[inMM.TypeName].WithDeltaPointerDepth(inMM.PointerDepth);
               // If we can coax/equal to directly to what's in the map, return that
-              if (exactly ? mapped.Equals(inType) : _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CanCoax([mapped], [inType])) {
+              if (exactly ? mapped.Equals(inType) : _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CanCoax([mapped], [inType])) {
                 return mapped;
               }
               // If what's in the map can coax/equal to what we have, update the map and return the new type
               // Frustratingly, I think we have to do 2 passes to ensure all the casts are called correctly later.
-              if (exactly ? inType.Equals(mapped) : _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CanCoax([inType], [mapped])) {
+              if (exactly ? inType.Equals(mapped) : _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CanCoax([inType], [mapped])) {
                 genericifiedMap[inMM.TypeName] = inType.WithDeltaPointerDepth(-inMM.PointerDepth);
                 return inType;
               }
@@ -1311,7 +1313,7 @@
           }
   
           // Check that a is b to the precision of exactly
-          if (!(exactly ? inMM.Equals(inType) : _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CanCoax([inMM], [inType]))) {
+          if (!(exactly ? inMM.Equals(inType) : _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CanCoax([inMM], [inType]))) {
             failed = true;
             return inMM;
           }
@@ -1385,15 +1387,15 @@
           return c[3].length === 0;
         }); // Anything with generics failed to map
         mm = mm.filter(function (c) {
-          return exactly ? _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.AllEquals(c[1], argTypes) : _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CanCoax(c[1], argTypes)[0];
+          return exactly ? _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.AllEquals(c[1], argTypes) : _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CanCoax(c[1], argTypes)[0];
         });
         if (mm.length === 0) return canFallback ? this.TryFallbacks(name, argTypes) : null;
         mm.sort(function (a, b) {
-          return _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CountMatches(b[1], argTypes) - _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CountMatches(a[1], argTypes);
+          return _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CountMatches(b[1], argTypes) - _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CountMatches(a[1], argTypes);
         });
-        var bestMatch = _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CountMatches(mm[0][1], argTypes);
+        var bestMatch = _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CountMatches(mm[0][1], argTypes);
         mm = mm.filter(function (c) {
-          return _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.CountMatches(c[1], argTypes) === bestMatch;
+          return _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.CountMatches(c[1], argTypes) === bestMatch;
         });
         if (mm.length > 1) throw new Error("Ambiguous Metamethod: ".concat(name, " Received: ").concat(argTypes, " Options: ").concat(mm.map(function (c) {
           return "[" + c[0].join(",") + "]";
@@ -1407,7 +1409,7 @@
         this.MetaMethods[name] = (_this$MetaMethods$nam = this.MetaMethods[name]) !== null && _this$MetaMethods$nam !== void 0 ? _this$MetaMethods$nam : [];
         // Check if any metamethod already exists with this signature
         for (var i = 0; i < this.MetaMethods[name].length; i++) {
-          if (_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.AllEquals(this.MetaMethods[name][i][1], argTypes) && (name === "cast" ? _vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.AllEquals(this.MetaMethods[name][i][0], retTypes) : true)) {
+          if (_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.AllEquals(this.MetaMethods[name][i][1], argTypes) && (name === "cast" ? _vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.AllEquals(this.MetaMethods[name][i][0], retTypes) : true)) {
             return;
           }
         }
@@ -1452,20 +1454,20 @@
         var asm = [];
         asm.push.apply(asm, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])("putchar:\n    apopa\n    writea\n    ret\ngetchar:\n    reada\n    apusha\n    ret\nvAllocTable: db 0\nvAllocSize: db 0\nalloc:\n    seta vAllocTable\n    setb aftercode\n    putbptra\n    seta vAllocSize\n    apopb\n    putbptra\n    wAllocCond:\n        seta vAllocTable\n        ptra\n        ptra\n        jnza wAllocBody\n        seta vAllocTable\n        ptra\n        inca\n        ptra\n        nota\n        jnza wAllocDone\n        seta vAllocTable\n        ptra\n        inca\n        ptra\n        setb vAllocSize\n        ptrb\n        addb 3\n        cmp\n        jnzb wAllocBody\n        jmp wAllocDone\n    wAllocBody:\n        seta vAllocTable\n        ptra\n        setb vAllocTable\n        ptrb\n        incb\n        ptrb\n        addba\n        adda 2\n        setb vAllocTable\n        putaptrb\n        jmp wAllocCond\n    wAllocDone:\n    seta vAllocTable\n    ptra\n    inca\n    ptra\n    jnza fAllocSlip\n    jmp fAllocSlipDone\n    fAllocSlip:\n        setb vAllocSize\n        ptrb\n        subba\n        suba 2\n        apusha\n        seta vAllocTable\n        ptra\n        setb vAllocSize\n        ptrb\n        addba\n        adda 2\n        setb 0\n        putbptra\n        inca\n        apopb\n        putbptra\n    fAllocSlipDone:\n    seta vAllocTable\n    ptra\n    setb 1\n    putbptra\n    inca\n    setb vAllocSize\n    ptrb\n    putbptra\n    inca\n    apusha\n    ret\n\nvFreeTable: db 0\nvFreeTarget: db 0\nvFreeLast: db 0\nfree:\n    seta vFreeTable\n    setb aftercode\n    putbptra\n    seta vFreeTarget\n    apopb\n    subb 2\n    putbptra\n    wFreeCond:\n        seta vFreeTable\n        ptra\n        setb vFreeTarget\n        ptrb\n        cmp\n        notb\n        jnzb wFreeDone\n        seta vFreeLast\n        setb vFreeTable\n        ptrb\n        putbptra\n        seta vFreeTable\n        ptra\n        setb vFreeTable\n        ptrb\n        incb\n        ptrb\n        addba\n        adda 2\n        setb vFreeTable\n        putaptrb\n        jmp wFreeCond\n    wFreeDone:\n    seta vFreeTable\n    ptra\n    setb vFreeTarget\n    ptrb\n    subab\n    notb\n    jnzb fFreeClear\n    ret\n    fFreeClear:\n        seta vFreeTable\n        ptra\n        setb 0\n        putbptra\n        seta vFreeLast\n        ptra\n        ptra\n        jnza fFreeDone\n        seta vFreeTarget\n        ptra\n        inca\n        ptra\n        setb vFreeLast\n        ptrb\n        incb\n        ptrb\n        addab\n        addb 2\n        seta vFreeLast\n        ptra\n        inca\n        putbptra\n    fFreeDone:\n    ret".split("\n")));
         (_this$Assembly = this.Assembly).push.apply(_this$Assembly, asm);
-        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_4__.Claimer("");
+        var falseClaimer = new _brainchild__WEBPACK_IMPORTED_MODULE_5__.Claimer("");
         var falseFlag = falseClaimer.Flag();
-        var allocType = new _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType(falseClaimer, falseFlag);
-        allocType.ArgTypes = [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int];
-        allocType.RetTypes = [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.VoidPtr];
-        var freeType = new _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType(falseClaimer, falseFlag);
-        freeType.ArgTypes = [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Void];
+        var allocType = new _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType(falseClaimer, falseFlag);
+        allocType.ArgTypes = [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int];
+        allocType.RetTypes = [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.VoidPtr];
+        var freeType = new _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType(falseClaimer, falseFlag);
+        freeType.ArgTypes = [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Void];
         freeType.RetTypes = [];
-        var putcharType = new _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType(falseClaimer, falseFlag);
-        putcharType.ArgTypes = [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int];
+        var putcharType = new _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType(falseClaimer, falseFlag);
+        putcharType.ArgTypes = [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int];
         putcharType.RetTypes = [];
-        var getcharType = new _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType(falseClaimer, falseFlag);
+        var getcharType = new _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType(falseClaimer, falseFlag);
         getcharType.ArgTypes = [];
-        getcharType.RetTypes = [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Int];
+        getcharType.RetTypes = [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Int];
         this.Set("alloc", allocType, false);
         this.Set("free", freeType, false);
         this.Set("putchar", putcharType, false);
@@ -1494,7 +1496,7 @@
       key: "Get",
       value: function Get(Identifier) {
         var _this$Vars$Identifier, _this$Parent;
-        if (Identifier === "_") return [_vartype__WEBPACK_IMPORTED_MODULE_5__.VarType.Discard, "", 0];
+        if (Identifier === "_") return [_vartype__WEBPACK_IMPORTED_MODULE_6__.VarType.Discard, "", 0];
         var o = (_this$Vars$Identifier = this.Vars[Identifier]) !== null && _this$Vars$Identifier !== void 0 ? _this$Vars$Identifier : (_this$Parent = this.Parent) === null || _this$Parent === void 0 ? void 0 : _this$Parent.Get(Identifier);
         if (!o) {
           throw new Error("Unknown identifier ".concat(Identifier));
@@ -1508,7 +1510,11 @@
         if (Type.TypeName === "discard") setup = false;
         var name = this.GetSafeName("var".concat(Type).concat(Identifier));
         this.Vars[Identifier] = [Type, name, null];
-        var typeDef = Type.GetDefinition();
+        var typeDef = _Types__WEBPACK_IMPORTED_MODULE_4__.TypeVoid;
+        try {
+          typeDef = Type.GetDefinition();
+        } catch (_unused) {}
+        ;
         if (setup) this.Assembly.push("".concat(name, ": db ").concat(typeDef.Wide ? new Array(typeDef.Size).fill('0').join(',') : 0));
         this.AllVars[name] = [Type, Identifier, this.CurrentFile, this.CurrentFunction];
         return name;
@@ -1610,7 +1616,7 @@
         var body = "";
         var f = this.AllVars[func];
         var name = "<b>function</b> ".concat(func);
-        if (f && f[0] instanceof _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType) {
+        if (f && f[0] instanceof _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType) {
           var funcType = f[0];
           name = "<b>function</b> ".concat(f[1], "(<b>").concat(funcType.ArgTypes.map(function (c) {
             return c.ToHTML();
@@ -1629,7 +1635,7 @@
           var v = vars[i];
           if (v[2].startsWith("_")) continue;
           if (isGlobal) {
-            if (v[1] instanceof _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType) continue;
+            if (v[1] instanceof _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType) continue;
           }
           body += "\t".concat(v[1].Debug(this, bs, v[0], v[2], bs.Labels[v[0]]).replace(/<br>(?!$)/g, "<br>\t"), "<br>");
         }
@@ -1684,7 +1690,7 @@
               var _child2 = childrenByOffset[i];
               if (!_child2) continue;
               if (_child2[3] === "new" || _child2[3] === "base") continue;
-              if (_child2[0] instanceof _vartype__WEBPACK_IMPORTED_MODULE_5__.FuncType && varsByFunction[_child2[2]]) {
+              if (_child2[0] instanceof _vartype__WEBPACK_IMPORTED_MODULE_6__.FuncType && varsByFunction[_child2[2]]) {
                 body += "\t".concat(this.RenderFunction(bs, _child2[2], varsByFunction[_child2[2]]).replace(/<br>(?!$)/g, "<br>\t"));
                 delete varsByFunction[_child2[2]];
               } else {
@@ -2200,6 +2206,7 @@
         var targs = [this.Left].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Targets));
         for (var i = 0; i < targs.length; i++) {
           var _targetTypes;
+          targs[i].InformType(scope, res[0][0]);
           (_targetTypes = targetTypes).push.apply(_targetTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(targs[i].GetTypes(scope)));
         }
         // Match targetTypes to next fit returnType.
@@ -2229,7 +2236,9 @@
       value: function GetTypes(scope) {
         var targetTypes = [];
         var targs = [this.Left].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this.Targets));
+        var rightTypes = this.Right.GetTypes(scope);
         for (var i = 0; i < targs.length; i++) {
+          targs[i].InformType(scope, rightTypes[0]);
           targetTypes.push.apply(targetTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(targs[i].GetTypes(scope)));
         }
         return targetTypes;
@@ -2411,6 +2420,10 @@
         this.TrySimplify(scope); // Apparently, this matters :\
         var subScope = this.GetSubScope(scope);
         if (this.Expressions.length === 0) return [];
+        // Run GetTypes on all the sub-expersions, just in case
+        for (var i = 0; i < this.Expressions.length - 1; i++) {
+          this.Expressions[i].GetTypes(subScope);
+        }
         var res = this.Expressions[this.Expressions.length - 1].GetTypes(subScope);
         return res;
       }
@@ -2664,6 +2677,7 @@
                     KnownCodes = {};
                     _include__WEBPACK_IMPORTED_MODULE_10__.Include.Parsed = {};
                     _include__WEBPACK_IMPORTED_MODULE_10__.Include.Includes = {};
+                    _include__WEBPACK_IMPORTED_MODULE_10__.Include.Evaluated = {};
                     _macrodef__WEBPACK_IMPORTED_MODULE_11__.Macro.Macros = {};
                     break;
                   }
@@ -2742,6 +2756,7 @@
                 try {
                   var _scope$Assembly;
                   var o = [];
+                  _include__WEBPACK_IMPORTED_MODULE_10__.Include.Evaluated = {};
                   for (var i = 0; i < _include__WEBPACK_IMPORTED_MODULE_10__.Include.Parsed["main.bc"].length; i++) {
                     o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_1__["default"])(_include__WEBPACK_IMPORTED_MODULE_10__.Include.Parsed["main.bc"][i].TryEvaluate(scope)));
                   }
@@ -2865,6 +2880,10 @@
           var resolveArgument = this.Arguments[i].GetTypes(scope);
           callArgumentTypes.push.apply(callArgumentTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveArgument));
         }
+        var meta = scope.GetMetamethod("call", [].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveTarget), callArgumentTypes));
+        if (meta) {
+          return meta[0];
+        }
         var functionTypes = resolveTarget.filter(function (c) {
           return c instanceof _vartype__WEBPACK_IMPORTED_MODULE_7__.FuncType;
         });
@@ -2881,7 +2900,11 @@
     }, {
       key: "Evaluate",
       value: function Evaluate(scope) {
-        var _this2 = this;
+        var _this2 = this,
+          _o7,
+          _o8,
+          _o9,
+          _o10;
         var o = [this.GetLine()];
         var callArgumentTypes = [];
         if (this.Left instanceof ___WEBPACK_IMPORTED_MODULE_5__.Index) {
@@ -2889,9 +2912,18 @@
         }
         var resolveTarget = this.Left.TryEvaluate(scope);
         for (var i = 0; i < this.Arguments.length; i++) {
+          var _o;
           var resolveArgument = this.Arguments[i].TryEvaluate(scope);
-          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveArgument[1]));
+          (_o = o).push.apply(_o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveArgument[1]));
           callArgumentTypes.push.apply(callArgumentTypes, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveArgument[0]));
+        }
+        var meta = scope.GetMetamethod("call", [].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveTarget[0]), callArgumentTypes));
+        if (meta) {
+          var _o2, _o3;
+          o = resolveTarget[1].concat(o);
+          (_o2 = o).push.apply(_o2, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(meta[1], [].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveTarget[0]), callArgumentTypes))[0]));
+          (_o3 = o).push.apply(_o3, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(meta[2]));
+          return [meta[0], o];
         }
         var functionTypes = resolveTarget[0].filter(function (c) {
           return c instanceof _vartype__WEBPACK_IMPORTED_MODULE_7__.FuncType;
@@ -2921,6 +2953,7 @@
         // If we CAN use Paramaterized form, use Paramaterized form.
         var paramCoax;
         if (!_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.CanCoax(funcType.ArgTypes, callArgumentTypes)[0] && funcType.ArgTypes.length >= 2 && funcType.ArgTypes[funcType.ArgTypes.length - 1].PointerDepth > 0 && funcType.ArgTypes[funcType.ArgTypes.length - 2].TypeName === "int" && funcType.ArgTypes[funcType.ArgTypes.length - 2].PointerDepth === 0 && (paramCoax = _vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.CanCoax(funcType.ArgTypes.slice(0, funcType.ArgTypes.length - 2), callArgumentTypes))[0]) {
+          var _o4;
           // Add the next N types to a fake argument target, and then coax to.
           var mapped = funcType.ArgTypes.slice(0, funcType.ArgTypes.length - 2);
           var targetType = funcType.ArgTypes[funcType.ArgTypes.length - 1].WithDeltaPointerDepth(-1);
@@ -2937,30 +2970,32 @@
           var size = 1;
           if (def.Wide) size = def.Size;
           spareSize *= size;
-          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(mapped, callArgumentTypes)[0]));
+          (_o4 = o).push.apply(_o4, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(mapped, callArgumentTypes)[0]));
           // Push the spare values to a reserved array
           var paramsName = scope.GetSafeName("params".concat(targetType.TypeName));
           scope.Assembly.push("".concat(paramsName, ":"), "db ".concat(Array(spareSize).fill(0)));
           // We're going to set every value in the array to the values off the top of the stack, casted to the target type.
           // Because it's on a stack, we're doing this in reverse.
           for (var _i2 = elementCount - 1; _i2 >= 0; _i2--) {
+            var _o5;
             // First, Coax
             // o.push(...VarType.Coax([targetType], [callArgumentTypes[i]])[0]);
             // Then, store
-            o.push.apply(o, ["setb ".concat(paramsName), "addb ".concat(_i2 * size)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(targetType.Put("a", "b"))));
+            (_o5 = o).push.apply(_o5, ["setb ".concat(paramsName), "addb ".concat(_i2 * size)].concat((0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(targetType.Put("a", "b"))));
           }
           // Then, add the length of the array, and the array itself
           o.push("apush ".concat(elementCount), "apush ".concat(paramsName));
         } else {
-          o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(funcType.ArgTypes, callArgumentTypes)[0]));
+          var _o6;
+          (_o6 = o).push.apply(_o6, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax(funcType.ArgTypes, callArgumentTypes)[0]));
         }
-        o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveTarget[1]));
-        o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax([funcType], resolveTarget[0].map(function (c) {
+        (_o7 = o).push.apply(_o7, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(resolveTarget[1]));
+        (_o8 = o).push.apply(_o8, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_vartype__WEBPACK_IMPORTED_MODULE_7__.VarType.Coax([funcType], resolveTarget[0].map(function (c) {
           return c.WithFunctionGenerics(_this2.Generics);
         }))[0]));
-        if (!this.IsFinalExpression && !this.TailCall) o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(scope.DumpFunctionVariables()));
+        if (!this.IsFinalExpression && !this.TailCall) (_o9 = o).push.apply(_o9, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(scope.DumpFunctionVariables()));
         o.push("apopa", this.TailCall ? "jmpa" : "calla");
-        if (!this.IsFinalExpression && !this.TailCall) o.push.apply(o, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(scope.LoadFunctionVariables()));
+        if (!this.IsFinalExpression && !this.TailCall) (_o10 = o).push.apply(_o10, (0,_project_workspace_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__["default"])(scope.LoadFunctionVariables()));
         return [functionMatchesTypes[0].RetTypes, o];
       }
     }], [{
@@ -3104,7 +3139,7 @@
         }
         var v = 0;
         if (n.Body[0] === "'\"'") {
-          v = 32;
+          v = 34;
         } else {
           v = JSON.parse(n.Body[0].replace(/'(\\?.)'/, '"$1"')).charCodeAt(0);
         }
@@ -4102,6 +4137,9 @@
       return _this;
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Dereference, [{
+      key: "InformType",
+      value: function InformType(scope, anyType) {}
+    }, {
       key: "Evaluate",
       value: function Evaluate(scope) {
         var o = [this.GetLine()];
@@ -5164,6 +5202,9 @@
       return _this;
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Identifier, [{
+      key: "InformType",
+      value: function InformType(scope, anyType) {}
+    }, {
       key: "AssignSimple",
       value: function AssignSimple(scope, value) {
         var res = scope.Get(this.Name);
@@ -5552,6 +5593,7 @@
         scope.CurrentFile = oldFile;
         if (o.length > 1) o.push("file ".concat(this.Claimer.File));else o.pop();
         if (scope.Assembly.length > lastLength) scope.Assembly.push("file ".concat(this.Claimer.File));else scope.Assembly.pop();
+        Include.Evaluated[this.Path] = true;
         return o;
       }
     }, {
@@ -5575,7 +5617,7 @@
         var inc = new Include(claimer, ic);
         inc.Path = c.Body[1];
         if (!_brainchild__WEBPACK_IMPORTED_MODULE_6__.KnownCodes[inc.Path]) {
-          (0,_brainchild__WEBPACK_IMPORTED_MODULE_6__.DoParse)(inc.Path[1]);
+          (0,_brainchild__WEBPACK_IMPORTED_MODULE_6__.DoParse)(inc.Path);
         }
         (_Include$Includes$_cl = (_Include$Includes = Include.Includes)[_claimer$File = claimer.File]) !== null && _Include$Includes$_cl !== void 0 ? _Include$Includes$_cl : _Include$Includes[_claimer$File] = new Set();
         Include.Includes[claimer.File].add(inc.Path);
@@ -5679,6 +5721,9 @@
       return _this;
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(Index, [{
+      key: "InformType",
+      value: function InformType(scope, anyType) {}
+    }, {
       key: "Simplify",
       value: function Simplify(scope) {
         var valRes = this.Left.GetTypes(scope);
@@ -8920,7 +8965,7 @@
   
   
   function IsAssignable(A) {
-    return "Assign" in A && "GetTypes" in A;
+    return "Assign" in A && "GetTypes" in A && "InformType" in A;
   }
   _c = IsAssignable;
   function IsSimpleAssignable(A) {
@@ -8932,7 +8977,7 @@
   }
   _c3 = IsReadable;
   function IsReadWritable(A) {
-    return "Read" in A && "Assign" in A && "GetTypes" in A;
+    return "Read" in A && "Assign" in A && "GetTypes" in A && "InformType" in A;
   }
   _c4 = IsReadWritable;
   function IsReferenceable(A) {
@@ -9105,6 +9150,13 @@
       return _this;
     }
     (0,_project_workspace_node_modules_babel_runtime_helpers_esm_createClass_js__WEBPACK_IMPORTED_MODULE_2__["default"])(VariableDecleration, [{
+      key: "InformType",
+      value: function InformType(scope, anyType) {
+        if (this.Type.TypeName === "var") {
+          this.Type = anyType;
+        }
+      }
+    }, {
       key: "Read",
       value: function Read(scope) {
         return this.Evaluate(scope)[1];
@@ -9162,6 +9214,12 @@
     }, {
       key: "GetTypes",
       value: function GetTypes(scope) {
+        // Potentially set up.
+        if (scope !== this.LastScope) {
+          this.Label = "";
+          this.LastScope = scope;
+        }
+        this.Label || (this.Label = scope.Set(this.Identifier.Name, this.Type));
         return [this.Type];
       }
     }, {
@@ -10392,12 +10450,13 @@
     generated = true;
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("array.bc", "metamethod getindex<T>(Array<T> this, int i) -> T{\n    return *(this.Data+i%this.Length);\n}\nmetamethod setindex<T>(Array<T> this, int i, T v){\n    *(this.Data+i%this.Length) = v;\n}\nmetamethod ptrindex<T>(Array<T> this, int i) -> @T{\n    return this.Data+i%this.Length;\n}\n\nclass Array<T> {\n    new(int l){\n        this.Data = alloc(l);\n        this.Length = l;\n    }\n    int Length;\n    @T Data;\n    virtual function ReplaceV(func(T)->T over){\n        int i = 0;\n        while(i < this.Length){\n            this[i] = over(this[i]);\n            i++;\n        }\n    }\n    virtual function ReplaceK(func(int)->T over){\n        int i = 0; \n        while(i < this.Length){\n            this[i] = over(i);\n            i++;\n        }\n    }\n    virtual function ReplaceKV(func(int,T)->T over){\n        int i = 0;\n        while(i < this.Length){\n            this[i] = over(i, this[i]);\n            i++;\n        }\n    }\n}");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("extmacros.bc", "macro ( (assignable) (/\\/%|<<|>>|<=|>=|==|!=|&&|\\|\\||[*^\\/%+<>&~|-]/) \"=\" (expression) ) { $1 = $1 $2 $3 }\nmacro ( 'for' \"(\" (expression?) \";\" (expression?) \";\" (expression?) \")\" (expression) ) {\n    {\n        $1;\n        while($2){\n            $4;\n            $3;\n        }\n    }\n}\nmacro ( 'new' type '[]' '{' '}' ){{}}\nmacro ( 'new' (type) '[]' '{'  ','? (expression) ((',' expression)*) '}' ) {{\n    $1 a = $2;\n    new $1[]{$3};\n    &a;\n}}\nmacro ( 'new' (type) '[' (number) ']' ){ (reserve $2 -> @$1) };\n");
-    (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("float.bc", "include stringify.bc;\nmetamethod get_sign(float this) -> int (this -> int) / 0x80000000;\nmetamethod get_exponent(float this) -> int ((this -> int) / 0x800000) % 0x100;\nmetamethod get_mantissa(float this) -> int (this -> int) % 0x800000;\n\nconst int bias = 127+23;\nmetamethod get_integer(float this) -> int {\n    int mantissa = this.mantissa + 0x800000;\n    int exponent = this.exponent;\n    if(exponent == 0xFF){ // MAXINT, Can be NaN but hecc NaN\n        return  if (this.sign)\n                    0x80000000\n                else\n                    0x7fffffff;\n    }\n    while(exponent < bias){\n        exponent ++;\n        mantissa = mantissa / 2;\n    }\n    while(exponent > bias){\n        exponent --;\n        mantissa = mantissa * 2;\n    }\n    if(this.sign == 1){\n        mantissa = 0-mantissa;\n    }\n    return mantissa;\n}\n\nmetamethod get_float(int this) -> float {\n    int sign = 0;\n    if (this > 0x7fffffff) {\n        sign = 1;\n        this = 0-this;\n    }\n    int mantissa = this;\n    int exponent = bias;\n    while(mantissa >= 0x1000000){\n        exponent ++;\n        mantissa = mantissa / 2;\n    }\n    while(mantissa < 0x800000){\n        exponent --;\n        mantissa = mantissa * 2;\n    }\n    return ((sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000) -> float);\n}\n\nmetamethod unm(float this) -> float {\n    return this.withSign(1 - this.sign);\n}\n\nabstract class float {\n    static const float one = 0x3F800000;\n    static const float zero = 0;\n    static const float ten = 0x41200000;\n\n    static function make(int sign, int exponent, int mantissa) -> float\n        ((sign * 0x80000000) + (exponent * 0x800000) + mantissa -> float);\n    virtual function withSign(int sign) -> float\n        float.make(sign, this.exponent, this.mantissa);\n    virtual function withExponent(int exponent) -> float\n        float.make(this.sign, exponent, this.mantissa);\n    virtual function withMantissa(int mantissa) -> float\n        float.make(this.sign, this.exponent, mantissa);\n    static function _sub(float this, float other) -> float {\n        if(this.sign != other.sign){\n            return float._add(this,-other);\n        }\n        if((this -> int) == 0)\n            return -other;\n        if((other -> int) == 0)\n            return this;\n        // Get both mantissas with their implied 1\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // Get both exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        // Shift left the smaller mantissa to match the larger one\n        // We don't actually have bitshift, so we have to manually multiply\n        int sign = this.sign;\n        while(exponentA < exponentB){\n            exponentA ++;\n            mantissaA = mantissaA / 2;\n        }\n        while(exponentB < exponentA){\n            exponentB ++;\n            mantissaB = mantissaB / 2;\n        }\n        if (mantissaB > mantissaA) {\n            mantissaA, mantissaB = (mantissaB, mantissaA -> int, int);\n            sign = 1 - sign;\n        }\n        // Subtract the mantissas\n        int mantissaC = mantissaA - mantissaB;\n        // Normalize the mantissa\n        while(mantissaC < 0x800000){\n            exponentA --;\n            mantissaC = mantissaC * 2;\n        }\n        // Return the result\n        return float.make(sign, exponentA, mantissaC % 0x800000);\n    }\n    static function _add(float this, float other) -> float {\n        if((this -> int) == 0)\n            return other;\n        if((other -> int) == 0)\n            return this;\n        if(this.sign != other.sign){\n            return float._sub(this,-other);\n        }\n        // Get both mantissas with their implied 1\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // Get both exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        // Shift left the smaller mantissa to match the larger one\n        // We don't actually have bitshift, so we have to manually multiply\n        while(exponentA < exponentB){\n            exponentA ++;\n            mantissaA = mantissaA / 2;\n        }\n        while(exponentB < exponentA){\n            exponentB ++;\n            mantissaB = mantissaB / 2;\n        }\n        // Add the mantissas\n        int mantissaC = mantissaA + mantissaB;\n        // Normalize the mantissa\n        while(mantissaC >= 0x1000000){\n            exponentA ++;\n            mantissaC = mantissaC / 2;\n        }\n        // Return the result\n        return float.make(this.sign, exponentA, mantissaC % 0x800000);\n    }\n    static function _mul(float this, float other) -> float {\n        if((this -> int) == 0)\n            return (0 -> float);\n        if((other -> int) == 0)\n            return (0 -> float);\n        // Get both mantissas with their implied 1\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // Get both exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        int exponentC = (exponentA + exponentB) - 134;\n        // Multiply the mantissas\n        int mantissaC = (mantissaA / 0x100) * (mantissaB / 0x100);\n        // Normalize the mantissa\n        while(mantissaC >= 0x1000000){\n            exponentC ++;\n            mantissaC = mantissaC / 2;\n        }\n        // Return the result\n        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);\n    }\n    static function _div(float this, float other) -> float {\n        if((this -> int) == 0)\n            return (0 -> float);\n        if((other -> int) == 0)\n            return (0x7fc00000 -> float);\n        // Floating point Division\n        // Apparently this is just like fancy fixed-point division\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        \n        int mantissaC = 0;\n        int div, int rem = (mantissaA * 0x100) /% mantissaB;\n        mantissaC = div * 0x8000;\n        div, rem = (rem * 0x100) /% mantissaB;\n        mantissaC = mantissaC + (div * 0x80);\n        div, rem = (rem * 0x100) /% mantissaB;\n        mantissaC = mantissaC + (div / 2);\n        int exponentC = (exponentA - exponentB) + 127;\n\n        if(mantissaC == 0){\n            return (0 -> float);\n        }\n        while(mantissaC < 0x800000){\n            exponentC --;\n            mantissaC = mantissaC * 2;\n        }\n        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);\n    }\n    static function _pow(float this, int base) -> float {\n        if (base == 0) {\n            return (0x3F800000 -> float);\n        }\n        if ((this -> int) == 0) {\n            return (0x0 -> float);\n        }\n        // Use simple binary exponentiation\n        float result = (0x3F800000 -> float);\n        while (base > 0) {\n            if (base % 2 == 1) {\n                result = float._mul(result, this);\n            }\n            this = float._mul(this, this);\n            base = base / 2;\n        }\n        return result;\n    }\n    static function _mod(float this, float other) -> float {\n        if((this -> int) == 0)\n            return (0 -> float);\n        if((other -> int) == 0)\n            return (0x7fc00000 -> float);\n        // Get both their mantissas\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // And their exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        // If A has a smaller exponant than B, return A (Because it will never be bigger than B)\n        if(exponentA < exponentB){\n            return this;\n        }\n        // Shift A until it has the same exponant as B\n        while(exponentA > exponentB){\n            exponentA --;\n            mantissaA = mantissaA * 2;\n        }\n        // Perform the modulo on the mantissas\n        int mantissaC = mantissaA % mantissaB;\n        if(mantissaC == 0){\n            return (0 -> float);\n        }\n        // Normalize the mantissa\n        while(mantissaC < 0x800000){\n            exponentA --;\n            mantissaC = mantissaC * 2;\n        }\n        // Return the result\n        return float.make(this.sign, exponentA, mantissaC % 0x800000);\n    }\n}\n\nmetamethod sub(float this, float other) -> float\n    float._sub(this, other);\n\nmetamethod add(float this, float other) -> float\n    float._add(this, other);\n\nmetamethod mul(float this, float other) -> float\n    float._mul(this, other);\n\nmetamethod div(float this, float other) -> float\n    float._div(this, other);\n\nmetamethod pow(float this, int other) -> float\n    float._pow(this, other);\n\nmetamethod mod(float this, float other) -> float\n    float._mod(this, other);\n\nmetamethod lt(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return a.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent > b.exponent\n                else\n                    a.exponent < b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa > b.mantissa\n            else\n                a.mantissa < b.mantissa;\n}\nmetamethod le(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return a.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent > b.exponent\n                else\n                    a.exponent < b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa >= b.mantissa\n            else\n                a.mantissa <= b.mantissa;\n}\nmetamethod gt(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return b.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent < b.exponent\n                else\n                    a.exponent > b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa < b.mantissa\n            else\n                a.mantissa > b.mantissa;\n}\nmetamethod ge(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return b.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent < b.exponent\n                else\n                    a.exponent > b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa <= b.mantissa\n            else\n                a.mantissa >= b.mantissa;\n}\n\nfunction almost_equal(int mantA, int mantB) -> int {\n    int diff = mantA - mantB;\n    return (diff < 0x100) || (diff > 0xFFFFFF00);\n} \n\nmetamethod eq(float a, float b) -> int\n    return (a.sign == b.sign) && (a.exponent == b.exponent) && almost_equal(a.mantissa, b.mantissa);\nmetamethod ne(float a, float b) -> int\n    return (a.sign != b.sign) || (a.exponent != b.exponent) || !almost_equal(a.mantissa, b.mantissa);\n\nmacro ( '__divide_float' (number) ',' (number) ) { const {\n    const int A = $1;\n    const int other = $2;\n    if(A == 0)\n        0\n    else if(other == 0)\n        0x7fc00000\n    else {\n        const int mantissaA = (A%0x800000) + 0x800000;\n        const int mantissaB = (other%0x800000) + 0x800000;\n        const int exponentA = (A/0x800000)%0x100;\n        const int exponentB = (other/0x800000)%0x100; \n        \n        const int mantissaC = 0;\n        const int div = (mantissaA * 0x100) / mantissaB;\n        const int rem = (mantissaA * 0x100) % mantissaB;\n        const mantissaC = div * 0x8000; \n        const div = (rem * 0x100) / mantissaB;\n        const rem = (rem * 0x100) % mantissaB;\n        const mantissaC = mantissaC + (div * 0x80);\n        const div = (rem * 0x100) / mantissaB;\n        const rem = (rem * 0x100) % mantissaB;\n        const mantissaC = mantissaC + (div / 2);\n        const int exponentC = (exponentA - exponentB) + 127;\n    \n        const if(mantissaC == 0){\n            0;\n        }else{\n            const while(mantissaC < 0x800000){\n                exponentC = exponentC - 1;\n                mantissaC = mantissaC * 2;\n            }\n            const ((((A/0x80000000) + (other/0x80000000))%2)*0x80000000) + ((exponentC%0x100) * 0x800000) + (mantissaC % 0x800000);\n        }\n    }\n}}\n\nmacro ( '__number_to_float' (number) ) { const {\n        const int A = $1;\n        const int sign = 0;\n        const if (A > 0x7fffffff) {\n            sign = 1;\n            A = 0-A; \n        }else {0}\n        const int mantissa = A;\n        const int exponent = bias;\n        const while(mantissa >= 0x1000000){\n            exponent = exponent + 1;\n            mantissa = mantissa / 2;\n        };\n        const while(mantissa < 0x800000){\n            exponent = exponent - 1;\n            mantissa = mantissa * 2; \n        };\n        const (sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000); \n} }\n\nmacro ( '__count_digits' /\\d/ (/\\d+/)) {1+__count_digits $1}\nmacro ( '__count_digits' /\\d/) {1}\n\nmacro ( '__tenth_power' (number) ) {const {\n    const int t = 1;\n    const int i = 1+$1;\n    const while(i=i-1)t = t * 10;\n    t;\n}} \n\nmacro ( (number) '.' (/\\d+/) 'f' ) { (const {\n    const int divisor = (__tenth_power __count_digits $2);\n    const int numerator = $1;\n    numerator = (numerator * divisor) + $2;\n    (__divide_float (__number_to_float numerator) , (__number_to_float divisor));\n} -> float) }\n\nfunction stringifyFloat(float this, func(int) iter){\n    int integer = this.integer;\n    intToString(integer, iter);\n    this = this - integer.float;\n    if(this == float.zero)return;\n    iter('.');\n    int i = 6;\n    while(this != float.zero && --i){\n        this = this * float.ten;\n        integer = this.integer;\n        iter(integer+'0');\n        this = this - integer.float;\n    }\n}\nmetamethod cast(float this) -> stringified stringified.from(this, stringifyFloat);");
+    (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("float.bc", "include stringify.bc;\nmetamethod get_sign(float this) -> int (this -> int) / 0x80000000;\nmetamethod get_exponent(float this) -> int ((this -> int) / 0x800000) % 0x100;\nmetamethod get_mantissa(float this) -> int (this -> int) % 0x800000;\n\nconst int bias = 127+23;\nmetamethod get_integer(float this) -> int {\n    int mantissa = this.mantissa + 0x800000;\n    int exponent = this.exponent;\n    if(exponent == 0xFF){ // MAXINT, Can be NaN but hecc NaN\n        return  if (this.sign)\n                    0x80000000\n                else\n                    0x7fffffff;\n    }\n    while(exponent < bias){\n        exponent ++;\n        mantissa = mantissa / 2;\n    }\n    while(exponent > bias){\n        exponent --;\n        mantissa = mantissa * 2;\n    }\n    if(this.sign == 1){\n        mantissa = 0-mantissa;\n    }\n    return mantissa;\n}\n\nmetamethod get_float(int this) -> float {\n    int sign = 0;\n    if (this > 0x7fffffff) {\n        sign = 1;\n        this = 0-this;\n    }\n    int mantissa = this;\n    int exponent = bias;\n    if(!mantissa){\n        return (0 -> float);\n    }\n    while(mantissa >= 0x1000000){\n        exponent ++;\n        mantissa = mantissa / 2;\n    }\n    while(mantissa < 0x800000){\n        exponent --;\n        mantissa = mantissa * 2;\n    }\n    return ((sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000) -> float);\n}\n\nmetamethod unm(float this) -> float {\n    return this.withSign(1 - this.sign);\n}\n\nabstract class float {\n    static const float one = 0x3F800000;\n    static const float zero = 0;\n    static const float ten = 0x41200000;\n\n    static function make(int sign, int exponent, int mantissa) -> float\n        ((sign * 0x80000000) + (exponent * 0x800000) + mantissa -> float);\n    virtual function withSign(int sign) -> float\n        float.make(sign, this.exponent, this.mantissa);\n    virtual function withExponent(int exponent) -> float\n        float.make(this.sign, exponent, this.mantissa);\n    virtual function withMantissa(int mantissa) -> float\n        float.make(this.sign, this.exponent, mantissa);\n    static function _sub(float this, float other) -> float {\n        if(this.sign != other.sign){\n            return float._add(this,-other);\n        }\n        if((this -> int) == 0)\n            return -other;\n        if((other -> int) == 0)\n            return this;\n        // Get both mantissas with their implied 1\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // Get both exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        // Shift left the smaller mantissa to match the larger one\n        // We don't actually have bitshift, so we have to manually multiply\n        int sign = this.sign;\n        while(exponentA < exponentB){\n            exponentA ++;\n            mantissaA = mantissaA / 2;\n        }\n        while(exponentB < exponentA){\n            exponentB ++;\n            mantissaB = mantissaB / 2;\n        }\n        if (mantissaB > mantissaA) {\n            mantissaA, mantissaB = (mantissaB, mantissaA -> int, int);\n            sign = 1 - sign;\n        }\n        // Subtract the mantissas\n        int mantissaC = mantissaA - mantissaB;\n        // Normalize the mantissa\n        while(mantissaC < 0x800000){\n            exponentA --;\n            mantissaC = mantissaC * 2;\n        }\n        // Return the result\n        return float.make(sign, exponentA, mantissaC % 0x800000);\n    }\n    static function _add(float this, float other) -> float {\n        if((this -> int) == 0)\n            return other;\n        if((other -> int) == 0)\n            return this;\n        if(this.sign != other.sign){\n            return float._sub(this,-other);\n        }\n        // Get both mantissas with their implied 1\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // Get both exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        // Shift left the smaller mantissa to match the larger one\n        // We don't actually have bitshift, so we have to manually multiply\n        while(exponentA < exponentB){\n            exponentA ++;\n            mantissaA = mantissaA / 2;\n        }\n        while(exponentB < exponentA){\n            exponentB ++;\n            mantissaB = mantissaB / 2;\n        }\n        // Add the mantissas\n        int mantissaC = mantissaA + mantissaB;\n        // Normalize the mantissa\n        while(mantissaC >= 0x1000000){\n            exponentA ++;\n            mantissaC = mantissaC / 2;\n        }\n        // Return the result\n        return float.make(this.sign, exponentA, mantissaC % 0x800000);\n    }\n    static function _mul(float this, float other) -> float {\n        if((this -> int) == 0)\n            return (0 -> float);\n        if((other -> int) == 0)\n            return (0 -> float);\n        // Get both mantissas with their implied 1\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // Get both exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        int exponentC = (exponentA + exponentB) - 134;\n        // Multiply the mantissas\n        int mantissaC = (mantissaA / 0x100) * (mantissaB / 0x100);\n        // Normalize the mantissa\n        while(mantissaC >= 0x1000000){\n            exponentC ++;\n            mantissaC = mantissaC / 2;\n        }\n        // Return the result\n        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);\n    }\n    static function _div(float this, float other) -> float {\n        if((this -> int) == 0)\n            return (0 -> float);\n        if((other -> int) == 0)\n            return (0x7fc00000 -> float);\n        // Floating point Division\n        // Apparently this is just like fancy fixed-point division\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        \n        int mantissaC = 0;\n        int div, int rem = (mantissaA * 0x100) /% mantissaB;\n        mantissaC = div * 0x8000;\n        div, rem = (rem * 0x100) /% mantissaB;\n        mantissaC = mantissaC + (div * 0x80);\n        div, rem = (rem * 0x100) /% mantissaB;\n        mantissaC = mantissaC + (div / 2);\n        int exponentC = (exponentA - exponentB) + 127;\n\n        if(mantissaC == 0){\n            return (0 -> float);\n        }\n        while(mantissaC < 0x800000){\n            exponentC --;\n            mantissaC = mantissaC * 2;\n        }\n        return float.make(this.sign + other.sign, exponentC, mantissaC % 0x800000);\n    }\n    static function _pow(float this, int base) -> float {\n        if (base == 0) {\n            return (0x3F800000 -> float);\n        }\n        if ((this -> int) == 0) {\n            return (0x0 -> float);\n        }\n        // Use simple binary exponentiation\n        float result = (0x3F800000 -> float);\n        while (base > 0) {\n            if (base % 2 == 1) {\n                result = float._mul(result, this);\n            }\n            this = float._mul(this, this);\n            base = base / 2;\n        }\n        return result;\n    }\n    static function _mod(float this, float other) -> float {\n        if((this -> int) == 0)\n            return (0 -> float);\n        if((other -> int) == 0)\n            return (0x7fc00000 -> float);\n        // Get both their mantissas\n        int mantissaA = this.mantissa + 0x800000;\n        int mantissaB = other.mantissa + 0x800000;\n        // And their exponents\n        int exponentA = this.exponent;\n        int exponentB = other.exponent;\n        // If A has a smaller exponant than B, return A (Because it will never be bigger than B)\n        if(exponentA < exponentB){\n            return this;\n        }\n        // Shift A until it has the same exponant as B\n        while(exponentA > exponentB){\n            exponentA --;\n            mantissaA = mantissaA * 2;\n        }\n        // Perform the modulo on the mantissas\n        int mantissaC = mantissaA % mantissaB;\n        if(mantissaC == 0){\n            return (0 -> float);\n        }\n        // Normalize the mantissa\n        while(mantissaC < 0x800000){\n            exponentA --;\n            mantissaC = mantissaC * 2;\n        }\n        // Return the result\n        return float.make(this.sign, exponentA, mantissaC % 0x800000);\n    }\n}\n\nmetamethod sub(float this, float other) -> float\n    float._sub(this, other);\n\nmetamethod add(float this, float other) -> float\n    float._add(this, other);\n\nmetamethod mul(float this, float other) -> float\n    float._mul(this, other);\n\nmetamethod div(float this, float other) -> float\n    float._div(this, other);\n\nmetamethod pow(float this, int other) -> float\n    float._pow(this, other);\n\nmetamethod mod(float this, float other) -> float\n    float._mod(this, other);\n\nmetamethod lt(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return a.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent > b.exponent\n                else\n                    a.exponent < b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa > b.mantissa\n            else\n                a.mantissa < b.mantissa;\n}\nmetamethod le(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return a.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent > b.exponent\n                else\n                    a.exponent < b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa >= b.mantissa\n            else\n                a.mantissa <= b.mantissa;\n}\nmetamethod gt(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return b.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent < b.exponent\n                else\n                    a.exponent > b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa < b.mantissa\n            else\n                a.mantissa > b.mantissa;\n}\nmetamethod ge(float a, float b) -> int{\n    if(a.sign != b.sign){\n        return b.sign;\n    }\n    if(a.exponent != b.exponent){\n        return if (a.sign)\n                    a.exponent < b.exponent\n                else\n                    a.exponent > b.exponent;\n    }\n    return if (a.sign)\n                a.mantissa <= b.mantissa\n            else\n                a.mantissa >= b.mantissa;\n}\n\nfunction almost_equal(int mantA, int mantB) -> int {\n    int diff = mantA - mantB;\n    return (diff < 0x100) || (diff > 0xFFFFFF00);\n} \n\nmetamethod eq(float a, float b) -> int\n    return (a.sign == b.sign) && (a.exponent == b.exponent) && almost_equal(a.mantissa, b.mantissa);\nmetamethod ne(float a, float b) -> int\n    return (a.sign != b.sign) || (a.exponent != b.exponent) || !almost_equal(a.mantissa, b.mantissa);\n\nmacro ( '__divide_float' (number) ',' (number) ) { const {\n    const int A = $1;\n    const int other = $2;\n    if(A == 0)\n        0\n    else if(other == 0)\n        0x7fc00000\n    else {\n        const int mantissaA = (A%0x800000) + 0x800000;\n        const int mantissaB = (other%0x800000) + 0x800000;\n        const int exponentA = (A/0x800000)%0x100;\n        const int exponentB = (other/0x800000)%0x100; \n        \n        const int mantissaC = 0;\n        const int div = (mantissaA * 0x100) / mantissaB;\n        const int rem = (mantissaA * 0x100) % mantissaB;\n        const mantissaC = div * 0x8000; \n        const div = (rem * 0x100) / mantissaB;\n        const rem = (rem * 0x100) % mantissaB;\n        const mantissaC = mantissaC + (div * 0x80);\n        const div = (rem * 0x100) / mantissaB;\n        const rem = (rem * 0x100) % mantissaB;\n        const mantissaC = mantissaC + (div / 2);\n        const int exponentC = (exponentA - exponentB) + 127;\n    \n        const if(mantissaC == 0){\n            0;\n        }else{\n            const while(mantissaC < 0x800000){\n                exponentC = exponentC - 1;\n                mantissaC = mantissaC * 2;\n            }\n            const ((((A/0x80000000) + (other/0x80000000))%2)*0x80000000) + ((exponentC%0x100) * 0x800000) + (mantissaC % 0x800000);\n        }\n    }\n}}\n\nmacro ( '__number_to_float' (number) ) { const {\n        const int A = $1;\n        const int sign = 0;\n        const if (A > 0x7fffffff) {\n            sign = 1;\n            A = 0-A; \n        }else {0}\n        const int mantissa = A;\n        const int exponent = bias;\n        const while(mantissa >= 0x1000000){\n            exponent = exponent + 1;\n            mantissa = mantissa / 2;\n        };\n        const while(mantissa < 0x800000){\n            exponent = exponent - 1;\n            mantissa = mantissa * 2; \n        };\n        const (sign * 0x80000000) + (exponent * 0x800000) + (mantissa % 0x800000); \n} }\n\nmacro ( '__count_digits' /\\d/ (/\\d+/)) {1+__count_digits $1}\nmacro ( '__count_digits' /\\d/) {1}\n\nmacro ( '__tenth_power' (number) ) {const {\n    const int t = 1;\n    const int i = 1+$1;\n    const while(i=i-1)t = t * 10;\n    t;\n}} \n\nmacro ( (number) '.' (/\\d+/) 'f' ) { (const {\n    const int divisor = (__tenth_power __count_digits $2);\n    const int numerator = $1;\n    numerator = (numerator * divisor) + $2;\n    (__divide_float (__number_to_float numerator) , (__number_to_float divisor));\n} -> float) }\n\nfunction stringifyFloat(float this, func(int) iter){\n    int integer = this.integer;\n    intToString(integer, iter);\n    this = this - integer.float;\n    if(this == float.zero)return;\n    iter('.');\n    int i = 6;\n    while(this != float.zero && --i){\n        this = this * float.ten;\n        integer = this.integer;\n        iter(integer+'0');\n        this = this - integer.float;\n    }\n}\nmetamethod cast(float this) -> stringified stringified.from(this, stringifyFloat);");
+    (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("format.bc", "include stringify.bc;\n\nfunction qFormat(func(int) iterator, stringified s){\n    iterator('\"');\n    s(function(int c){\n        if (c == '\"' || c == '\\\\'){\n            iterator('\\\\');\n        }\n        iterator(c);\n    });\n    iterator('\"');\n} \n\nfunction xFormat(func(int) iterator, stringified s){\n    // Treat the n value of the stringified as a lowercase hex number\n    @int buffer = reserve 8;\n    int n = s.n;\n    if(n == 0){\n        iterator('0');\n    }\n    int l = 0;\n    while(n){\n        n, int m = n /% 16;\n        if (m > 9)\n            buffer[l] = ('a' + m - 10)\n        else\n            buffer[l] = '0' + m;\n        l++;\n    }\n    while(l){\n        l--;\n        iterator(buffer[l]);\n    }\n}\n\nfunction XFormat(func(int) iterator, stringified s){\n    // Treat the n value of the stringified as a lowercase hex number\n    @int buffer = reserve 8;\n    int n = s.n;\n    if(n == 0){\n        iterator('0');\n    }\n    int l = 0;\n    while(n){\n        n, int m = n /% 16;\n        if (m > 9)\n            buffer[l] = ('A' + m - 10)\n        else\n            buffer[l] = '0' + m;\n        l++;\n    }\n    while(l){\n        l--;\n        iterator(buffer[l]);\n    }\n}\n\nfunction bFormat(func(int) iterator, stringified s){\n    // Treat the n value of the stringified as a lowercase hex number\n    @int buffer = reserve 32;\n    int n = s.n;\n    if(n == 0){\n        iterator('0');\n    }\n    int l = 0;\n    while(n){\n        n, int m = n /% 2;\n        buffer[l] = '0' + m;\n        l++;\n    }\n    while(l){\n        l--;\n        iterator(buffer[l]);\n    }\n}\n\nfunction format(func(int) iterator, stringified formatSpecifier, params stringified[count] elements){\n    // Tracks if a $ was primed\n    int isSpecial = 0;\n    // One of 0, 'q', 'x', 'X', 'b'\n    int modifier = 0;\n    formatSpecifier(function(int c){\n        if (isSpecial) {\n            if (c == 'q'){\n                modifier = 'q';\n                return;\n            }\n            if (c == 'x'){\n                modifier = 'x';\n                return;\n            }\n            if (c == 'X'){\n                modifier = 'X';\n                return;\n            }\n            if (c == 'b'){\n                modifier = 'b';\n                return;\n            }\n            // Iterate the element, use any special modifier if required.\n            if (c >= '0' && c <= '9'){\n                if(modifier == 'q'){\n                    qFormat(iterator, elements[c - '0']);\n                } else if(modifier == 'x'){\n                    xFormat(iterator, elements[c - '0']);\n                } else if(modifier == 'X'){\n                    XFormat(iterator, elements[c - '0']);\n                } else if(modifier == 'b'){\n                    bFormat(iterator, elements[c - '0']);\n                } else {\n                    elements[c - '0'](iterator); \n                }\n                isSpecial = 0;\n                modifier = 0;\n                return\n            }\n            isSpecial = 0;\n            modifier = 0;\n            iterator(c);\n            return;\n        }\n        \n        if (c == '$'){\n            isSpecial = 1;\n        }else{\n            iterator(c);\n        }\n    });\n}\n\nfunction printf(stringified formatSpecifier, params stringified[count] elements){\n    format(putchar, formatSpecifier, count, elements);\n}\n\nfunction print(params stringified[count] elements){\n    stringified.deliminated(putchar, \"\\t\", count, elements);\n}");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("int.bc", "metamethod pow(int _a, int _b) -> int {\n    if(!_b)\n        return 1;\n    if(_b == 1)\n        return _a;\n    int _result = 1;\n    while(_b > 0){\n        if(!(_b%2)){\n            _b = _b / 2;\n            _a = _a * _a;\n        }else{\n            _b = _b - 1\n            _result = _result * _a;\n            _b = _b / 2;\n            _a = _a * _a\n        }\n    }\n    return _result;\n}\nmetamethod bshl(int _a, int _b) -> int {\n    return _a * (2 ^ _b);\n}\nmetamethod bshr(int _a, int _b) -> int {\n    return _a / (2 ^ _b);\n}\nmetamethod band(int _a, int _b) -> int {\n    int _o = 0;\n    int _i = 1;\n    while (_i){\n        _o = _o + ((_a%2)*(_b%2))*_i;\n        _i = _i * 2;\n        _a = _a / 2;\n        _b = _b / 2;\n    }\n    return _o;\n}\nmetamethod bor(int _a, int _b) -> int {\n    int _o = 0;\n    int _i = 1;\n    while (_i){\n        _o = _o + !(!(_a%2)*!(_b%2))*_i;\n        _i = _i * 2;\n        _a = _a / 2;\n        _b = _b / 2;\n    }\n    return _o;\n}\nmetamethod bxor(int _a, int _b) -> int {\n    int _o = 0;\n    int _i = 1;\n    while (_i){\n        _o = _o + (_a%2!=_b%2)*_i;\n        _i = _i * 2;\n        _a = _a / 2;\n        _b = _b / 2;\n    }\n    return _o;\n}\n\n// int can cast to everything implicitely, via modulo\n// Whilst int acts as an insigned value generally, we allow it to be cast to signed values destructively.\nmetamethod cast(int _i) -> u32 (_i -> u32);\nmetamethod cast(int _i) -> s32 (_i -> s32);\n// Likewise, everything can cast to int implicitly\nmetamethod cast(u32 _i) -> int (_i -> int);\nmetamethod cast(s32 _i) -> int (_i -> int);\n// u32s can cast to u16 and u8, and so on (Including in reverse)\nmetamethod cast(u32 _i) -> u16 ((_i -> int) % 0x10000 -> u16);\nmetamethod cast(u32 _i) -> u8  ((_i -> int) % 0x100 -> u8);\nmetamethod cast(u16 _i) -> u32 ((_i -> int) -> u32);\nmetamethod cast(u16 _i) -> u8  ((_i -> int) % 0x100 -> u8);\nmetamethod cast(u8  _i) -> u32 ((_i -> int) -> u32);\nmetamethod cast(u8  _i) -> u16 ((_i -> int) -> u16);\n// Same with signed values, although special attention must be paid to the sign bit\n// To go from s32, we take the value % 0x8000, which leaves 15 bits of data and the sign bit\n// We transfer the sign bit by adding (_i / 0x80000000) * 0x8000, Same for the other bits and values\nmetamethod cast(s32 _i) -> s16 (\n    ((_i -> int) % 0x8000) + ((_i -> int) / 0x80000000) * 0x8000 -> s16\n);\nmetamethod cast(s32 _i) -> s8 (\n    ((_i -> int) % 0x80) + ((_i -> int) / 0x80000000) * 0x80 -> s8\n);\nmetamethod cast(s16 _i) -> s32 (\n    ((_i -> int) % 0x8000) + ((_i -> int) / 0x8000) * 0x80000000 -> s32\n);\nmetamethod cast(s16 _i) -> s8 (\n    ((_i -> int) % 0x80) + ((_i -> int) / 0x8000) * 0x80 -> s8\n);\nmetamethod cast(s8 _i) -> s32 (\n    ((_i -> int) % 0x8000) + ((_i -> int) / 0x80) * 0x80000000 -> s32\n);\nmetamethod cast(s8 _i) -> s16 (\n    ((_i -> int) % 0x80) + ((_i -> int) / 0x80) * 0x8000 -> s16\n);\n// Finally, u32 cast to s32 and so on, though without the sign bit\nmetamethod get_signed(u32 _i) -> s32 ((_i -> int) % 0x80000000 -> s32);\nmetamethod get_unsigned(s32 _i) -> u32 ((_i -> int) % 0x80000000 -> u32);\n\nmetamethod lt(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) < ((_b -> int)+0x80000000) ;\nmetamethod gt(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) > ((_b -> int)+0x80000000) ;\nmetamethod le(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) <= ((_b -> int)+0x80000000) ;\nmetamethod ge(s32 _a, s32 _b) -> int ((_a -> int)+0x80000000) >= ((_b -> int)+0x80000000) ;\n\nabstract class u32 {}\nabstract class u16 {}\nabstract class u8  {}\nabstract class s32 {}\nabstract class s16 {}\nabstract class s8  {}");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("pair.bc", "struct pair<A,B> {\n    A a;\n    B b;\n    new(A a, B b){\n        this.a = a;\n        this.b = b;\n    };\n}");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("stack.bc", "metamethod getindex<T>(Stack<T> this, int i) -> T{\n    return *(this.Data+i%this.Length);\n}\nmetamethod setindex<T>(Stack<T> this, int i, T v){\n    *(this.Data+i%this.Length) = v;\n}\nmetamethod ptrindex<T>(Stack<T> this, int i) -> @T{\n    return this.Data+i%this.Length;\n}\n\nclass Stack<T> {\n    int Capacity;\n    int Length;\n    @T Data;\n    \n    new(){\n        this.Capacity = 8;\n        this.Data = alloc(8);\n    }\n    \n    new(int cap){\n        this.Capacity = cap;\n        this.Data = alloc(cap);\n    }\n     \n    virtual function Push(T v){\n        if(this.Length == this.Capacity){\n            @T newBuff = alloc(this.Capacity * 2);\n            int i = 0;\n            while(i < this.Length){\n                *(newBuff + i) = *(this.Data + i);\n                i++;\n            }\n            this.Capacity = this.Capacity * 2;\n            @T oldData = this.Data;\n            this.Data = newBuff;\n            free(oldData);\n        };\n        *(this.Data + this.Length) = v;\n        this.Length++;\n    }\n    virtual function Pop() -> T {\n        if(this.Length){\n            this.Length--;\n            return *(this.Data + this.Length);\n        }\n        return (0 -> T);\n    }\n    virtual function Peek() -> T {\n        if(this.Length) return *(this.Data + this.Length - 1);\n        return (0 -> T);\n    }\n    virtual function Has() -> int {\n        if this.Length return 1;\n        return 0;\n    }\n}");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("string.bc", "abstract class string {}\nmetamethod get_length(string this) -> int *(this -> @int);\nmetamethod get_chars(string this) -> @int 1+(this -> @int);\nmetamethod getindex(string this, int index) -> int this.chars[index % this.length];\nmetamethod setindex(string this, int index, int value) -> int this.chars[index % this.length] = value;\nmetamethod ptrindex(string this, int index) -> @int &this.chars[index % this.length]");
-    (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("stringify.bc", "include pair.bc;\ninclude string.bc;\n\nmetamethod cast(pair<void, stringifyMethod> this) -> stringified (this -> stringified);\nmetamethod cast(stringified this) -> pair<void, stringifyMethod> (this -> pair<void, stringifyMethod>);\n\nabstract class stringifyMethod {}\nmetamethod cast(stringifyMethod this) -> func(void, func(int)) (this -> func(void, func(int)));\nmetamethod cast(func(void, func(int)) this) -> stringifyMethod (this -> stringifyMethod);\n\nstruct stringified {\n    void n;\n    stringifyMethod method;\n    static function from(void n, stringifyMethod method) -> stringified new pair(n, method);\n    static function deliminated(func(int) iterator, stringified seperator, params stringified[count] elements){\n        void sep = seperator.n;\n        func(void,func(int)) method = seperator.method;\n        int i = 0;\n        while(i < count){\n            if(i){\n                method(sep, iterator);\n            };\n            (elements[i].method -> func(int, func(int)))(elements[i].n, iterator);\n            i++;\n        }\n    }\n    static function join(func(int) iterator, params stringified[count] elements){\n        int i = 0;\n        while(i < count){\n            (elements[i].method -> func(int, func(int)))(elements[i].n, iterator);\n            i++;\n        }\n    }\n}\n\nfunction intToString(int n, func(int) iterator){\n    if(!n){\n        iterator('0');\n        return;\n    }\n    @int buffer = reserve 10;\n    int i = 0;\n    while(n){\n        n,int m = n /% 10;\n        buffer[i] = (m+'0');\n        i++;\n    }\n    while(i--){\n        iterator(buffer[i]);\n    }\n}\nmetamethod cast(int n) -> stringified stringified.from(n, intToString);\n\nfunction iterateString(string s, func(int) iterator){\n    int i = 0;\n    int l = s.length;\n    while(i < l){\n        iterator(s[i]);\n        i++;\n    }\n}\nmetamethod cast(string s) -> stringified stringified.from(s, iterateString);");
+    (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("stringify.bc", "include pair.bc;\ninclude string.bc;\n\nmetamethod cast(pair<void, stringifyMethod> this) -> stringified (this -> stringified);\nmetamethod cast(stringified this) -> pair<void, stringifyMethod> (this -> pair<void, stringifyMethod>);\n\nabstract class stringifyMethod {}\nmetamethod cast(stringifyMethod this) -> func(void, func(int)) (this -> func(void, func(int)));\nmetamethod cast(func(void, func(int)) this) -> stringifyMethod (this -> stringifyMethod);\n\nmetamethod call(stringified s, func(int) iterator)\n    (s.method -> func(int,func(int)))(s.n, iterator)\n\nstruct stringified {\n    void n;\n    stringifyMethod method;\n    static function from(void n, stringifyMethod method) -> stringified new pair(n, method);\n    static function deliminated(func(int) iterator, stringified seperator, params stringified[count] elements){\n        int i = 0;\n        while(i < count){\n            if(i){\n                seperator(iterator);\n            };\n            elements[i](iterator);\n            i++;\n        }\n    }\n    static function join(func(int) iterator, params stringified[count] elements){\n        int i = 0;\n        while(i < count){\n            elements[i](iterator);\n            i++;\n        }\n    }\n}\n\nfunction intToString(int n, func(int) iterator){\n    if(!n){\n        iterator('0');\n        return;\n    }\n    @int buffer = reserve 10;\n    int i = 0;\n    while(n){\n        n,int m = n /% 10;\n        buffer[i] = (m+'0');\n        i++;\n    }\n    while(i--){\n        iterator(buffer[i]);\n    }\n}\nmetamethod cast(int n) -> stringified stringified.from(n, intToString);\n\nfunction iterateString(string s, func(int) iterator){\n    int i = 0;\n    int l = s.length;\n    while(i < l){\n        iterator(s[i]);\n        i++;\n    }\n}\nmetamethod cast(string s) -> stringified stringified.from(s, iterateString);");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("term.bc", "include stack.bc;\ninclude string.bc;\n\nmetamethod get_R(Color3B c) -> int {\n    return (c->int)%2;\n}\nmetamethod get_G(Color3B c) -> int {\n    return ((c->int)/2)%2;\n}\nmetamethod get_B(Color3B c) -> int {\n    return ((c->int)/4)%2;\n}\nabstract class Color3B {\n    static function FromRGB(int r, int g, int b) -> Color3B{\n        return ((r%2) + (g%2)*2 + (b%2)*4 -> Color3B);\n    }\n}\n\nColor3B Black   = (0 -> Color3B);\nColor3B Red     = (1 -> Color3B);\nColor3B Green   = (2 -> Color3B);\nColor3B Yellow  = (3 -> Color3B);\nColor3B Blue    = (4 -> Color3B);\nColor3B Magenta = (5 -> Color3B);\nColor3B Cyan    = (6 -> Color3B);\nColor3B White   = (7 -> Color3B);\n\n@int numBuffer = reserve 10;\nabstract class Term {    \n    static function WriteLen(int length, @int data){\n        while(length--)putchar(data++);\n    }\n\n    static function Write(string text){\n        Term.WriteLen(text.length, text.chars);\n    }\n    \n    static function WriteNum(int n){\n        if(n==0)return putchar('0');\n        int l = 0;\n        while(n>0){\n            n,int m = n/%10;\n            *((numBuffer+4)-l) = '0' + m;\n            l++;\n        }\n        Term.WriteLen(l, (numBuffer+5)-l);\n    }\n    \n    static function smethod(int c){\n        putchar(0x1B);\n        putchar('[');\n        putchar(c);\n    }\n    \n    static function method(int n, int c){\n        putchar(0x1B);\n        putchar('[');\n        Term.WriteNum(n);\n        putchar(c);\n    }\n    \n    // Formatting stuff\n    static function format(int n){\n        Term.method(n, 'm');\n    }\n    static __Style Style;\n    static __Cursor Cursor;\n    \n    // Clear\n    static function ClearAfter(){\n        return Term.smethod('J');\n    }\n    static function ClearBefore(){\n        return Term.method(1, 'J');\n    }\n    static function Clear(){\n        return Term.method(2, 'J');\n    }\n    \n    // Events\n    static function PollEvents(){\n        int r = getchar();\n        if(r){\n            int low = getchar();\n            int high = getchar();\n            int i = 0;\n            if(r == 1){\n                while(i < Term.Click.Length){\n                    (Term.Click[i++] -> func(int,int))(low, high)\n                }\n            }else if (r == 2){\n                while(i < Term.KeyDown.Length){\n                    (Term.KeyDown[i++] -> func(int,int))(low, high)\n                }\n            }else if (r == 3){\n                while(i < Term.KeyUp.Length){\n                    (Term.KeyUp[i++] -> func(int,int))(low, high)\n                }\n            }else if (r == 4){\n                while(i < Term.Frame.Length){\n                    (Term.Frame[i++] -> func())()\n                }\n            }\n        }\n    }\n    \n    \n    \n    static Stack<func(int,int)> KeyDown = reserve Stack(1);\n    static Stack<func(int,int)> KeyUp = reserve Stack(1);\n    static Stack<func(int,int)> Click = reserve Stack(1);\n    static Stack<func()> Frame = reserve Stack(1);\n}\n\nmetamethod get_Fore(__Style s) -> void{return 0;}\nmetamethod get_Back(__Style s) -> void{return 0;}\nmetamethod get_Bold(__Style s) -> void{return 0;}\nmetamethod get_Italic(__Style s) -> void{return 0;}\nmetamethod get_Underline(__Style s) -> void{return 0;}\nmetamethod get_Striked(__Style s) -> void{return 0;}\n\nmetamethod set_Fore(__Style s, Color3B col){\n    return Term.format(30 + (col -> int));\n}\nmetamethod set_Back(__Style s, Color3B col){\n    return Term.format(40 + (col -> int));\n}\nmetamethod set_Bold(__Style s, int b){\n    if(b)Term.format(1)\n    else Term.format(22);\n}\nmetamethod set_Italic(__Style s, int b){\n    if(b)Term.format(3)\n    else Term.format(23);\n}\nmetamethod set_Underline(__Style s, int b){\n    if(b)Term.format(4)\n    else Term.format(24);\n}\nmetamethod set_Striked(__Style s, int b){\n    if(b)Term.format(9)\n    else Term.format(29);\n}\nabstract class __Style {\n}\n\nmetamethod get_X(__Cursor c) -> void {return 0};\nmetamethod get_Y(__Cursor c) -> void {return 0};\nmetamethod get_Up(__Cursor c) -> void {return 0};\nmetamethod get_Down(__Cursor c) -> void {return 0};\nmetamethod get_Left(__Cursor c) -> void {return 0};\nmetamethod get_Right(__Cursor c) -> void {return 0};\n\nmetamethod set_X(__Cursor c, int x){ return Term.method(x, 'G') }\nmetamethod set_Y(__Cursor c, int y){ return Term.method(y, 'H') }\nabstract class __Cursor {\n    virtual function Up(int n){ return Term.method(n, 'A') }\n    virtual function Down(int n){ return Term.method(n, 'B') }\n    virtual function Left(int n){ return Term.method(n, 'D') }\n    virtual function Right(int n){ return Term.method(n, 'C') }\n    virtual function Push(){ return Term.smethod('s') }\n    virtual function Pop(){ return Term.smethod('u') }\n    virtual function Reset(){ return Term.smethod('H') }\n    virtual function NextLine(){ return Term.method(1, 'E') }\n    virtual function PrevLine(){ return Term.method(1, 'F') }\n}");
     (0,_App__WEBPACK_IMPORTED_MODULE_0__.GenerateReadOnly)("*", Object.keys(_App__WEBPACK_IMPORTED_MODULE_0__.AllReadOnlys).map(function (c) {
       return "include ".concat(c, ";");
@@ -11126,20 +11185,20 @@
     interp.RegA = interp.RegB;
   }], ["PTRA", '', function (interp, arg) {
     var _interp$Heap, _interp$Heap2, _interp$Heap3, _interp$Heap4;
-    interp.RegA = (((_interp$Heap = interp.Heap[interp.RegA * 4 + 0]) !== null && _interp$Heap !== void 0 ? _interp$Heap : 0) << 24) + (((_interp$Heap2 = interp.Heap[interp.RegA * 4 + 1]) !== null && _interp$Heap2 !== void 0 ? _interp$Heap2 : 0) << 16) + (((_interp$Heap3 = interp.Heap[interp.RegA * 4 + 2]) !== null && _interp$Heap3 !== void 0 ? _interp$Heap3 : 0) << 8) + (((_interp$Heap4 = interp.Heap[interp.RegA * 4 + 3]) !== null && _interp$Heap4 !== void 0 ? _interp$Heap4 : 0) << 0);
+    interp.RegA = (((_interp$Heap = interp.Heap[interp.RegA * 4 + 0]) !== null && _interp$Heap !== void 0 ? _interp$Heap : 0) << 24) + (((_interp$Heap2 = interp.Heap[interp.RegA * 4 + 1]) !== null && _interp$Heap2 !== void 0 ? _interp$Heap2 : 0) << 16) + (((_interp$Heap3 = interp.Heap[interp.RegA * 4 + 2]) !== null && _interp$Heap3 !== void 0 ? _interp$Heap3 : 0) << 8) + (((_interp$Heap4 = interp.Heap[interp.RegA * 4 + 3]) !== null && _interp$Heap4 !== void 0 ? _interp$Heap4 : 0) << 0) >>> 0;
   }], ["PTRB", '', function (interp, arg) {
     var _interp$Heap5, _interp$Heap6, _interp$Heap7, _interp$Heap8;
-    interp.RegB = (((_interp$Heap5 = interp.Heap[interp.RegB * 4 + 0]) !== null && _interp$Heap5 !== void 0 ? _interp$Heap5 : 0) << 24) + (((_interp$Heap6 = interp.Heap[interp.RegB * 4 + 1]) !== null && _interp$Heap6 !== void 0 ? _interp$Heap6 : 0) << 16) + (((_interp$Heap7 = interp.Heap[interp.RegB * 4 + 2]) !== null && _interp$Heap7 !== void 0 ? _interp$Heap7 : 0) << 8) + (((_interp$Heap8 = interp.Heap[interp.RegB * 4 + 3]) !== null && _interp$Heap8 !== void 0 ? _interp$Heap8 : 0) << 0);
+    interp.RegB = (((_interp$Heap5 = interp.Heap[interp.RegB * 4 + 0]) !== null && _interp$Heap5 !== void 0 ? _interp$Heap5 : 0) << 24) + (((_interp$Heap6 = interp.Heap[interp.RegB * 4 + 1]) !== null && _interp$Heap6 !== void 0 ? _interp$Heap6 : 0) << 16) + (((_interp$Heap7 = interp.Heap[interp.RegB * 4 + 2]) !== null && _interp$Heap7 !== void 0 ? _interp$Heap7 : 0) << 8) + (((_interp$Heap8 = interp.Heap[interp.RegB * 4 + 3]) !== null && _interp$Heap8 !== void 0 ? _interp$Heap8 : 0) << 0) >>> 0;
   }], ["PUTBPTRA", '', function (interp, arg) {
-    interp.Heap[interp.RegA * 4 + 0] = interp.RegB >> 24 & 0xff;
-    interp.Heap[interp.RegA * 4 + 1] = interp.RegB >> 16 & 0xff;
-    interp.Heap[interp.RegA * 4 + 2] = interp.RegB >> 8 & 0xff;
-    interp.Heap[interp.RegA * 4 + 3] = interp.RegB >> 0 & 0xff;
+    interp.Heap[interp.RegA * 4 + 0] = interp.RegB >>> 24 & 0xff;
+    interp.Heap[interp.RegA * 4 + 1] = interp.RegB >>> 16 & 0xff;
+    interp.Heap[interp.RegA * 4 + 2] = interp.RegB >>> 8 & 0xff;
+    interp.Heap[interp.RegA * 4 + 3] = interp.RegB >>> 0 & 0xff;
   }], ["PUTAPTRB", '', function (interp, arg) {
-    interp.Heap[interp.RegB * 4 + 0] = interp.RegA >> 24 & 0xff;
-    interp.Heap[interp.RegB * 4 + 1] = interp.RegA >> 16 & 0xff;
-    interp.Heap[interp.RegB * 4 + 2] = interp.RegA >> 8 & 0xff;
-    interp.Heap[interp.RegB * 4 + 3] = interp.RegA >> 0 & 0xff;
+    interp.Heap[interp.RegB * 4 + 0] = interp.RegA >>> 24 & 0xff;
+    interp.Heap[interp.RegB * 4 + 1] = interp.RegA >>> 16 & 0xff;
+    interp.Heap[interp.RegB * 4 + 2] = interp.RegA >>> 8 & 0xff;
+    interp.Heap[interp.RegB * 4 + 3] = interp.RegA >>> 0 & 0xff;
   }], ["JMP", '', function (interp, arg) {
     interp.IP = arg * 4;
   }], ["JMPA", '', function (interp, arg) {
@@ -35175,8 +35234,8 @@
     html4: {
       entities: {
         "&apos;": "'",
-        "&nbsp": " ",
-        "&nbsp;": " ",
+        "&nbsp": " ",
+        "&nbsp;": " ",
         "&iexcl": "¡",
         "&iexcl;": "¡",
         "&cent": "¢",
@@ -35530,7 +35589,7 @@
       },
       characters: {
         "'": "&apos;",
-        " ": "&nbsp;",
+        " ": "&nbsp;",
         "¡": "&iexcl;",
         "¢": "&cent;",
         "£": "&pound;",
@@ -36114,7 +36173,7 @@
         "&NewLine;": "\n",
         "&Nfr;": "𝔑",
         "&NoBreak;": "⁠",
-        "&NonBreakingSpace;": " ",
+        "&NonBreakingSpace;": " ",
         "&Nopf;": "ℕ",
         "&Not;": "⫬",
         "&NotCongruent;": "≢",
@@ -37254,8 +37313,8 @@
         "&natur;": "♮",
         "&natural;": "♮",
         "&naturals;": "ℕ",
-        "&nbsp": " ",
-        "&nbsp;": " ",
+        "&nbsp": " ",
+        "&nbsp;": " ",
         "&nbump;": "≎̸",
         "&nbumpe;": "≏̸",
         "&ncap;": "⩃",
@@ -38302,7 +38361,7 @@
         "\n": "&NewLine;",
         "𝔑": "&Nfr;",
         "⁠": "&NoBreak;",
-        " ": "&nbsp;",
+        " ": "&nbsp;",
         "ℕ": "&naturals;",
         "⫬": "&Not;",
         "≢": "&nequiv;",
@@ -84691,35 +84750,6 @@
   }
   
   /***/ }),
-    
-  /***/ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/client/ReactRefreshEntry.js":
-  /*!***************************************************************************************!*\
-    !*** ./node_modules/@pmmmwh/react-refresh-webpack-plugin/client/ReactRefreshEntry.js ***!
-    \***************************************************************************************/
-  /***/ (function(__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
-  
-  /* global __react_refresh_library__ */
-  
-  var safeThis = __webpack_require__(/*! core-js-pure/features/global-this */ "./node_modules/core-js-pure/features/global-this.js");
-  var RefreshRuntime = __webpack_require__(/*! react-refresh/runtime */ "./node_modules/react-refresh/runtime.js");
-  if (true) {
-    if (typeof safeThis !== 'undefined') {
-      var $RefreshInjected$ = '__reactRefreshInjected';
-      // Namespace the injected flag (if necessary) for monorepo compatibility
-      if (false) {}
-  
-      // Only inject the runtime if it hasn't been injected
-      if (!safeThis[$RefreshInjected$]) {
-        // Inject refresh runtime into global scope
-        RefreshRuntime.injectIntoGlobalHook(safeThis);
-  
-        // Mark the runtime as injected to prevent double-injection
-        safeThis[$RefreshInjected$] = true;
-      }
-    }
-  }
-  
-  /***/ }),
   
   /***/ "./node_modules/@babel/runtime/helpers/esm/arrayLikeToArray.js":
   /*!*********************************************************************!*\
@@ -85865,7 +85895,7 @@
   /******/ 	
   /******/ 	/* webpack/runtime/getFullHash */
   /******/ 	!function() {
-  /******/ 		__webpack_require__.h = function() { return "ff2905b0bf27bf9683ec"; }
+  /******/ 		__webpack_require__.h = function() { return "fa10643bdefbbdae02db"; }
   /******/ 	}();
   /******/ 	
   /******/ 	/* webpack/runtime/global */
