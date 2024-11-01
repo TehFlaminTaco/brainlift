@@ -94,7 +94,9 @@ export abstract class Expression extends Token {
   abstract GetTypes(scope: Scope): VarType[];
 
   TryEvaluate(scope: Scope): [stack: VarType[], body: string[]] {
+    let oldCurScope = Scope.CURRENT;
     try {
+      Scope.CURRENT = scope;
       var o = this.Evaluate(scope);
       scope.InformType(this, o[0]);
       return o;
@@ -113,6 +115,8 @@ export abstract class Expression extends Token {
       } else {
         throw new TokenError([this], "" + e);
       }
+    } finally {
+      Scope.CURRENT = oldCurScope;
     }
   }
   TrySimplify(scope: Scope): number | null {

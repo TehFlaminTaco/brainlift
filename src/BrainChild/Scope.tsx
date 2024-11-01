@@ -4,6 +4,7 @@ import { Claimer } from "./brainchild";
 import { VarType, FuncType } from "./vartype";
 import { ASMInterpreter } from "../brainasm";
 import { Token } from "./token";
+import { Include } from "./include";
 
 // Metamethod stuff //
 let simpleAdd: string[] = [`apopb`, `apopa`, `addab`, `apushb`];
@@ -72,12 +73,15 @@ export class Scope {
       ReturnTypes: VarType[],
       ArgTypes: VarType[],
       Code: string[],
-      GenericArgs: string[]
+      GenericArgs: string[],
+      File: string
     ][];
   } = {};
 
   SetupIntMetamethods() {
-    simpleOps.forEach((c) => {
+    let oldFile = this.CurrentFile;
+    this.CurrentFile = "GLOBAL";
+    try {simpleOps.forEach((c) => {
       this.AddMetamethodSoft(
         c[0],
         [VarType.Int],
@@ -95,6 +99,9 @@ export class Scope {
     this.AddMetamethodSoft("not", [VarType.Int], [VarType.Int], simpleNot);
     this.AddMetamethodSoft("unm", [VarType.Int], [VarType.Int], simpleUnm);
     this.AddMetamethodSoft("unp", [VarType.Int], [VarType.Int], simpleUnp);
+    } finally {
+      this.CurrentFile = oldFile;
+    }
   }
 
   TryFallbacks(
@@ -135,65 +142,71 @@ export class Scope {
   }
 
   SoftInit(t: VarType) {
-    // Used to register common Metamethods. Ugly hack, (Ofc)
-    if (t.TypeName === "int" && t.PointerDepth === 0) {
-      this.SetupIntMetamethods();
-      return;
-    }
-    if (t instanceof FuncType) {
-      this.AddMetamethodSoft("truthy", [VarType.Int], [t], []);
-      return;
-    }
-    if (t.PointerDepth > 0) {
-      let t1 = t.WithDeltaPointerDepth(-1);
-      // Same as basic math, but with Pointers.
-      simpleOps.forEach((c) => {
-        this.AddMetamethodSoft(c[0], [t], [t, VarType.Int], c[1]);
-        this.AddMetamethodSoft(c[0], [t], [VarType.Int, t], c[1]);
-        this.AddMetamethodSoft(c[0], [t], [VarType.VoidPtr, t], c[1]);
-        this.AddMetamethodSoft(c[0], [t], [t, VarType.VoidPtr], c[1]);
-      });
-      this.AddMetamethodSoft(
-        "divmod",
-        [t, VarType.Int],
-        [t, VarType.Int],
-        simpleDivMod
-      );
-      this.AddMetamethodSoft(
-        "divmod",
-        [t, VarType.Int],
-        [VarType.Int, t],
-        simpleDivMod
-      );
-      this.AddMetamethodSoft(
-        "divmod",
-        [t, VarType.Int],
-        [VarType.VoidPtr, t],
-        simpleDivMod
-      );
-      this.AddMetamethodSoft(
-        "divmod",
-        [t, VarType.Int],
-        [t, VarType.VoidPtr],
-        simpleDivMod
-      );
-      this.AddMetamethodSoft("truthy", [VarType.Int], [t], []);
-      this.AddMetamethodSoft("not", [VarType.Int], [t], simpleNot);
-      this.AddMetamethodSoft("unm", [t], [t], simpleUnm);
-      this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
-      this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int],
-        t1.IsWide()
-        ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, ...t1.Get('a', 'a')]
-        : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
-      this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int, t.WithDeltaPointerDepth(-1)],
-        t1.IsWide()
-        ? [`REM Wide set metamethod`, ...t1.FlipAB(), `apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addab`, ...t1.FlipBA(), ...t1.Put("a","b"), `REM end wide set metamethod`]
-        : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
-      this.AddMetamethodSoft("ptrindex", [t], [t, VarType.Int],
-        t1.IsWide()
-        ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, `apusha`]
-        : simpleAdd);
-      return;
+    let oldFile = this.CurrentFile;
+    this.CurrentFile = "GLOBAL";
+    try {
+      // Used to register common Metamethods. Ugly hack, (Ofc)
+      if (t.TypeName === "int" && t.PointerDepth === 0) {
+        this.SetupIntMetamethods();
+        return;
+      }
+      if (t instanceof FuncType) {
+        this.AddMetamethodSoft("truthy", [VarType.Int], [t], []);
+        return;
+      }
+      if (t.PointerDepth > 0) {
+        let t1 = t.WithDeltaPointerDepth(-1);
+        // Same as basic math, but with Pointers.
+        simpleOps.forEach((c) => {
+          this.AddMetamethodSoft(c[0], [t], [t, VarType.Int], c[1]);
+          this.AddMetamethodSoft(c[0], [t], [VarType.Int, t], c[1]);
+          this.AddMetamethodSoft(c[0], [t], [VarType.VoidPtr, t], c[1]);
+          this.AddMetamethodSoft(c[0], [t], [t, VarType.VoidPtr], c[1]);
+        });
+        this.AddMetamethodSoft(
+          "divmod",
+          [t, VarType.Int],
+          [t, VarType.Int],
+          simpleDivMod
+        );
+        this.AddMetamethodSoft(
+          "divmod",
+          [t, VarType.Int],
+          [VarType.Int, t],
+          simpleDivMod
+        );
+        this.AddMetamethodSoft(
+          "divmod",
+          [t, VarType.Int],
+          [VarType.VoidPtr, t],
+          simpleDivMod
+        );
+        this.AddMetamethodSoft(
+          "divmod",
+          [t, VarType.Int],
+          [t, VarType.VoidPtr],
+          simpleDivMod
+        );
+        this.AddMetamethodSoft("truthy", [VarType.Int], [t], []);
+        this.AddMetamethodSoft("not", [VarType.Int], [t], simpleNot);
+        this.AddMetamethodSoft("unm", [t], [t], simpleUnm);
+        this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
+        this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int],
+          t1.IsWide()
+          ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, ...t1.Get('a', 'a')]
+          : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
+        this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int, t.WithDeltaPointerDepth(-1)],
+          t1.IsWide()
+          ? [`REM Wide set metamethod`, ...t1.FlipAB(), `apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addab`, ...t1.FlipBA(), ...t1.Put("a","b"), `REM end wide set metamethod`]
+          : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
+        this.AddMetamethodSoft("ptrindex", [t], [t, VarType.Int],
+          t1.IsWide()
+          ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, `apusha`]
+          : simpleAdd);
+        return;
+      }
+    }finally{
+      this.CurrentFile = oldFile;
     }
   }
 
@@ -202,7 +215,8 @@ export class Scope {
       ReturnTypes: VarType[],
       ArgTypes: VarType[],
       Code: string[],
-      GenericArgs: string[]
+      GenericArgs: string[],
+      File: string
     ],
     inTypes: VarType[],
     exactly: boolean
@@ -210,7 +224,8 @@ export class Scope {
     ReturnTypes: VarType[],
     ArgTypes: VarType[],
     Code: string[],
-    GenericArgs: string[]
+    GenericArgs: string[],
+    File: string
   ] {
     if (mm[3].length === 0) return mm;
     var genericifiedMap: { [generic: string]: VarType } = {};
@@ -330,7 +345,7 @@ export class Scope {
     for (let i = 0; i < mm[0].length; i++) {
       returnTypes.push(forceSwap(mm[0][i]));
     }
-    return [returnTypes, argTypes, mm[2], []];
+    return [returnTypes, argTypes, mm[2], [], mm[4]];
   }
 
   GetMetamethod(
@@ -354,6 +369,7 @@ export class Scope {
     var mm = this.MetaMethods[name];
     if (mm === undefined)
       return options.canFallback ? this.TryFallbacks(name, argTypes) : null;
+    mm = mm.filter(c=>c[4]==="GLOBAL" || c[4]===this.CurrentFile || Include.Includes[this.CurrentFile]?.has(c[4]))
     mm = mm.map((c) => this.RemapGenericMetamethod(c, argTypes, options.exactly!));
     mm = mm.filter((c) => c[3].length === 0); // Anything with generics failed to map
     mm = mm.filter((c) =>
@@ -398,7 +414,7 @@ export class Scope {
         return;
       }
     }
-    this.MetaMethods[name].push([retTypes, argTypes, code, []]);
+    this.MetaMethods[name].push([retTypes, argTypes, code, [], this.CurrentFile]);
   }
 
   private CurrentRequiredReturns: VarType[] | null = [];

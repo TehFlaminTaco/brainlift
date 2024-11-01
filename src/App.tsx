@@ -42,7 +42,7 @@ const pako = require("pako");
 
 export const AllReadOnlys: {[name: string]: string} = {};
 
-export const VERSION = "0.5";
+export const VERSION = "0.5.1";
 
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;

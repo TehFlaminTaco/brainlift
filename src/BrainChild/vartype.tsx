@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { ASMInterpreter } from "../brainasm";
 import { Claim, Claimer, Keywords } from "./brainchild";
+import { Include } from "./include";
 import { Scope } from "./Scope";
 import { Token } from "./token";
 import {
@@ -267,7 +268,7 @@ export class VarType extends Token {
     targetStack: VarType[],
     receivedStack: VarType[],
     restricted: Set<
-      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
     > = new Set(),
     sticky: boolean = false
   ): [success: boolean, count?: number] {
@@ -289,20 +290,21 @@ export class VarType extends Token {
 
         // Get all metamethods
         var metas: Set<
-          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
         > = new Set();
         for (let t in scope.UserTypes) {
           scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
         }
-        let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
         // That are casts to and from
-        metasArr = metasArr.filter((c) => !restricted.has(c));
-        metasArr = metasArr.filter((c) =>
+        let metasArr = [...metas]
+          .filter(c=>c[4]==="GLOBAL" || c[4]===scope.CurrentFile || Include.Includes[scope.CurrentFile]?.has(c[4]))
+          .filter((c) =>
           VarType.CanCoaxSoft(
             targetStack.slice(targetPtr, targetPtr + c[0].length),
             c[0]
           )
-        );
+        ).map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
+        metasArr = metasArr.filter((c) => !restricted.has(c));
         metasArr = metasArr.filter((c) => {
           let r = new Set(restricted);
           r.add(c);
@@ -316,7 +318,7 @@ export class VarType extends Token {
 
         // Score all metas by how good a match they are
         var scoreArr: [
-          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]],
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string],
           score: number
         ][] = metasArr.map((c) => [
           c,
@@ -353,7 +355,7 @@ export class VarType extends Token {
     targetStack: VarType[],
     receivedStack: VarType[],
     restricted: Set<
-      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
     > = new Set(),
     cleanup: boolean = true,
     sticky: boolean = false
@@ -388,7 +390,7 @@ export class VarType extends Token {
 
         // Get all metamethods
         var metas: Set<
-          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
         > = new Set();
         for (let t in scope.UserTypes) {
           scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
@@ -415,7 +417,7 @@ export class VarType extends Token {
 
         // Score all metas by how good a match they are
         var scoreArr: [
-          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]],
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string],
           score: number
         ][] = metasArr.map((c) => [
           c,

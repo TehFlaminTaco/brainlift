@@ -436,6 +436,7 @@ export class FunctionDefinition extends Expression {
         this.Args.map((c) => c.Type!),
         [`call ${label}`],
         this.GenericArgs,
+        scope.CurrentFile
       ]);
       return [[], []];
     }
