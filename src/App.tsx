@@ -1004,13 +1004,13 @@ export default function App() {
     url.searchParams.set("code", codeParam);
     let encoder = new TextEncoder();
     let byteCount = encoder.encode(mainCode).length;
-    let textToCopy = `# [BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}.\n\n${mainCode.replace(/^/mg, "\t")}\n\n[Try It Online!](${url})`;
+    let textToCopy = `# [BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}\n\n${mainCode.replace(/^/mg, "\t")}\n\n[Try It Online!](${url})`;
     navigator.clipboard.writeText(textToCopy);
   }
   
   fetch("../version.txt").then(c=>c.text().then(txt=>{
     if(txt.match(/^[\d.]+$/) && txt != VERSION){
-      (document.getElementById("updateHeader") as any).innerHTML = `v${VERSION} - Latest version is v${txt} - Click <a href="../">HERE</a> to try it out`
+      (document.getElementById("updateHeader") as any).innerHTML = `v${VERSION} - Latest version is v${txt} - Click <a href="#" onclick="window.location=(''+window.location).replace('${VERSION}','${txt}')">HERE</a> to try it out`
     }else{
       (document.getElementById("updateHeader") as any).innerHTML = `v${VERSION}`
     }

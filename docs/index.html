@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirect to latest version</title>
-    <script>window.location = "./v0.5.1"</script>
+    <script>fetch("./version.txt").then(c=>c.text().then(txt=>window.location = `./v${txt}`))</script>
 </head>
 <body>
-    Redirecting to latest version! If that doesn't work, click <a href="./v0.5.1">HERE</a>
+    <noscript>BrainChild needs JS to run!</noscript>
+    Redirecting to latest version!
 </body>
 </html>

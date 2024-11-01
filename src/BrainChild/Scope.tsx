@@ -197,8 +197,8 @@ export class Scope {
           : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
         this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int, t.WithDeltaPointerDepth(-1)],
           t1.IsWide()
-          ? [`REM Wide set metamethod`, ...t1.FlipAB(), `apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addab`, ...t1.FlipBA(), ...t1.Put("a","b"), `REM end wide set metamethod`]
-          : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "bpusha", "putaptrb", "bpopa", "apusha"]);
+          ? [...t1.FlipAB(), `apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addab`, ...t1.FlipBA(), ...t1.Put("a","b")]
+          : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "putaptrb"]);
         this.AddMetamethodSoft("ptrindex", [t], [t, VarType.Int],
           t1.IsWide()
           ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, `apusha`]
