@@ -42,6 +42,8 @@ const pako = require("pako");
 
 export const AllReadOnlys: {[name: string]: string} = {};
 
+export const VERSION = "0.5";
+
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;
 let editors: { [path: string]: Ace.Editor } = {};
@@ -1006,11 +1008,19 @@ export default function App() {
     navigator.clipboard.writeText(textToCopy);
   }
   
+  fetch("../version.txt").then(c=>c.text().then(txt=>{
+    if(txt.match(/^[\d.]+$/) && txt != VERSION){
+      (document.getElementById("updateHeader") as any).innerHTML = `v${VERSION} - Latest version is v${txt} - Click <a href="../">HERE</a> to try it out`
+    }else{
+      (document.getElementById("updateHeader") as any).innerHTML = `v${VERSION}`
+    }
+  }))
 
   return (
     <div className="App">
       <title>BrainChild</title>
       <h1>BrainChild</h1>
+      <div id="updateHeader"></div>
       <div id="top">
         <div id="editors">
           <div id="editorButtons">
