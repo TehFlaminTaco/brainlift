@@ -1,27 +1,41 @@
 import { Claimer } from "./brainchild";
-import { Expression } from "./expression";
-import { Identifier } from "./identifier";
-import { Statement } from "./statement";
+import { Expression, LeftDonor, RightDonor } from "./expression";
 import { Scope } from "./Scope";
-import { VariableDecleration } from "./variabledefinition";
 import { VarType } from "./vartype";
-import { Variable, Assignable } from "./variable";
+import {
+  Variable,
+  Assignable,
+  IsAssignable,
+  IsSimpleAssignable,
+  SimpleAssignable,
+} from "./variable";
+import { IsSimplifyable, Simplifyable } from "./Simplifyable";
 
-export class Assignment extends Statement {
+export class Assignment
+  extends Expression
+  implements LeftDonor, RightDonor, Simplifyable
+{
+  Left: Expression | null = null;
   Targets: Assignable[] = [];
-  Value: Expression | null = null;
-  static Claim(claimer: Claimer): Assignment | null {
+  Right: Expression | null = null;
+  Precedence = 2;
+  LeftRightAssociative = false;
+  static RightClaim(left: Expression, claimer: Claimer): Assignment | null {
     var flag = claimer.Flag();
-    var target: Assignable | null = Variable.ClaimAssignable(claimer);
-    if (target === null) {
+    if (!IsAssignable(left)) {
       flag.Fail();
       return null;
     }
     var targets: Assignable[] = [];
-    while (target !== null) {
-      targets.push(target);
+    while (true) {
       if (!claimer.Claim(/,/).Success) break;
-      target = Variable.ClaimAssignable(claimer);
+      var target: Assignable | null = Variable.ClaimAssignable(claimer, true);
+      if (target === null) {
+        flag.Fail();
+        return null;
+      }
+      targets.push(target);
+      target = Variable.ClaimAssignable(claimer, true);
     }
     /* TODO: Add operator here */
     if (!claimer.Claim(/=/).Success) {
@@ -33,32 +47,82 @@ export class Assignment extends Statement {
       flag.Fail();
       return null;
     }
-    var ass = new Assignment(claimer, flag);
+    var ass = new Assignment(claimer, left.Claim);
     ass.Targets = targets;
-    ass.Value = val;
+    ass.Left = left;
+    ass.Right = val;
     return ass;
   }
 
-  Evaluate(scope: Scope): string[] {
+  Simplify(scope: Scope): number | null {
+    if (IsSimpleAssignable(this.Left) && IsSimplifyable(this.Right)) {
+      let n = (this.Right!).TrySimplify(scope);
+      if (n === null) return null;
+      if ((this.Left as any as SimpleAssignable).AssignSimple(scope, n))
+        return n;
+    }
+    return null;
+  }
+
+  Evaluate(scope: Scope): [VarType[], string[]] {
+    if (IsSimpleAssignable(this.Left) && IsSimplifyable(this.Right)) {
+      let n = (this.Right!).TrySimplify(scope);
+      if (n !== null) {
+        if ((this.Left as any as SimpleAssignable).AssignSimple(scope, n)) {
+          return [
+            (this.Left as any as Assignable).GetTypes(scope),
+            [`apush ${(n & 0xffffffff) >>> 0}`],
+          ];
+        }
+      }
+    }
     var o: string[] = [this.GetLine()];
-    var res = this.Value!.Evaluate(scope);
+    var res = this.Right!.TryEvaluate(scope);
     o.push(...res[1]);
     var targetTypes: VarType[] = [];
-    for (let i = 0; i < this.Targets.length; i++) {
-      targetTypes.push(this.Targets[i].GetType(scope));
+    let targs: Assignable[] = [
+      this.Left as unknown as Assignable,
+      ...this.Targets,
+    ];
+    for (let i = 0; i < targs.length; i++) {
+      targs[i].InformType(scope, res[0][0]);
+      targetTypes.push(...targs[i].GetTypes(scope));
     }
     // Match targetTypes to next fit returnType.
-    o.push(...VarType.Coax(targetTypes, res[0]));
-    for (let i = this.Targets.length - 1; i >= 0; i--) {
-      o.push(...this.Targets[i].Assign(scope, targetTypes[i]));
+    var coaxed = VarType.Coax(targetTypes, res[0]);
+    o.push(...coaxed[0]);
+    for (let i = targs.length - 1; i >= 0; i--) {
+      o.push(...targs[i].Assign(scope, coaxed[2][i]));
     }
-
-    return o;
+    for (let i = 0; i < targs.length; i++) {
+      o.push(...(targs[i] as unknown as Expression).TryEvaluate(scope)[1]);
+    }
+    // Redefine them for the purse of `var a = 3`.
+    targetTypes = [];
+    for (let i = 0; i < targs.length; i++) {
+      targetTypes.push(...targs[i].GetTypes(scope));
+    }
+    return [targetTypes, o];
   }
 
   DefinitelyReturns(): boolean {
     return false;
   }
+
+  GetTypes(scope: Scope): VarType[] {
+    let targetTypes: VarType[] = [];
+    let targs: Assignable[] = [
+      this.Left as unknown as Assignable,
+      ...this.Targets,
+    ];
+    let rightTypes = this.Right!.GetTypes(scope);
+    
+    for (let i = 0; i < targs.length; i++) {
+      targs[i].InformType(scope, rightTypes[0]);
+      targetTypes.push(...targs[i].GetTypes(scope));
+    }
+    return targetTypes;
+  }
 }
 
-Statement.Register(Assignment.Claim);
+Expression.RegisterRight(Assignment.RightClaim);

@@ -14,10 +14,10 @@ export class ExpressionStatement extends Statement {
   }
   Evaluate(scope: Scope): string[] {
     var o: string[] = [];
-    var res = this.Body!.Evaluate(scope);
+    var res = this.Body!.TryEvaluate(scope);
     o.push(...res[1]);
     for (var i = 0; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     return o;
   }

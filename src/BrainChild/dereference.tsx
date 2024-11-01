@@ -1,11 +1,17 @@
-import { Expression } from "./expression";
+import { Expression, RightDonor } from "./expression";
 import { Scope } from "./Scope";
 import { VarType } from "./vartype";
-import { ReadWritable, Referenceable, Variable } from "./variable";
+import { ReadWritable, Variable } from "./variable";
 import { Claimer } from "./brainchild";
 
-export class Dereference extends Expression implements ReadWritable {
-  Target: Expression | null = null;
+export class Dereference
+  extends Expression
+  implements ReadWritable, RightDonor
+{
+  InformType(scope: Scope, anyType: VarType): void {}
+  Right: Expression | null = null;
+  Precedence: number = 18;
+  LeftRightAssociative = false;
   static Claim(claimer: Claimer): Expression | null {
     var ref = claimer.Claim(/\*/);
     if (!ref.Success) return null;
@@ -15,19 +21,19 @@ export class Dereference extends Expression implements ReadWritable {
       return null;
     }
     var derefer = new Dereference(claimer, ref);
-    derefer.Target = target;
+    derefer.Right = target;
     return derefer;
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var o: string[] = [this.GetLine()];
-    var res = this.Target!.Evaluate(scope);
+    var res = this.Right!.TryEvaluate(scope);
     o.push(...res[1]);
     if (res[0].length <= 0) {
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
@@ -39,13 +45,13 @@ export class Dereference extends Expression implements ReadWritable {
   }
   Assign(scope: Scope, anyType: VarType): string[] {
     var o: string[] = [];
-    var res = this.Target!.Evaluate(scope);
+    var res = this.Right!.TryEvaluate(scope);
     o.push(...res[1]);
     if (res[0].length <= 0) {
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
@@ -55,13 +61,13 @@ export class Dereference extends Expression implements ReadWritable {
   }
   Read(scope: Scope): string[] {
     var o: string[] = [];
-    var res = this.Target!.Evaluate(scope);
+    var res = this.Right!.TryEvaluate(scope);
     o.push(...res[1]);
     if (res[0].length <= 0) {
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(`apop`);
+      o.push(...res[0][i].APop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
@@ -71,11 +77,15 @@ export class Dereference extends Expression implements ReadWritable {
     dereferenced.PointerDepth--;
     return o;
   }
-  GetType(scope: Scope): VarType {
-    var res = this.Target!.Evaluate(scope);
-    var dereferenced = res[0][0].Clone();
-    dereferenced.PointerDepth--;
-    return dereferenced;
+  GetTypes(scope: Scope): VarType[] {
+    var res = this.Right!.GetTypes(scope);
+    var oTypes: VarType[] = [];
+    res.forEach((r) => {
+      let dereferenced = r.Clone();
+      dereferenced.PointerDepth--;
+      oTypes.push(dereferenced);
+    });
+    return oTypes;
   }
 }
 

@@ -21,9 +21,13 @@ export class Reference extends Expression {
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     return [
-      [this.Target!.GetReferenceType(scope)],
-      this.Target!.GetPointer(scope)
+      this.Target!.GetReferenceTypes(scope),
+      this.Target!.GetPointer(scope),
     ];
+  }
+
+  GetTypes(scope: Scope): VarType[] {
+    return this.Target!.GetReferenceTypes(scope);
   }
 }
 

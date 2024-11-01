@@ -1,0 +1,254 @@
+function pow(int a, int b) -> int{
+    if(b == 1)return a;
+    if(b == 0)return 1;
+    if(b%2 == 1)return pow(a, b-1)*a;
+    int v = pow(a, b/2);
+    return v * v;
+}
+
+abstract class sint7 {
+    metamethod get_sign(sint7 this) -> int {
+        return (this -> int) / 64;
+    }
+    metamethod get_value(sint7 this) -> int {
+        return (this -> int) % 64;
+    }
+    static function withSign(sint7 s, int sign) {
+        return (s.value + (sign * 64) -> sint7);
+    }
+    static function withVal(sint7 s, int v) -> sint7 {
+        return (v + s.sign*64 -> sint7);
+    }
+    metamethod add(sint7 a, sint7 b) -> sint7 {
+        return (((a->int) + (b->int))%128 -> sint7);
+    }
+    metamethod sub(sint7 a, sint7 b) -> sint7 {
+        return (((a->int) - (b->int))%128 -> sint7);
+    }
+    metamethod increment(sint7 a) -> sint7 {
+        return (((a->int)+1)%128 -> sint7);
+    }
+    metamethod decrement(sint7 a) -> sint7 {
+        return (((a->int)-1)%128 -> sint7);
+    }
+    metamethod gt(sint7 a, sint7 b) -> int {
+        int as = a.sign;
+        int bs = b.sign;
+        if(as > bs)return bs;
+        if(bs > as)return as;
+        return a.value > b.value;
+    }
+    metamethod lt(sint7 a, sint7 b) -> int {
+        int as = a.sign;
+        int bs = b.sign;
+        if(as > bs)return as;
+        if(bs > as)return bs;
+        return a.value < b.value;
+    }
+    metamethod eq(sint7 a, sint7 b) -> int {
+        return (a -> int) == (b -> int);
+    }
+    metamethod cast(int i) -> sint7 {
+        return (i%64 -> sint7);
+    }
+}
+
+abstract class float {
+    static function fromParts(int fract, sint7 exp, int sign) -> float {
+        return ( fract + ((exp -> int) + sign * 128)*256 -> float);
+    }
+
+    metamethod get_high(float f) -> int {
+        return (f->int)/256;
+    }
+    metamethod get_sign(float f) -> int {
+        return f.high/128;
+    }
+    metamethod get_exp(float f) -> sint7 {
+        return ( f.high%128 -> sint7 );
+    }
+    metamethod get_fract(float f) -> int {
+        return (f->int)%256;
+    }
+    metamethod get_parts(float f) -> int, sint7, int {
+        return f.fract, f.exp, f.sign;
+    }
+    
+    static function withHigh(float f, int h) -> float {
+        return ( f.sign + (h * 256) -> float );
+    }
+    static function withSign(float f, int sign) -> float {
+        return float.fromParts(f.fract, f.exp, sign);
+    }
+    static function withExp(float f, sint7 exp) -> float {
+        return float.fromParts(f.fract, exp, f.sign);
+    }
+    
+    static function shiftExp(float f, sint7 amount) -> float {
+        int ff, sint7 fe, int fs = f.parts;
+        if(amount < 0){
+            ff = ff * pow(2, amount.value);
+            fe = fe + amount;
+        }else{
+            ff = ff / pow(2, amount.value);
+            fe = fe + amount;
+        }
+        ff = ff % 256;
+        return float.fromParts(ff, fe, fs);
+    }
+    
+    metamethod get_neg(float f) -> float {
+        return float.withSign(f, 1 - f.sign);
+    }
+    
+    metamethod add(float a, float b) -> float {
+        int as = a.sign;
+        int bs = b.sign;
+        if(bs != as)return a - b.neg;
+        sint7 ae = a.exp;
+        sint7 be = b.exp;
+        sint7 e = ae;
+        if(be > ae)e = be;
+        a = float.shiftExp(a, e - ae);
+        b = float.shiftExp(b, e - be);
+        int af = a.fract;
+        int bf = b.fract;
+        int f = af + bf;
+        while(f >= 256){
+            f = f / 2;
+            e = e + 1;
+        }
+        return float.fromParts(f, e, as);
+    }
+    metamethod sub(float a, float b) -> float {
+        int as = a.sign;
+        int bs = b.sign;
+        if(bs != as)return a - b.neg;
+        sint7 ae = a.exp;
+        sint7 be = b.exp;
+        sint7 e = ae;
+        if(be > ae)e = be;
+        a = float.shiftExp(a, e - ae);
+        b = float.shiftExp(b, e - be);
+        int af = a.fract;
+        int bf = b.fract;
+        int f = (af - bf)%256;
+        if(bf > af){
+            f = (bf - af)%256;
+            as = 1 - as;
+        }
+        return float.fromParts(f, e, as);
+    }
+    metamethod mul(float a, float b) -> float {
+        int as = a.sign;
+        int bs = b.sign
+        int s = as != bs;
+        sint7 ae = a.exp;
+        sint7 be = b.exp;
+        int af = a.fract;
+        int bf = b.fract;
+        sint7 e = ae + be;
+        int f = af * bf;
+        while(f >= 256){
+             f = f / 2;
+             e = e + 1;
+        }
+        return float.fromParts(f, e, s);
+    }
+    metamethod div(float a, float b) -> float {
+        int as = a.sign;
+        int bs = b.sign;
+        int s = as != bs;
+        if(a.fract == 0)return (0 -> float);
+        if(b.fract == 0)return (0 -> float);
+        while(a.fract < 128)a = float.shiftExp(a, (0->sint7)-1);
+        while(b.fract < 128)b = float.shiftExp(b, (0->sint7)-1);
+        
+        sint7 ae = a.exp;
+        sint7 be = b.exp;
+        sint7 e = ae;
+        if(ae < be){a = float.shiftExp(a, be - ae); e = be}
+        else b = float.shiftExp(b, ae - be);
+        
+        int af = a.fract;
+        int bf = b.fract;
+        int f, int m = af /% bf;
+        m = m * (256 / bf);
+        int leadingZeroes = 0;
+        while((leadingZeroes < 8) * (m%pow(2,leadingZeroes) == 0)){
+            leadingZeroes++;
+        }
+        while((leadingZeroes < 8) * (f < 128)){
+            f = f * 2;
+            m = m * 2;
+            f = f + (m/256);
+            m = m % 256;
+            e--;
+            leadingZeroes++;
+        }
+        return float.fromParts(f, e, s);
+    }
+    
+    metamethod cast(int i) -> float {
+        sint7 e = (0 -> sint7);
+        while(i >= 256){
+            i = i / 2;
+            e++;
+        }
+        return float.fromParts(i, e, 0);
+    }
+    metamethod gt(float a, float b) -> int {
+        int as = a.sign;
+        int bs = b.sign;
+        if(as > bs)return 0;
+        if(bs > as)return 1;
+        if(a.fract == 0)return 0;
+        if(b.fract == 0)return a.fract > 0;
+        sint7 ae = a.exp;
+        sint7 be = b.exp;
+        if(ae > be+7)return 1;
+        if(be > ae+7)return 0;
+        sint7 e = ae;
+        if(be < ae){
+            e = be;
+        }
+        int af = a.fract;
+        int bf = b.fract;
+        while(ae > e){
+            ae--;
+            af = af * 2;
+        }
+        while(be > e){
+            be--;
+            bf = bf * 2;
+        }
+        return af > bf;
+    }
+    metamethod lt(float a, float b) -> int {
+        int as = a.sign;
+        int bs = b.sign;
+        if(as > bs)return 1;
+        if(bs > as)return 0;
+        if(a.fract == 0)return b.fract > 0;
+        if(b.fract == 0)return 0;
+        sint7 ae = a.exp;
+        sint7 be = b.exp;
+        if(ae > be+7)return 0;
+        if(be > ae+7)return 1;
+        sint7 e = ae;
+        if(be < ae){
+            e = be;
+        }
+        int af = a.fract;
+        int bf = b.fract;
+        while(ae > e){
+            ae--;
+            af = af * 2;
+        }
+        while(be > e){
+            be--;
+            bf = bf * 2;
+        }
+        return af < bf;
+    }
+}

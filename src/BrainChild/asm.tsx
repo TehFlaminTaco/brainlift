@@ -1,13 +1,24 @@
 import { Claimer } from "./brainchild";
-import { Statement } from "./statement";
 import { Scope } from "./Scope";
+import { Expression } from "./expression";
+import { VarType } from "./vartype";
 
-export class ASM extends Statement {
+export class ASM extends Expression {
   Instructions: string[] = [];
+  RetTypes: VarType[] = [];
   static Claim(claimer: Claimer) {
     var asm = claimer.Claim(/asm\b/);
     if (!asm.Success) {
       return null;
+    }
+    var retTypes = [];
+    if (claimer.Claim(/->/).Success) {
+      var retType = VarType.Claim(claimer);
+      while (retType !== null) {
+        retTypes.push(retType);
+        if (!claimer.Claim(/,/).Success) break;
+        retType = VarType.Claim(claimer);
+      }
     }
     if (!claimer.Claim(/\{/).Success) {
       asm.Fail();
@@ -22,19 +33,27 @@ export class ASM extends Statement {
     as.Instructions = theRest
       .Body![1].split("\n")
       .map((c) => c.replace(/^\s+/, ""));
+    as.RetTypes = retTypes;
     return as;
   }
-  Evaluate(scope: Scope): string[] {
+  Evaluate(scope: Scope): [VarType[], string[]] {
     return [
-      this.GetLine(),
-      ...this.Instructions.map((c) =>
-        c.replace(/\[([a-zA-Z_]\w*\b)\]/, (_, a) => scope.Get(a)[1])
-      ),
+      this.RetTypes,
+      [
+        this.GetLine(),
+        ...this.Instructions.map((c) =>
+          c.replace(/\[([a-zA-Z_]\w*\b)\]/, (_, a) => scope.Get(a)[1])
+        ),
+      ],
     ];
+  }
+
+  GetTypes(): VarType[] {
+    return this.RetTypes;
   }
 
   DefinitelyReturns(): boolean {
     return false;
   }
 }
-Statement.Register(ASM.Claim);
+Expression.Register(ASM.Claim);

@@ -1,0 +1,25 @@
+class _{};
+
+class array {
+    int length;
+    void* data;
+    metamethod array(int l){
+        this.data = alloc(l);
+        this.length = l;
+    }
+    
+    metamethod getindex(array this, int i) -> void{
+        return *(this.data+i%this.length);
+    }
+    metamethod setindex(array this, int i, void v){
+        *(this.data+i%this.length) = v;
+    }
+    metamethod ptrindex(array this, int i) -> void*{
+        return this.data+i%this.length;
+    }
+}
+
+array a = new array(5);
+
+a[1] = 2;
+void* b = &a[0];

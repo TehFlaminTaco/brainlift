@@ -12,7 +12,7 @@ export class CharConstant extends Expression {
     }
     var v: number = 0;
     if (n.Body![0] === "'\"'") {
-      v = 32;
+      v = 34;
     } else {
       v = JSON.parse(n.Body![0].replace(/'(\\?.)'/, '"$1"')).charCodeAt(0);
     }
@@ -23,6 +23,10 @@ export class CharConstant extends Expression {
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     return [[VarType.Int], [this.GetLine(), `apush ${this.Value}`]];
+  }
+
+  GetTypes(scope: Scope): VarType[] {
+    return [VarType.Int];
   }
 }
 Expression.Register(CharConstant.Claim);

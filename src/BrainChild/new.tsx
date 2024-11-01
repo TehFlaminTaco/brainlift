@@ -39,45 +39,70 @@ export class New extends Expression {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    var o: string[] = [this.GetLine()];
-    var objectType = scope.UserTypes[this.Type!.Name];
+    let o: string[] = [this.GetLine()];
+    let falseClaimer = new Claimer("");
+    let falseFlag = falseClaimer.Flag();
+    let vType = new VarType(falseClaimer, falseFlag);
+    let objectType = scope.UserTypes[this.Type!.Name];
     if (objectType === undefined)
       throw new Error(`Cannot find type ${this.Type!.Name}`);
-    var classType = objectType.TypeType;
+    let classType = objectType.TypeType;
     if (!classType)
       throw new Error(`Cannot find type type for ${this.Type!.Name}`);
-    var targTypeNewMethod = classType.Children["new"];
+    let targTypeNewMethod = classType.Children["new"];
     if (targTypeNewMethod === undefined)
       throw new Error(`Cannot find new method for type ${this.Type!.Name}`);
-    o.push(
-      `seta ${classType.ClassLabel}`,
-      `adda ${targTypeNewMethod[1]}`,
-      `ptra`,
-      `calla`,
-      `apopa`,
-      `apusha`,
-      `bpusha`
-    );
-    var falseClaimer = new Claimer("");
-    var falseFlag = falseClaimer.Flag();
-    var vType = new VarType(falseClaimer, falseFlag);
     vType.TypeName = this.Type!.Name;
-    var argTypes: VarType[] = [];
+    let argTypes: VarType[] = [];
     for (let i = 0; i < this.Arguments.length; i++) {
-      var arg = this.Arguments[i].Evaluate(scope);
+      let arg = this.Arguments[i].TryEvaluate(scope);
       o.push(...arg[1]);
       argTypes.push(...arg[0]);
     }
     argTypes.push(vType);
-    var constructorMetamethod = objectType.GetMetamethod(
+    let constructorMetamethod = scope.GetMetamethod(
       this.Type!.Name,
       argTypes
     );
     if (!constructorMetamethod)
       throw new Error(`Cannot find constructor new ${argTypes}`);
-    o.push(`bpopa`, `apusha`);
+    o.push(
+      `seta ${classType.ClassLabel}`,
+      `adda ${targTypeNewMethod[1]}`,
+      `ptra`,
+      `calla`
+    );
     o.push(...constructorMetamethod[2]);
-    return [[vType], o];
+    return [constructorMetamethod[0], o];
+  }
+  
+  GetTypes(scope: Scope): VarType[] {
+    let falseClaimer = new Claimer("");
+    let falseFlag = falseClaimer.Flag();
+    let vType = new VarType(falseClaimer, falseFlag);
+    let objectType = scope.UserTypes[this.Type!.Name];
+    if (objectType === undefined)
+      throw new Error(`Cannot find type ${this.Type!.Name}`);
+    let classType = objectType.TypeType;
+    if (!classType)
+      throw new Error(`Cannot find type type for ${this.Type!.Name}`);
+    let targTypeNewMethod = classType.Children["new"];
+    if (targTypeNewMethod === undefined)
+      throw new Error(`Cannot find new method for type ${this.Type!.Name}`);
+    vType.TypeName = this.Type!.Name;
+    let argTypes: VarType[] = [];
+    for (let i = 0; i < this.Arguments.length; i++) {
+      let arg = this.Arguments[i].TryEvaluate(scope);
+      argTypes.push(...arg[0]);
+    }
+    argTypes.push(vType);
+    let constructorMetamethod = scope.GetMetamethod(
+      this.Type!.Name,
+      argTypes
+    );
+    if (!constructorMetamethod)
+      throw new Error(`Cannot find constructor new ${argTypes}`);
+    return constructorMetamethod[0];
   }
 }
 Expression.Register(New.Claim);

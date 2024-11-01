@@ -9,7 +9,13 @@ import {
   GeneratePointerType,
   TypeDefinition,
   GenerateFuncType,
+  TypeDiscard,
 } from "./Types";
+
+function hexPad(value: number, amount: number = 2) {
+  value ??= 0;
+  return ("0".repeat(amount) + value.toString(16).toUpperCase()).slice(-amount);
+}
 
 /*
   (FuncType | "int" | "void" | identifier) "*"*
@@ -17,6 +23,9 @@ import {
 export class VarType extends Token {
   PointerDepth: number = 0;
   TypeName: string = "";
+  Generics: VarType[] = [];
+
+  static CurrentGenericArgs: { [key: string]: string } = {};
 
   static Int: VarType;
   static Void: VarType;
@@ -24,34 +33,55 @@ export class VarType extends Token {
   static VoidPtr: VarType;
   static Any: VarType;
   static Type: VarType;
+  static String: VarType;
+  static Discard: VarType;
 
   static Claim(claimer: Claimer): VarType | null {
     var ftype = FuncType.Claim(claimer);
-    if (ftype !== null) return VarType.Point(ftype, claimer);
-    var c = claimer.Claim(/(int|void|[a-zA-Z_]\w*)\b/);
+    if (ftype !== null) return ftype;
+    let flag = claimer.Flag();
+    let depth = 0;
+    let ptr = claimer.Claim(/@+/);
+    if (ptr.Success) depth = ptr.Body![0].length;
+    var c = claimer.Claim(/(int|void|discard|[a-zA-Z_]\w*)\b/);
     if (!c.Success) return null;
     if (
       Keywords.includes(c.Body![0]) &&
       c.Body![0] !== "int" &&
-      c.Body![0] !== "void"
+      c.Body![0] !== "void" &&
+      c.Body![0] !== "discard"
     ) {
-      c.Fail();
+      flag.Fail();
       return null;
     }
-    var vType = new VarType(claimer, c);
-    vType.TypeName = c.Body![0];
-    return VarType.Point(vType, claimer);
-  }
-
-  static Point(typ: VarType, claimer: Claimer) {
-    var d = 0;
-    var c: Claim;
-    while ((c = claimer.Claim(/\*/)).Success) {
-      d++;
+    let generics: VarType[] = [];
+    let f = claimer.Flag();
+    if (claimer.Claim(/</).Success) {
+      while (true) {
+        let t = VarType.Claim(claimer);
+        if (t === null) {
+          generics = [];
+          f.Fail();
+          break;
+        }
+        generics.push(t);
+        if (!claimer.Claim(/,/).Success) {
+          break;
+        }
+      }
+      if (!claimer.Claim(/>/).Success) {
+        generics = [];
+        f.Fail();
+      }
     }
-    typ.PointerDepth = d;
-    typ.End += d;
-    return typ;
+    let vType = new VarType(claimer, flag);
+    vType.TypeName = c.Body![0];
+    if (VarType.CurrentGenericArgs[vType.TypeName] !== undefined) {
+      vType.TypeName = VarType.CurrentGenericArgs[vType.TypeName];
+    }
+    vType.PointerDepth = depth;
+    vType.Generics = generics;
+    return vType;
   }
 
   Equals(other: VarType): boolean {
@@ -65,8 +95,14 @@ export class VarType extends Token {
     );
   }
 
-  AssignableFrom(other: VarType, directly: boolean = false): boolean {
+  IsWide(): boolean {
+    return this.IsDefined() && (this.GetDefinition()?.Wide ?? false);
+  }
+
+  CastableFrom(other: VarType): boolean {
     if (this.TypeName === "var") return true;
+    if (this.TypeName === "discard") return true;
+    if (other.TypeName === "discard") return false;
     if (this.TypeName === "void") {
       return this.PointerDepth <= other.PointerDepth;
     }
@@ -76,30 +112,37 @@ export class VarType extends Token {
     if (
       !(other instanceof FuncType) &&
       this.TypeName === other.TypeName &&
+      this.PointerDepth === other.PointerDepth
+    )
+      return true;
+    var typeDef = this.GetDefinition();
+    return false;
+  }
+
+  AssignableFrom(other: VarType): boolean {
+    if (this.TypeName === "var") return true;
+    if (this.TypeName === "discard") return true;
+    if (other.TypeName === "discard") return false;
+    if (this.TypeName === "void") {
+      return !other.IsWide() && this.PointerDepth <= other.PointerDepth;
+    }
+    if (other.TypeName === "void") {
+      return !this.IsWide() && this.PointerDepth >= other.PointerDepth;
+    }
+    if (
+      !(other instanceof FuncType) &&
+      this.TypeName === other.TypeName &&
       this.PointerDepth <= other.PointerDepth
     )
       return true;
     var typeDef = this.GetDefinition();
-    if (!directly) {
-      var meta = typeDef.GetMetamethod("cast", [other], true, true);
-      var otherType = other.GetDefinition();
-      if (meta && meta[0].length > 0 && this.AssignableFrom(meta[0][0], true)) {
-        return true;
-      }
-      meta = otherType.GetMetamethod("cast", [other], true, true);
-      if (meta && meta[0].length > 0 && this.AssignableFrom(meta[0][0], true)) {
-        return true;
-      }
-    }
-    if (typeDef.IsParent(other.GetDefinition())) {
-      return this.PointerDepth <= other.PointerDepth;
-    }
     return false;
   }
 
   ConvertFrom(other: VarType): string[] {
     if (!this.AssignableFrom(other))
       throw new Error(`Cannot convert from ${other} to ${this}!`);
+    if (this.TypeName === "var") return [];
     var o: string[] = [];
     if (this.PointerDepth < other.PointerDepth) {
       o.push(`apopa`);
@@ -108,34 +151,7 @@ export class VarType extends Token {
       }
       o.push(`apusha`);
     }
-    if (this.TypeName === "void") {
-      return o;
-    }
-    if (other.TypeName === "void") {
-      return o;
-    }
-    var typeDef = this.GetDefinition();
-    var otherType = other.GetDefinition();
-    var meta = typeDef.GetMetamethod("cast", [other]);
-    if (
-      meta !== null &&
-      meta[0].length > 0 &&
-      this.AssignableFrom(meta[0][0], true)
-    ) {
-      o.push(...meta[2]);
-      for (var i = 1; i < meta[0].length; i++) o.push(`apop`);
-      o.push(...this.ConvertFrom(meta[0][0]));
-      return o;
-    }
-    meta = otherType.GetMetamethod("cast", [other]);
-    if (
-      meta !== null &&
-      meta[0].length > 0 &&
-      this.AssignableFrom(meta[0][0], true)
-    ) {
-      o.push(...meta[2]);
-      for (var i = 1; i < meta[0].length; i++) o.push(`apop`);
-      o.push(...this.ConvertFrom(meta[0][0]));
+    if (this.TypeName === "void" || other.TypeName === "void") {
       return o;
     }
     return o;
@@ -144,47 +160,62 @@ export class VarType extends Token {
   Debug(
     scope: Scope,
     bs: ASMInterpreter,
-    l: string,
-    i: string,
-    v: number
+    label: string,
+    identifier: string,
+    location: number
   ): string {
-    let val: string = "" + bs.Heap[v];
-    let valHolding: string | undefined = undefined;
-    for (let id in bs.Labels) {
-      if (bs.Labels[id] === bs.Heap[v]) {
-        val = `${id} (${bs.Heap[v]})`;
-        break;
-      }
-    }
-    if (this.PointerDepth > 0) {
-      var higher = this.Clone();
-      higher.PointerDepth--;
-      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}<br>${higher.Debug(
-        scope,
-        bs,
-        "*",
-        "->",
-        bs.Heap[v]
+    let valAtLocation = ((bs.Heap[location*4]??0) << 24) + ((bs.Heap[location*4 + 1]??0) << 16) + ((bs.Heap[location*4 + 2]??0) << 8) + ((bs.Heap[location*4 + 3]??0));
+    if (scope.DebuggedVals.has(location))
+      return `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${hexPad(
+        valAtLocation,
+        8
       )}`;
-    } else if (scope.UserTypes[this.TypeName]) {
-      var t = scope.UserTypes[this.TypeName];
-      var s = `<span class='subtle'>${l}</span><b>${this}</b> ${i} = {<br>`;
-      for (var name in t.Children) {
-        var child = t.Children[name];
-        if (!child || !child[0]) continue;
-        s +=
-          child[0].Debug(scope, bs, "", name, bs.Heap[v] + child[1]) + "<br>";
+    scope.DebuggedVals.add(location);
+    let t: TypeDefinition;
+    if (
+      this.PointerDepth === 0 &&
+      (t = scope.UserTypes[this.TypeName]) &&
+      (t.Wide || valAtLocation > 0)
+    ) {
+      let ptr = t.Wide ? location : valAtLocation;
+      let cls = t.Wide ? valAtLocation : bs.Heap[valAtLocation];
+      let val = hexPad(ptr, 8);
+      let s = `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${val} {<br>`;
+      let childrenByOffset: [VarType, number, string, string][] = [];
+      if (t && this.Generics.length > 0) t = t.WithGenerics(this.Generics);
+      for (let ident in t.Children) {
+        let child = t.Children[ident];
+        childrenByOffset[child[1]] = [child[0], child[1], child[2], ident];
       }
-      s += "}";
-      return s;
-    } else {
-      return `<span class='subtle'>${l}</span><b>${this}</b> ${i} = ${val}`;
+      for (let i = 0; i < childrenByOffset.length; i++) {
+        let child = childrenByOffset[i];
+        if (!child) continue;
+        let v = ((bs.Heap[(ptr + child[1])*4]??0) << 24) + ((bs.Heap[(ptr + child[1])*4 + 1]??0) << 16) + ((bs.Heap[(ptr + child[1])*4 + 2]??0) << 8) + ((bs.Heap[(ptr + child[1])*4 + 3]??0) << 0);
+        let expected = +child[2];
+        if (bs.Labels[child[2]]) expected = bs.Labels[child[2]];
+        if (v !== expected)
+          s +=
+            "\t" +
+            child[0]
+              .Debug(scope, bs, "", child[3], ptr + child[1])
+              .replace(/<br>(?!$)/g, "<br>\t") +
+            "<br>";
+      }
+      return s + "}";
     }
-    return ``;
+    let val = hexPad(valAtLocation, 8);
+    return `<span class='var' title='${label}'><b>${this}</b> ${identifier}</span> = ${val}`;
+  }
+
+  ToHTML() {
+    return this.toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
 
   static AllEquals(targetStack: VarType[], receivedStack: VarType[]) {
-    if (targetStack.length != receivedStack.length) return falseClaimer;
+    if (targetStack.length != receivedStack.length) return false;
     for (var i = 0; i < targetStack.length; i++) {
       if (!targetStack[i].Equals(receivedStack[i])) return false;
     }
@@ -203,7 +234,7 @@ export class VarType extends Token {
     return o;
   }
 
-  static CanCoax(targetStack: VarType[], receivedStack: VarType[]): boolean {
+  static oldCanCoax(targetStack: VarType[], receivedStack: VarType[]): boolean {
     var maxRet = 0;
     for (let i = 0; i < targetStack.length; i++) {
       while (
@@ -218,55 +249,274 @@ export class VarType extends Token {
     return true;
   }
 
-  static Coax(targetStack: VarType[], receivedStack: VarType[]): string[] {
-    var o = [];
-    var targetLookup: { [id: number]: number } = {};
-    var maxRet = 0;
-    for (let i = 0; i < targetStack.length; i++) {
-      if (targetStack[i].TypeName === "var") {
-        targetStack[i] = receivedStack[maxRet];
-        targetLookup[maxRet++] = i;
-        continue;
-      }
-      while (
-        maxRet < receivedStack.length &&
-        !targetStack[i].AssignableFrom(receivedStack[maxRet])
-      )
-        maxRet++;
-      if (maxRet >= receivedStack.length) {
-        throw new Error(
-          `Too many/Incorrect targets for expression. Expected: ${targetStack} Got: ${receivedStack}`
-        );
-      }
-      targetLookup[maxRet++] = i;
+  static CanCoaxSoft(
+    targetStack: VarType[],
+    receivedStack: VarType[]
+  ): boolean {
+    var receivedPtr = 0;
+    for (let targetPtr = 0; targetPtr < targetStack.length; targetPtr++) {
+      if (!targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr]))
+        return false;
+      receivedPtr++;
+      targetPtr++;
     }
+    return true;
+  }
 
-    for (let i = receivedStack.length - 1; i >= 0; i--) {
-      if (targetLookup[i] !== undefined) {
-        o.push(...targetStack[targetLookup[i]].ConvertFrom(receivedStack[i]));
-        if (i > 0) o.push(`apopa`, `bpusha`);
-      } else {
-        o.push(`apop`);
-        if (i === 0) {
-          o.push(`bpopa`, `apusha`);
+  static CanCoax(
+    targetStack: VarType[],
+    receivedStack: VarType[],
+    restricted: Set<
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+    > = new Set(),
+    sticky: boolean = false
+  ): [success: boolean, count?: number] {
+    let scope = Scope.CURRENT;
+    var receivedPtr = 0;
+    let targetPtr = 0;
+    while (targetPtr < targetStack.length) {
+      if (receivedPtr >= receivedStack.length) return [false];
+      while (receivedPtr < receivedStack.length) {
+        if (sticky && receivedPtr > 0) {
+          return [false, 0];
         }
+        // Directly assignable
+        if (targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr])) {
+          receivedPtr++;
+          targetPtr++;
+          break;
+        }
+
+        // Get all metamethods
+        var metas: Set<
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+        > = new Set();
+        for (let t in scope.UserTypes) {
+          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+        }
+        let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
+        // That are casts to and from
+        metasArr = metasArr.filter((c) => !restricted.has(c));
+        metasArr = metasArr.filter((c) =>
+          VarType.CanCoaxSoft(
+            targetStack.slice(targetPtr, targetPtr + c[0].length),
+            c[0]
+          )
+        );
+        metasArr = metasArr.filter((c) => {
+          let r = new Set(restricted);
+          r.add(c);
+          return VarType.CanCoax(
+            c[1],
+            receivedStack.slice(receivedPtr),
+            r,
+            true
+          )[0];
+        });
+
+        // Score all metas by how good a match they are
+        var scoreArr: [
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]],
+          score: number
+        ][] = metasArr.map((c) => [
+          c,
+          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
+            VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
+        ]);
+        scoreArr.sort((a, b) => b[1] - a[1]);
+        if (scoreArr.length === 0) {
+          receivedPtr++;
+          continue;
+        }
+        let best = scoreArr[0][1];
+        scoreArr = scoreArr.filter((c) => c[1] >= best);
+        if (scoreArr.length > 1)
+          return [false, 0];
+        let m = scoreArr[0][0];
+        targetPtr += m[0].length;
+        let r = new Set(restricted);
+        r.add(m);
+        receivedPtr += VarType.CanCoax(
+          m[1],
+          receivedStack.slice(receivedPtr),
+          r,
+          true
+        )[1]!;
+        break;
       }
+      sticky = false;
     }
-    for (var i = 1; i < targetStack.length; i++) {
-      o.push(`bpopa`, `apusha`);
+    return [true, receivedPtr];
+  }
+
+  static Coax(
+    targetStack: VarType[],
+    receivedStack: VarType[],
+    restricted: Set<
+      [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+    > = new Set(),
+    cleanup: boolean = true,
+    sticky: boolean = false
+  ): [asm: string[], used: number, converted: VarType[]] {
+    let scope = Scope.CURRENT;
+    var receivedPtr = 0;
+    var asm: string[] = [];
+    // Cycle everything to the B stack (So we handle it from left to right)
+    for (let i = 0; i < receivedStack.length; i++) {
+      asm.push(...receivedStack[i].FlipAB());
     }
-    return o;
+    let converted: VarType[] = [];
+    let targetPtr = 0;
+    while (targetPtr < targetStack.length) {
+      if (receivedPtr >= receivedStack.length)
+        throw new Error(`Failed to Coax (Missed check?)`);
+      while (receivedPtr < receivedStack.length) {
+        if (sticky && receivedPtr > 0) {
+          throw new Error(`Failed to Coax (Missed check?)`);
+        }
+        // Directly assignable
+        if (targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr])) {
+          asm.push(...receivedStack[receivedPtr].FlipBA());
+          asm.push(
+            ...targetStack[targetPtr].ConvertFrom(receivedStack[receivedPtr])
+          );
+          converted.push(receivedStack[receivedPtr]);
+          receivedPtr++;
+          targetPtr++;
+          break;
+        }
+
+        // Get all metamethods
+        var metas: Set<
+          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]]
+        > = new Set();
+        for (let t in scope.UserTypes) {
+          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+        }
+        let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
+        // That are casts to and from
+        metasArr = metasArr.filter((c) => !restricted.has(c));
+        metasArr = metasArr.filter((c) =>
+          VarType.CanCoaxSoft(
+            targetStack.slice(targetPtr, targetPtr + c[0].length),
+            c[0]
+          )
+        );
+        metasArr = metasArr.filter((c) => {
+          let r = new Set(restricted);
+          r.add(c);
+          return VarType.CanCoax(
+            c[1],
+            receivedStack.slice(receivedPtr),
+            r,
+            true
+          )[0];
+        });
+
+        // Score all metas by how good a match they are
+        var scoreArr: [
+          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[]],
+          score: number
+        ][] = metasArr.map((c) => [
+          c,
+          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
+            VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
+        ]);
+        scoreArr.sort((a, b) => b[1] - a[1]);
+        if (scoreArr.length === 0)
+          throw new Error(`Failed to Coax (Missed check?)`);
+        let best = scoreArr[0][1];
+        scoreArr = scoreArr.filter((c) => c[1] >= best);
+        if (scoreArr.length > 1)
+          throw new Error(
+            `Ambigious casts from ${receivedStack.slice(
+              receivedPtr
+            )} to ${targetStack.slice(targetPtr)} (${scoreArr.length} choices)`
+          );
+        let m = scoreArr[0][0];
+        var r = new Set(restricted);
+        r.add(m);
+        let c = VarType.CanCoax(
+          m[1],
+          receivedStack.slice(receivedPtr),
+          r,
+          true
+        )[1]!;
+        for (let i = 0; i < c; i++) {
+          asm.push(...receivedStack[receivedPtr+i].FlipBA());
+        }
+        asm.push(
+          ...VarType.Coax(
+            m[1],
+            receivedStack.slice(receivedPtr, receivedPtr + c),
+            r,
+            false,
+            true
+          )[0]
+        );
+        asm.push(...m[2]);
+        converted.push(...m[0]);
+        targetPtr += m[0].length;
+        receivedPtr += c;
+        break;
+      }
+      sticky = false;
+    }
+    if (cleanup) {
+      while (receivedPtr < receivedStack.length) asm.push(...receivedStack[receivedPtr++].BPop());
+    }
+    return [asm, receivedPtr, converted];
   }
 
   toString(): string {
-    return `${this.TypeName}${"*".repeat(this.PointerDepth)}`;
+    if (this.TypeName.startsWith("$")) {
+    }
+    if (this.Generics.length > 0)
+      return `${"@".repeat(this.PointerDepth)}${this.TypeName}<${
+        this.Generics
+      }>`;
+    return `${"@".repeat(this.PointerDepth)}${this.TypeName}`;
   }
 
   Clone(): VarType {
     var t = new VarType(this.Claimer, this.Claim);
     t.PointerDepth = this.PointerDepth;
     t.TypeName = this.TypeName;
+    t.Generics = this.Generics.concat();
     return t;
+  }
+
+  WithPointerDepth(depth: number): VarType {
+    var t = this.Clone();
+    t.PointerDepth = depth;
+    return t;
+  }
+
+  WithDeltaPointerDepth(delta: number): VarType {
+    var t = this.Clone();
+    t.PointerDepth += delta;
+    if (t.PointerDepth < 0) throw new Error(`Pointer depth cannot be negative!`);
+    return t;
+  }
+
+  HasDefinition(): boolean {
+    if (this.PointerDepth > 0) true;
+    if (this.TypeName === "int") return true;
+    if (this.TypeName === "void") return true;
+    var userType = Scope.CURRENT.UserTypes[this.TypeName];
+    if (!userType) return false;
+    return true;
+  }
+
+  IsDefined(): boolean {
+    if (this.PointerDepth > 0) {
+      return true;
+    }
+    if (this.TypeName === "int") return true;
+    if (this.TypeName === "void") return true;
+    if (this.TypeName === "discard") return true;
+    if (this.TypeName.startsWith("$")) return true;
+    return !!Scope.CURRENT.UserTypes[this.TypeName];
   }
 
   GetDefinition(): TypeDefinition {
@@ -275,10 +525,120 @@ export class VarType extends Token {
     }
     if (this.TypeName === "int") return TypeInt;
     if (this.TypeName === "void") return TypeVoid;
+    if (this.TypeName === "discard") return TypeDiscard;
+    if (this.TypeName.startsWith("$")) return TypeVoid;
     var userType = Scope.CURRENT.UserTypes[this.TypeName];
     if (!userType) throw new Error(`Undefined type ${this.TypeName}`);
+    if (this.Generics.length > 0) {
+      userType = userType.WithGenerics(this.Generics);
+    }
     return userType;
   }
+
+  WithGenerics(genericArgs: VarType[], recurse: boolean = true): VarType {
+    if (this.TypeName.startsWith("$") && !this.TypeName.startsWith("$$")) {
+      let v = genericArgs[+this.TypeName.substr(1)].Clone();
+      if(v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
+      v.PointerDepth += this.PointerDepth;
+      return v;
+    } else {
+      let v = this.Clone();
+      if (recurse) {
+        for (let i = 0; i < v.Generics.length; i++) {
+          v.Generics[i] = v.Generics[i].WithGenerics(genericArgs, true);
+        }
+      }
+      return v;
+    }
+  }
+  WithFunctionGenerics(genericArgs: VarType[]): VarType {
+    if (this.TypeName.startsWith("$$")) {
+      let v = genericArgs[+this.TypeName.substr(2)].Clone();
+      if(v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
+      v.PointerDepth += this.PointerDepth;
+      for (let i = 0; i < v.Generics.length; i++) {
+        v.Generics[i] = v.Generics[i].WithFunctionGenerics(genericArgs);
+      }
+      return v;
+    }
+    return this;
+  }
+
+  APop(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['apop'];
+    return new Array(def.Size).fill('apop');
+  }
+  BPop(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['bpop'];
+    return new Array(def.Size).fill('bpop');
+  }
+  // Flip from the A stack to the B stack
+  FlipAB(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['apopa', 'bpusha'];
+    return new Array(def.Size).fill(['apopa', 'bpusha']).flat();
+  }
+  // Flip from the B stack to the A stack
+  FlipBA(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return ['bpopa', 'apusha'];
+    return new Array(def.Size).fill(['bpopa', 'apusha']).flat();
+  }
+  // Puts the value from the top of the selected stack to the location pointed to by the selected register
+  // Move the location register to the end of the value
+  Put(fromStack: "a"|"b" = "a", toLocation: "a"|"b" = "b"): string[] {
+    let def = this.GetDefinition();
+    let other = toLocation === "a" ? "b" : "a";
+    if(!def.Wide) return [`${fromStack}pop${other}`, `put${other}ptr${toLocation}`];
+    return new Array(def.Size).fill([`${fromStack}pop${other}`, `put${other}ptr${toLocation}`, `inc${toLocation}`]).flat().slice(0,-1);
+  }
+  // Grabs the value from the location pointed to by the selected register and puts it on the selected stack
+  // Move the location register to the end of the value
+  // Reversed is used purely to allow flipping the stack order. It assumes the b register points to the START of the location.
+  Get(toStack: "a"|"b" = "a", fromLocation: "a"|"b" = "b", reversed: boolean = false): string[] {
+    let def = this.GetDefinition();
+    let other = fromLocation === "a" ? "b" : "a";
+    if(!def.Wide) return [`cpy${fromLocation}${other}`, `ptr${other}`, `${toStack}push${other}`];
+    if(def.Size === 0) return [];
+    let o:string[] = [];
+    if(!reversed)
+      o.push(`add${fromLocation} ${def.Size-1}`)
+    o.push(...new Array(def.Size).fill([`cpy${fromLocation}${other}`, `ptr${other}`, `${toStack}push${other}`, reversed ? `inc${fromLocation}` : `dec${fromLocation}`]).flat().slice(0,-1));
+    return o;
+  }
+  // Flip the top of the A stack, uses scratch as temporary storage
+  FlipA(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return []; // Do nothing :D
+    if(def.Size === 0) return [];
+    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put(), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("a","b",true)]
+  }
+  // Flip the top of the B stack, uses scratch as temporary storage
+  FlipB(): string[] {
+    let def = this.GetDefinition();
+    if(def.Wide) return []; // Do nothing :D
+    if(def.Size === 0) return [];
+    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put("b"), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("b","a",true)]
+  }
+  // Clone the top of the A stack, uses scratch as temporary storage
+  CloneA(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    if(def.Size === 0) return [];
+    let scratch = Scope.CURRENT.GetScratch(def.Size);
+    return [`setb ${scratch}`, ...this.Put(), `setb ${scratch}`, ...this.Get("a","b"), `setb ${scratch}`, ...this.Get("a","b")];
+  }
+  // Clone the top of the B stack, uses scratch as temporary storage
+  CloneB(): string[] {
+    let def = this.GetDefinition();
+    if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    if(def.Size === 0) return [];
+    let scratch = Scope.CURRENT.GetScratch(def.Size);
+    return [`setb ${scratch}`, ...this.Put("b"), `setb ${scratch}`, ...this.Get("b","b"), `setb ${scratch}`, ...this.Get("b","b")];
+  }
+
 }
 
 export class FuncType extends VarType {
@@ -286,6 +646,9 @@ export class FuncType extends VarType {
   RetTypes: VarType[] = [];
   static Claim(claimer: Claimer): FuncType | null {
     var flag = claimer.Flag();
+    let depth = 0;
+    let ptr = claimer.Claim(/@+/);
+    if (ptr.Success) depth = ptr.Body![0].length;
     var leftParen = claimer.Claim(/\(/);
     var fnc = claimer.Claim(/func\b/);
     if (!fnc.Success) {
@@ -327,6 +690,7 @@ export class FuncType extends VarType {
     var fType = new FuncType(claimer, flag);
     fType.ArgTypes = argTypes;
     fType.RetTypes = retTypes;
+    fType.PointerDepth = depth;
     return fType;
   }
 
@@ -345,21 +709,37 @@ export class FuncType extends VarType {
     }
     return true;
   }
+  CastableFrom(other: VarType): boolean {
+    if (other.TypeName === "void")
+      return this.PointerDepth >= other.PointerDepth;
+    if (!(other instanceof FuncType)) return false;
+    if (other.PointerDepth < this.PointerDepth) return false;
+    if (this.ArgTypes.length != other.ArgTypes.length) return false;
+    if (this.RetTypes.length != other.RetTypes.length) return false;
+    for (let i = 0; i < this.ArgTypes.length; i++)
+      if (!other.ArgTypes[i].CastableFrom(this.ArgTypes[i])) return false;
+    for (let i = 0; i < this.RetTypes.length; i++)
+      if (!this.RetTypes[i].CastableFrom(other.RetTypes[i])) return false;
+    return true;
+  }
 
   AssignableFrom(other: VarType): boolean {
     if (other.TypeName === "void")
       return this.PointerDepth >= other.PointerDepth;
     if (!(other instanceof FuncType)) return false;
-    if (other.ArgTypes.length != this.ArgTypes.length) return false;
-    if (other.RetTypes.length != this.RetTypes.length) return false;
     if (other.PointerDepth < this.PointerDepth) return false;
-    for (var i = 0; i < this.ArgTypes.length; i++) {
-      if (!this.ArgTypes[i].Equals(other.ArgTypes[i])) return false;
-    }
-    for (var i = 0; i < this.RetTypes.length; i++) {
-      if (!this.RetTypes[i].Equals(other.RetTypes[i])) return false;
-    }
+    if (this.ArgTypes.length != other.ArgTypes.length) return false;
+    if (this.RetTypes.length != other.RetTypes.length) return false;
+    for (let i = 0; i < this.ArgTypes.length; i++)
+      if (!other.ArgTypes[i].CastableFrom(this.ArgTypes[i])) return false;
+    for (let i = 0; i < this.RetTypes.length; i++)
+      if (!this.RetTypes[i].CastableFrom(other.RetTypes[i])) return false;
     return true;
+  }
+  ConvertFrom(other: VarType): string[] {
+    if (!this.AssignableFrom(other))
+      throw new Error(`cannot cast from ${other} to ${this}`);
+    return [];
   }
 
   toString(): string {
@@ -368,9 +748,9 @@ export class FuncType extends VarType {
         this.RetTypes.length > 0 ? "->" + this.RetTypes : ""
       }`;
     }
-    return `(func(${this.ArgTypes})${
+    return `${"@".repeat(this.PointerDepth)}(func(${this.ArgTypes})${
       this.RetTypes.length > 0 ? "->" + this.RetTypes : ""
-    })${"*".repeat(this.PointerDepth)}`;
+    })`;
   }
 
   Clone(): FuncType {
@@ -379,6 +759,7 @@ export class FuncType extends VarType {
     t.TypeName = this.TypeName;
     t.ArgTypes = this.ArgTypes.concat();
     t.RetTypes = this.RetTypes.concat();
+    t.Generics = this.Generics;
     return t;
   }
 
@@ -387,6 +768,20 @@ export class FuncType extends VarType {
       return GeneratePointerType(this);
     }
     return GenerateFuncType(this);
+  }
+
+  WithGenerics(genericArgs: VarType[]): VarType {
+    let c = this.Clone();
+    c.ArgTypes = c.ArgTypes.map((c) => c.WithGenerics(genericArgs));
+    c.RetTypes = c.RetTypes.map((c) => c.WithGenerics(genericArgs));
+    return c;
+  }
+
+  WithFunctionGenerics(genericArgs: VarType[]): VarType {
+    let c = this.Clone();
+    c.ArgTypes = c.ArgTypes.map((c) => c.WithFunctionGenerics(genericArgs));
+    c.RetTypes = c.RetTypes.map((c) => c.WithFunctionGenerics(genericArgs));
+    return c;
   }
 }
 
@@ -404,3 +799,7 @@ VarType.VoidPtr.TypeName = "void";
 VarType.VoidPtr.PointerDepth = 1;
 VarType.Any = new VarType(falseClaimer, falseFlag);
 VarType.Any.TypeName = "var";
+VarType.String = new VarType(falseClaimer, falseFlag);
+VarType.String.TypeName = "string";
+VarType.Discard = new VarType(falseClaimer, falseFlag);
+VarType.Discard.TypeName = "discard";

@@ -1,7 +1,5 @@
 import { Claimer } from "./brainchild";
-import { Identifier } from "./identifier";
-import { Token } from "./token";
-import { Expression } from "./expression";
+import { Token, TokenError } from "./token";
 import { Scope } from "./Scope";
 
 export abstract class Statement extends Token {
@@ -35,6 +33,27 @@ export abstract class Statement extends Token {
   }
 
   abstract Evaluate(scope: Scope): string[];
+
+  TryEvaluate(scope: Scope): string[] {
+    try {
+      return this.Evaluate(scope);
+    } catch (e) {
+      if (e instanceof TokenError) {
+        let E = new TokenError(e.CallStack.concat(this), e.message);
+        E.stack = e.stack;
+        E.name = e.name;
+        throw E;
+      }
+      if (e instanceof Error) {
+        let E = new TokenError([this], e.message);
+        E.stack = e.stack;
+        E.name = e.name;
+        throw E;
+      } else {
+        throw new TokenError([this], "" + e);
+      }
+    }
+  }
 
   abstract DefinitelyReturns(): boolean;
 }

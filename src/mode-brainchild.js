@@ -24,7 +24,7 @@ ace.define(
 
     var BrainChildHighlightRules = function () {
       var keywords =
-        "any|asm|class|else|func|function|if|int|label|metamethod|new|return|static|void|while";
+        "abstract|asm|class|const|discard|else|func|function|if|int|label|macro|metamethod|new|params|reserve|return|static|struct|var|void|while|virtual";
 
       var functions =
         // builtinFunctions
@@ -38,9 +38,8 @@ ace.define(
         "identifier"
       );
 
-      var decimalInteger =
-        "(?:0*(?:0|6[0-5][0-5][0-3][0-5]|[1-5][0-9][0-9][0-9][0-9]|[1-9][0-9]{0,3}))";
-      var hexInteger = "(?:0[xX][\\dA-Fa-f]{1,4})";
+      var decimalInteger = "(?:d{1,10})";
+      var hexInteger = "(?:0[xX][\\dA-Fa-f]{1,8})";
       var badDecimal = "(?:\\d+)";
       var badHex = "(?:0x[xX][\\dA-Fa-f]+)";
       var integer = "(?:" + decimalInteger + "|" + hexInteger + ")";
@@ -82,6 +81,20 @@ ace.define(
           {
             token: "invalid.number",
             regex: badInteger + "\\b",
+          },
+          {
+            token: "keyword.include",
+            regex: /include\b/,
+            next: [
+              {
+                token: "keyword.include",
+                next: "start",
+                regex: /;|$/,
+              },
+              {
+                defaultToken: "text.include",
+              },
+            ],
           },
           {
             token: keywordMapper,
