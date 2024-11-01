@@ -15,18 +15,11 @@ export class TypeDefinition {
     ];
   } = {};
   Size: number = 1;
-  Parent: TypeDefinition | null = null;
 
   TypeType: TypeDefinition | null = null;
   ClassLabel: string = "";
   Name: string = "";
   Wide: boolean = false; // For structs
-
-  IsParent(other: TypeDefinition): boolean {
-    if (other.Name === this.Name) return true;
-    if (other.Parent === null) return false;
-    return this.IsParent(other.Parent);
-  }
 
   WithGenerics(genericArgs: VarType[]): TypeDefinition {
     let t = this.Clone();
@@ -46,7 +39,6 @@ export class TypeDefinition {
       this.VirtualChildren[i][0] =
         this.VirtualChildren[i][0].WithGenerics(genericArgs);
     }
-    if (this.Parent) this.Parent.AddGenerics(genericArgs);
     if (this.TypeType) this.TypeType.AddGenerics(genericArgs);
   }
 
@@ -61,7 +53,6 @@ export class TypeDefinition {
       t.VirtualChildren[i] = [child[0], child[1], child[2], child[3]];
     }
     t.Size = this.Size;
-    if (this.Parent) t.Parent = this.Parent.Clone();
     if (this.TypeType) t.TypeType = this.TypeType.Clone();
     t.ClassLabel = this.ClassLabel;
     t.Name = this.Name;

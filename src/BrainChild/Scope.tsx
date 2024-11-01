@@ -111,7 +111,7 @@ export class Scope {
       let inv = inverses[i];
       if (name === inv[0]) {
         try {
-          let other = this.GetMetamethod(inv[1], argTypes, false);
+          let other = this.GetMetamethod(inv[1], argTypes, {canFallback: false});
           if (other !== null && VarType.AllEquals(other[0], [VarType.Int])) {
             let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
             return [other[0], other[1], newMethod];
@@ -121,7 +121,7 @@ export class Scope {
         }
       } else if (name === inv[1]) {
         try {
-          let other = this.GetMetamethod(inv[0], argTypes, false);
+          let other = this.GetMetamethod(inv[0], argTypes, {canFallback: false});
           if (other !== null && VarType.AllEquals(other[0], [VarType.Int])) {
             let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
             return [other[0], other[1], newMethod];
@@ -279,6 +279,15 @@ export class Scope {
         ) {
           newGenericArgs.push(trySwap(inMM.Generics[i], inType.Generics[i]));
         }
+        for(let i=inType.Generics.length; i < inMM.Generics.length; i++){ // If there are more EXPECTED generic args then real generic args, just use $i
+          let fakeClaimer = new Claimer("","");
+          let fakeClaim = fakeClaimer.Flag();
+          let vt: VarType = new VarType(fakeClaimer, fakeClaim);
+          vt.PointerDepth = 0;
+          vt.TypeName = "$"+i;
+          vt.Generics = [];
+          newGenericArgs.push(trySwap(inMM.Generics[i], vt));
+        }
         return inMM.WithGenerics(newGenericArgs);
       }
       return inMM;
@@ -327,9 +336,14 @@ export class Scope {
   GetMetamethod(
     name: string,
     argTypes: VarType[],
-    canFallback: boolean = true,
-    exactly: boolean = false
+    options: {
+      canFallback?: boolean,
+      exactly?: boolean,
+      strictTo?: number
+    } = {}
   ): [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]] | null {
+    options.canFallback ??= true;
+    options.exactly ??= false;
     // Check all ArgTypes for SoftInitilizedMetamethods, if they aren't there yet, add them and run SoftInit on the type
     argTypes
       .filter((c: VarType) => !this.SoftInitilizedMetamethods.includes(c))
@@ -339,16 +353,18 @@ export class Scope {
       });
     var mm = this.MetaMethods[name];
     if (mm === undefined)
-      return canFallback ? this.TryFallbacks(name, argTypes) : null;
-    mm = mm.map((c) => this.RemapGenericMetamethod(c, argTypes, exactly));
+      return options.canFallback ? this.TryFallbacks(name, argTypes) : null;
+    mm = mm.map((c) => this.RemapGenericMetamethod(c, argTypes, options.exactly!));
     mm = mm.filter((c) => c[3].length === 0); // Anything with generics failed to map
     mm = mm.filter((c) =>
-      exactly
+      options.exactly
         ? VarType.AllEquals(c[1], argTypes)
         : VarType.CanCoax(c[1], argTypes)[0]
     );
+    if(options.strictTo)
+      mm = mm.filter((c) => VarType.AllEquals(c[1].slice(0,options.strictTo), argTypes.slice(0,options.strictTo)))
     if (mm.length === 0)
-      return canFallback ? this.TryFallbacks(name, argTypes) : null;
+      return options.canFallback ? this.TryFallbacks(name, argTypes) : null;
     mm.sort(
       (a, b) =>
         VarType.CountMatches(b[1], argTypes) -
@@ -883,7 +899,7 @@ free:
         for (let i = 0; i < childrenByOffset.length; i++) {
           let child = childrenByOffset[i];
           if (!child) continue;
-          if (child[3] === "new" || child[3] === "base") continue;
+          if (child[3] === "new") continue;
           if (child[0] instanceof FuncType && varsByFunction[child[2]]) {
             body += `\t${this.RenderFunction(
               bs,
@@ -916,7 +932,7 @@ free:
     }
     body = body.replace(/\{(\s*<br>)*\s*\}/g, "{}");
     body += "</div>";
-    body += bs.RenderHeap();
+    document.querySelector('div.tab[data-target="baHeap"]')!.innerHTML = bs.RenderHeap();
     document.querySelector('div.tab[data-target="baMemory"]')!.innerHTML +=
       body;
   }

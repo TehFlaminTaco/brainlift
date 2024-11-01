@@ -109,8 +109,10 @@ export class FunctionDefinition extends Expression {
     var body = Expression.Claim(claimer);
     VarType.CurrentGenericArgs = oldGenericTypes;
     if (body === null) {
-      fnc.Fail();
-      return null;
+      let fakeClaimer = new Claimer("", "");
+      let fakeClaim = fakeClaimer.Flag();
+      let fakeBlock = new Block(fakeClaimer, fakeClaim);
+      body = fakeBlock;
     }
     if (body instanceof Block) {
       if (body.Expressions.length > 0) {
@@ -248,8 +250,10 @@ export class FunctionDefinition extends Expression {
     var body = Expression.Claim(claimer);
     VarType.CurrentGenericArgs = oldGenericTypes;
     if (body === null) {
-      fnc.Fail();
-      return null;
+      let fakeClaimer = new Claimer("", "");
+      let fakeClaim = fakeClaimer.Flag();
+      let fakeBlock = new Block(fakeClaimer, fakeClaim);
+      body = fakeBlock;
     }
     if (body instanceof Block) {
       if (body.Expressions.length > 0) {
@@ -325,8 +329,8 @@ export class FunctionDefinition extends Expression {
     var body = Expression.Claim(claimer);
     VarType.CurrentGenericArgs = oldGenericTypes;
     if (body === null) {
-      fnc.Fail();
-      return null;
+      let fakeBlock = new Block(fakeClaimer, fakeClaim);
+      body = fakeBlock;
     }
     if (!(body instanceof Block)) {
       // Wrap the body in a fake block for constructors

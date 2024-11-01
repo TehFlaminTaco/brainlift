@@ -20,7 +20,6 @@ export class Class extends Statement {
   StaticConstants: VariableDecleration[] = [];
   Constructors: FunctionDefinition[] = [];
   Name: Identifier | null = null;
-  Parent: VarType | null = null;
   GenericArgs: string[] = [];
   IsAbstract: boolean = false;
   FromFile: string = "";
@@ -101,15 +100,6 @@ export class Class extends Statement {
         arg = Identifier.Claim(claimer);
       }
       if (!claimer.Claim(/>/).Success) {
-        VarType.CurrentGenericArgs = {};
-        flg.Fail();
-        return null;
-      }
-    }
-    var parent: VarType | null = null;
-    if (claimer.Claim(/:/).Success) {
-      parent = VarType.Claim(claimer);
-      if (parent === null) {
         VarType.CurrentGenericArgs = {};
         flg.Fail();
         return null;
@@ -211,7 +201,6 @@ export class Class extends Statement {
     cls.StaticConstants = staticConstants;
     cls.Constructors = constructors;
     cls.Name = className;
-    cls.Parent = parent;
     cls.IsAbstract = abstract;
     cls.FromFile = claimer.File;
     cls.Wide = wide;
@@ -326,9 +315,6 @@ export class Class extends Statement {
   }
 
   TrySetup(scope: Scope): boolean {
-    if (this.Parent !== null && !this.Parent.HasDefinition()) {
-      return false;
-    }
     var objectType = new TypeDefinition();
     var classType = new TypeDefinition();
     objectType.ClassLabel = scope.GetSafeName(`class${this.Name!.Name}`);
@@ -337,36 +323,14 @@ export class Class extends Statement {
     classType.Name = `type${this.Name!.Name}`;
     objectType.TypeType = classType;
     objectType.Wide = this.Wide;
-    if (this.Parent !== null) {
-      var parent = this.Parent!.GetDefinition();
-      var classParent = parent.TypeType;
-      if (!parent) {
-        return false;
-      }
-      objectType.Parent = parent;
-      classType.Parent = classParent;
-      for (let name in parent.Children) {
-        if (parent.Children[name][1] !== 0)
-          objectType.Children[name] = parent.Children[name];
-      }
-      objectType.Size = parent.Size;
-      if (classParent) {
-        for (let name in classParent.Children) {
-          if (classParent.Children[name][1] > 1)
-            classType.Children[name] = classParent.Children[name];
-        }
-
-        classType.Size = classParent.Size;
-        classType.Children["base"] = [VarType.Type, 0, classParent.ClassLabel];
-      } else {
-        classType.Size = 2;
-      }
-    } else {
+    if (this.Wide){
+      objectType.Size = 0;
+    }else{
       objectType.Size = 1;
-      classType.Size = 2;
     }
-    objectType.Children["class"] = [VarType.Type, 0, classType.ClassLabel];
-    classType.Children["new"] = [VarType.Void, 1, "0"];
+    classType.Size = 1;
+    //objectType.Children["class"] = [VarType.Type, 0, classType.ClassLabel];
+    classType.Children["new"] = [VarType.Void, 0, "0"];
     for (let i = 0; i < this.StaticMembers.length; i++) {
       let member = this.StaticMembers[i];
       if (member instanceof FunctionDefinition) {

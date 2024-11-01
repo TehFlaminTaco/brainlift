@@ -274,7 +274,173 @@ function addGutter(file: string) {
         new CustomTab(file, unrolled[file]);
       }
     } else {
-      e.setValue("include term.bc;\ninclude extmacros.bc;\ninclude int.bc;\nint seed = 1;\n\nfunction rand() -> int {\n    seed ~= (seed * 128);\n    seed ~= (seed / 512);\n    seed ~= (seed * 256);\n    return seed;\n}\n\nmetamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }\nmetamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }\nmetamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }\nmetamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }\nmetamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }\nabstract class pVec2 {\n    static function Make(int x, int y) -> pVec2 { ((x%0x10000) + (y*0x10000) -> pVec2) }\n    static function WithX(pVec2 this, int x) -> pVec2 { ((x%0x10000) + (((this->int)/0x10000)*0x10000) -> pVec2) }\n    static function WithY(pVec2 this, int y) -> pVec2 { (((this->int)%0x10000)+ (y*0x10000) -> pVec2) }\n}\n\npVec2 apple = pVec2.Make(0xFF,0xFF);\n\n@int DirectionVectors = new pVec2[] {\n    (0xFFFF0000 -> pVec2),\n    (0x00000001 -> pVec2),\n    (0x00010000 -> pVec2),\n    (0x0000FFFF -> pVec2)\n};\n@int DirectionHeads = new int[]{'^','>','v','<'}\n\nmetamethod truthy(Body this)->int{\n    return (this -> int);\n}\nclass Body {\n    pVec2 Pos;\n    pVec2 LastPos;\n    Body Tail;\n    \n    function Move(pVec2 pos){\n        this.LastPos = this.Pos;\n        if(this.Tail)this.Tail.Move(this.Pos);\n        this.Pos = pos;\n    }\n    \n    function MoveBy(pVec2 amount){\n        this.Move(this.Pos + amount);\n    }\n    \n    function Grow(){\n        if(this.Tail)return this.Tail.Grow();\n        this.Tail = new Body(this.LastPos);\n    }\n    \n    function Draw(){\n        if(this.Tail)this.Tail.Draw();\n        Term.Cursor.X = this.Pos.X;\n        Term.Cursor.Y = this.Pos.Y;\n        putchar('#');\n    }\n    \n    new (pVec2 pos){\n        this.LastPos = pos;\n        this.Pos = pos;\n    }\n}\n\nclass Head : Body {\n    int Direction;\n    new (pVec2 pos){\n        this.Direction = 1;\n        this.Pos = pos;\n        this.LastPos = pos;\n    }\n    function Draw(){\n        if(this.Tail)this.Tail.Draw();\n        Term.Cursor.X = this.Pos.X;\n        Term.Cursor.Y = this.Pos.Y;\n        putchar(DirectionHeads + this.Direction);\n    }\n}\n\nint score = 0;\nfunction GameOver(){\n    Term.Clear();\n    Term.Style.Fore = Red;\n    Term.Style.Bold = 1;\n    Term.Cursor.X = 27;\n    Term.Cursor.Y = 15;\n    Term.Write(\"GAME  OVER\");\n    Term.Cursor.X = 28;\n    Term.Cursor.Y = 16;\n    Term.Write(\"SCORE: \");\n    Term.WriteNum(score);\n    asm {halt}\n}\n\nHead snake = new Head(pVec2.Make(32, 16));\nsnake.Grow();\nsnake.Grow();\nsnake.Grow();\n\nint frame = 0;\nint counter = 0;\nint grace = 3;\nTerm.PollEvents();\nTerm.Frame.Push(()=>{\n    seed += counter;\n    rand();\n    if(apple.X > 63){\n        var a = (rand() -> pVec2);\n        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));\n    }\n    if(frame++ >= 2 + (2*!(snake.Direction%2))){\n        snake.MoveBy((*(DirectionVectors + snake.Direction) -> pVec2));\n        frame = 0;\n    }\n    if(snake.Pos == apple){\n        score++;\n        snake.Grow();\n        var a = (rand() -> pVec2);\n        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));\n    }\n    if(grace)grace--\n    else{\n        var b = snake.Tail;\n        while(b){\n            if(snake.Pos == b.Pos){\n                GameOver();\n            }\n            b = b.Tail;\n        }\n    }\n    if(snake.Pos.X > 63){GameOver();}\n    if(snake.Pos.Y > 31){GameOver();}\n    if(snake.Pos.Y < 1){GameOver();}\n    Term.Clear();\n    Term.Cursor.Reset();\n    Term.Style.Back = White;\n    Term.Style.Fore = Black;\n    Term.Write(\"                                                                \");\n    Term.Cursor.Reset();\n    Term.Write(\"SCORE: \");\n    Term.WriteNum(score);\n    Term.Style.Back = Black;\n    Term.Style.Fore = White;\n    Term.Cursor.X = apple.X;\n    Term.Cursor.Y = apple.Y;\n    putchar('a');\n    snake.Draw();\n});\n\nTerm.KeyDown.Push(function(int h, int l){\n    if(h=='w')if(1 == snake.Direction%2)return snake.Direction = 0;\n    if(h=='d')if(0 == snake.Direction%2)return snake.Direction = 1;\n    if(h=='s')if(1 == snake.Direction%2)return snake.Direction = 2;\n    if(h=='a')if(0 == snake.Direction%2)return snake.Direction = 3;\n})\n\nwhile(1){counter++;Term.PollEvents();}");
+      e.setValue(`include term.bc;
+include extmacros.bc;
+include int.bc;
+int seed = 1;
+
+function rand() -> int {
+    seed ~= (seed * 128);
+    seed ~= (seed / 512);
+    seed ~= (seed * 256);
+    return seed;
+}
+
+metamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }
+metamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }
+metamethod add(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)+((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)+(((b->int)/0x10000)*0x10000)) -> pVec2) }
+metamethod sub(pVec2 a, pVec2 b) -> pVec2 { ( ((((a->int)%0x10000)-((b->int)%0x10000))%0x10000) + ((((a->int)/0x10000)*0x10000)-(((b->int)/0x10000)*0x10000)) -> pVec2) }
+metamethod eq(pVec2 a, pVec2 b) -> int { (a->int)==(b->int) }
+abstract class pVec2 {
+    static function Make(int x, int y) -> pVec2 { ((x%0x10000) + (y*0x10000) -> pVec2) }
+    static function WithX(pVec2 this, int x) -> pVec2 { ((x%0x10000) + (((this->int)/0x10000)*0x10000) -> pVec2) }
+    static function WithY(pVec2 this, int y) -> pVec2 { (((this->int)%0x10000)+ (y*0x10000) -> pVec2) }
+}
+
+pVec2 apple = pVec2.Make(0xFF,0xFF);
+
+@pVec2 DirectionVectors = new pVec2[] {
+    (0xFFFF0000 -> pVec2),
+    (0x00000001 -> pVec2),
+    (0x00010000 -> pVec2),
+    (0x0000FFFF -> pVec2)
+};
+@int DirectionHeads = new int[]{'^','>','v','<'}
+
+metamethod truthy(Body this)->int{
+    return (this -> int);
+}
+class Body {
+    pVec2 Pos;
+    pVec2 LastPos;
+    Body Tail;
+    
+    function Move(pVec2 pos){
+        this.LastPos = this.Pos;
+        if(this.Tail)this.Tail.Move(this.Pos);
+        this.Pos = pos;
+    }
+    
+    function MoveBy(pVec2 amount){
+        this.Move(this.Pos + amount);
+    }
+    
+    function Grow(){
+        if(this.Tail)return this.Tail.Grow();
+        this.Tail = new Body(this.LastPos);
+    }
+    
+    function Draw(){
+        if(this.Tail)this.Tail.Draw();
+        Term.Cursor.X = this.Pos.X;
+        Term.Cursor.Y = this.Pos.Y;
+        putchar('#');
+    }
+    
+    new (pVec2 pos){
+        this.LastPos = pos;
+        this.Pos = pos;
+    }
+}
+
+class Snake {
+    int Direction;
+    Body body;
+    new (pVec2 pos){
+        this.Direction = 1;
+        this.body = new Body(pos);
+    }
+    function Draw(){
+        this.body.Draw();
+        Term.Cursor.X = this.body.Pos.X;
+        Term.Cursor.Y = this.body.Pos.Y;
+        putchar(DirectionHeads + this.Direction);
+    }
+    function Grow()
+        this.body.Grow();
+    function MoveBy(pVec2 delta)
+        this.body.MoveBy(delta);
+    
+}
+
+int score = 0;
+function GameOver(){
+    Term.Clear();
+    Term.Style.Fore = Red;
+    Term.Style.Bold = 1;
+    Term.Cursor.X = 27;
+    Term.Cursor.Y = 15;
+    Term.Write("GAME  OVER");
+    Term.Cursor.X = 28;
+    Term.Cursor.Y = 16;
+    Term.Write("SCORE: ");
+    Term.WriteNum(score);
+    asm {halt}
+}
+
+Snake snake = new Snake(pVec2.Make(32, 16));
+snake.Grow();
+snake.Grow();
+snake.Grow();
+
+int frame = 0;
+int counter = 0;
+int grace = 3;
+Term.PollEvents();
+Term.Frame.Push(()=>{
+    seed += counter;
+    rand();
+    if(apple.X > 63){
+        var a = (rand() -> pVec2);
+        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));
+    }
+    if(frame++ >= 2 + (2*!(snake.Direction%2))){
+        snake.MoveBy((*(DirectionVectors + snake.Direction) -> pVec2));
+        frame = 0;
+    }
+    if(snake.body.Pos == apple){
+        score++;
+        snake.Grow();
+        var a = (rand() -> pVec2);
+        apple = pVec2.Make(a.X%64, 1 + (a.Y%31));
+    }
+    if(grace)grace--
+    else{
+        var b = snake.body.Tail;
+        while(b){
+            if(snake.body.Pos == b.Pos){
+                GameOver();
+            }
+            b = b.Tail;
+        }
+    }
+    if(snake.body.Pos.X > 63){GameOver();}
+    if(snake.body.Pos.Y > 31){GameOver();}
+    if(snake.body.Pos.Y < 1){GameOver();}
+    Term.Clear();
+    Term.Cursor.Reset();
+    Term.Style.Back = White;
+    Term.Style.Fore = Black;
+    Term.Write("                                                                ");
+    Term.Cursor.Reset();
+    Term.Write("SCORE: ");
+    Term.WriteNum(score);
+    Term.Style.Back = Black;
+    Term.Style.Fore = White;
+    Term.Cursor.X = apple.X;
+    Term.Cursor.Y = apple.Y;
+    putchar('a');
+    snake.Draw();
+});
+
+Term.KeyDown.Push(function(int h, int l){
+    if(h=='w')if(1 == snake.Direction%2)return snake.Direction = 0;
+    if(h=='d')if(0 == snake.Direction%2)return snake.Direction = 1;
+    if(h=='s')if(1 == snake.Direction%2)return snake.Direction = 2;
+    if(h=='a')if(0 == snake.Direction%2)return snake.Direction = 3;
+})
+
+while(1){counter++;Term.PollEvents();}`);
     }
 
     editors[file] = e;
@@ -782,8 +948,68 @@ export default function App() {
     );
   }
 
+  function DownloadBytecode(){
+    if(!bsInterp) return;
+    let bytecode = bsInterp.Heap;
+    let byteArr = new Uint8Array(bytecode);
+    let blob = new Blob([byteArr], {type: 'application/octet-stream'});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'bytecode.bc';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 0);
+  }
+
+  // Copy a CMC answer in the form `[BrainChild](https://github.com/tehflamintaco/brainlift), ${n} byte${"s"|""}. [`${main.code}`](${permalink})`
+  function CopyCMC(){
+    let mainCode = editors["main.bc"].getValue()
+    let userFiles: {[key:string]:string} = {};
+    for(let file in editors){
+      if (file in AllReadOnlys) continue;
+      userFiles[file] = editors[file].getValue();
+    }
+    let codeParam = compress(JSON.stringify(userFiles));
+    let url = new URL(window.location as any as string);
+    url.searchParams.set("code", codeParam);
+    let encoder = new TextEncoder();
+    let byteCount = encoder.encode(mainCode).length;
+    let textToCopy = `[BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}. [\`${mainCode}\`](${url})`;
+    navigator.clipboard.writeText(textToCopy);
+  }
+
+  /*
+    Copy a Code-golf answer in the form of
+      # [BrainChild](https://github.com/tehflamintaco/brainlift), ${n} byte${"s"|"n"}
+      
+        main.code
+
+      [Try It Online!](${permalink})
+  */
+  function CopyCodegolf(){
+    let mainCode = editors["main.bc"].getValue()
+    let userFiles: {[key:string]:string} = {};
+    for(let file in editors){
+      if (file in AllReadOnlys) continue;
+      userFiles[file] = editors[file].getValue();
+    }
+    let codeParam = compress(JSON.stringify(userFiles));
+    let url = new URL(window.location as any as string);
+    url.searchParams.set("code", codeParam);
+    let encoder = new TextEncoder();
+    let byteCount = encoder.encode(mainCode).length;
+    let textToCopy = `# [BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}.\n\n${mainCode.replace(/^/mg, "\t")}\n\n[Try It Online!](${url})`;
+    navigator.clipboard.writeText(textToCopy);
+  }
+  
+
   return (
     <div className="App">
+      <title>BrainChild</title>
       <h1>BrainChild</h1>
       <div id="top">
         <div id="editors">
@@ -826,6 +1052,16 @@ export default function App() {
             <button title="Restart Interpreter" onClick={ASMReload}>
               ↺
             </button>
+            <span className='buttonPadding'></span>
+            <button title="Copy Codegolf Answer" onClick={CopyCodegolf}>
+              🥇
+            </button>
+            <button title="Copy CMC Answer" onClick={CopyCMC}>
+              🏌️
+            </button>
+            <button title="Download Bytecode" onClick={DownloadBytecode}>
+              ↓
+            </button>
           </div>
           <pre
             id="output"
@@ -839,7 +1075,8 @@ export default function App() {
       <div id="bf">
         <div id="memory">
           <div id="tabBodies">
-            <div data-target="baMemory" className="active tab"></div>
+            <div data-target="baMemory" className="tab"></div>
+            <div data-target="baHeap" className="tab"></div>
           </div>
         </div>
         <div id="code">

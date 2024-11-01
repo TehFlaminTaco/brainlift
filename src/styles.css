@@ -46,10 +46,10 @@ h1 {
 #memory {
   display: flex;
   flex-direction: column;
+  height:100%;
 }
 
 #memory {
-  overflow: auto;
   flex-grow: 1;
 }
 
@@ -66,10 +66,6 @@ h1 {
 
 .pointer {
   background-color: #8af;
-}
-
-.tab:not(.active) {
-  display: none;
 }
 
 button a {
@@ -116,6 +112,25 @@ button a:hover {
 #editorTabs {
 }
 
+#actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-right: 2em;
+  padding-bottom:2px;
+}
+
+span.buttonPadding {
+  flex-grow: 1;
+}
+
+#tabBodies {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height:100%;
+}
+
 .etab:not(.active) {
   display: none;
 }
@@ -144,6 +159,7 @@ button a:hover {
 #heap {
   white-space: pre;
   font-family: monospace;
+  padding-right: 2em;
 }
 
 span.error {
@@ -210,4 +226,13 @@ span.reg {
 }
 #outputSide button:hover {
   background-color: darkgray;
+}
+
+.tab {
+  overflow: auto;
+  height: 100%;
+}
+
+div[data-target="baMemory"]{
+  flex-grow: 1;
 }

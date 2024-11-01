@@ -103,7 +103,7 @@ export class Call extends Expression implements LeftDonor {
       callArgumentTypes.push(...resolveArgument[0]);
     }
 
-    let meta = scope.GetMetamethod("call", [...resolveTarget[0], ...callArgumentTypes]);
+    let meta = scope.GetMetamethod("call", [...resolveTarget[0], ...callArgumentTypes], {strictTo: resolveTarget[0].length});
     if(meta){
       o = resolveTarget[1].concat(o);
       o.push(...VarType.Coax(meta[1], [...resolveTarget[0], ...callArgumentTypes])[0])

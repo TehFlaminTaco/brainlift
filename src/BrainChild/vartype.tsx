@@ -116,9 +116,6 @@ export class VarType extends Token {
     )
       return true;
     var typeDef = this.GetDefinition();
-    if (other.GetDefinition().IsParent(typeDef)) {
-      return this.PointerDepth === other.PointerDepth;
-    }
     return false;
   }
 
@@ -139,9 +136,6 @@ export class VarType extends Token {
     )
       return true;
     var typeDef = this.GetDefinition();
-    if (typeDef.IsParent(other.GetDefinition())) {
-      return this.PointerDepth <= other.PointerDepth;
-    }
     return false;
   }
 
@@ -188,24 +182,6 @@ export class VarType extends Token {
       let val = hexPad(ptr, 8);
       let s = `<span class='var' title='${label}'><b>${this.ToHTML()}</b> ${identifier}</span> = ${val} {<br>`;
       let childrenByOffset: [VarType, number, string, string][] = [];
-      let className = "undefined";
-      for (let id in bs.Labels) {
-        if (!id.startsWith("class")) continue;
-        if (bs.Labels[id] === cls) {
-          for (let clsName in scope.UserTypes) {
-            if (clsName.startsWith("type")) continue;
-            if (scope.UserTypes[clsName].ClassLabel === id) {
-              className = clsName;
-              break;
-            }
-          }
-          break;
-        }
-      }
-      if (className !== "undefined") {
-        if (t.IsParent(scope.UserTypes[className]))
-          t = scope.UserTypes[className];
-      }
       if (t && this.Generics.length > 0) t = t.WithGenerics(this.Generics);
       for (let ident in t.Children) {
         let child = t.Children[ident];
@@ -214,12 +190,6 @@ export class VarType extends Token {
       for (let i = 0; i < childrenByOffset.length; i++) {
         let child = childrenByOffset[i];
         if (!child) continue;
-        if (child[3] === "class") {
-          if (className === "undefined") continue;
-          if (className === this.TypeName) continue;
-          s += `\t<b>class</b> = <b>${className}</b><br>`;
-          continue;
-        }
         let v = ((bs.Heap[(ptr + child[1])*4]??0) << 24) + ((bs.Heap[(ptr + child[1])*4 + 1]??0) << 16) + ((bs.Heap[(ptr + child[1])*4 + 2]??0) << 8) + ((bs.Heap[(ptr + child[1])*4 + 3]??0) << 0);
         let expected = +child[2];
         if (bs.Labels[child[2]]) expected = bs.Labels[child[2]];
@@ -631,6 +601,7 @@ export class VarType extends Token {
     let def = this.GetDefinition();
     let other = fromLocation === "a" ? "b" : "a";
     if(!def.Wide) return [`cpy${fromLocation}${other}`, `ptr${other}`, `${toStack}push${other}`];
+    if(def.Size === 0) return [];
     let o:string[] = [];
     if(!reversed)
       o.push(`add${fromLocation} ${def.Size-1}`)
@@ -641,27 +612,31 @@ export class VarType extends Token {
   FlipA(): string[] {
     let def = this.GetDefinition();
     if(!def.Wide) return []; // Do nothing :D
+    if(def.Size === 0) return [];
     return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put(), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("a","b",true)]
   }
   // Flip the top of the B stack, uses scratch as temporary storage
   FlipB(): string[] {
     let def = this.GetDefinition();
     if(def.Wide) return []; // Do nothing :D
+    if(def.Size === 0) return [];
     return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put("b"), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("b","a",true)]
   }
   // Clone the top of the A stack, uses scratch as temporary storage
   CloneA(): string[] {
     let def = this.GetDefinition();
     if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    if(def.Size === 0) return [];
     let scratch = Scope.CURRENT.GetScratch(def.Size);
-    return [`setb ${scratch}`, ...this.Put(), `setb ${scratch}`, ...this.Get("b","a"), `setb ${scratch}`, ...this.Get("b","a")];
+    return [`setb ${scratch}`, ...this.Put(), `setb ${scratch}`, ...this.Get("a","b"), `setb ${scratch}`, ...this.Get("a","b")];
   }
   // Clone the top of the B stack, uses scratch as temporary storage
   CloneB(): string[] {
     let def = this.GetDefinition();
     if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    if(def.Size === 0) return [];
     let scratch = Scope.CURRENT.GetScratch(def.Size);
-    return [`setb ${scratch}`, ...this.Put("b"), `setb ${scratch}`, ...this.Get("a","b"), `setb ${scratch}`, ...this.Get("a","b")];
+    return [`setb ${scratch}`, ...this.Put("b"), `setb ${scratch}`, ...this.Get("b","b"), `setb ${scratch}`, ...this.Get("b","b")];
   }
 
 }
