@@ -112,6 +112,13 @@ button a:hover {
 #editorTabs {
 }
 
+#updateHeader {
+  position:fixed;
+  top:.5em;
+  right:.5em;
+  font-size: 8pt;
+}
+
 #actions {
   display: flex;
   flex-direction: row;
