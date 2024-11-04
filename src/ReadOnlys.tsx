@@ -249,7 +249,7 @@ metamethod call(typegets _, string terminators) -> stringified {
     return new stringified(terminators, __getsstringified);
 }
 metamethod call(typegets _) -> stringified{
-    return gets("\\r\\n");
+    return new stringified("\\r\\n", __getsstringified);
 }
 abstract class getof{};
 metamethod call(typegetof _, int bufferLength, @int buffer, stringified whitelist) -> int{
