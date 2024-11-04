@@ -18,7 +18,8 @@ export class Assignment
   Left: Expression | null = null;
   Targets: Assignable[] = [];
   Right: Expression | null = null;
-  Precedence = 2;
+  RightPrecedence = 2;
+  LeftPrecedence = 14;
   LeftRightAssociative = false;
   static RightClaim(left: Expression, claimer: Claimer): Assignment | null {
     var flag = claimer.Flag();

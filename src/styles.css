@@ -243,3 +243,15 @@ span.reg {
 div[data-target="baMemory"]{
   flex-grow: 1;
 }
+
+.simpleIO {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+}
+
+.simpleIO textarea {
+  resize: none;
+  flex-grow: 1;
+}

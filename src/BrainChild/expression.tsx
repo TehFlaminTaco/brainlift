@@ -7,11 +7,11 @@ import { Simplifyable } from "./Simplifyable";
 
 function IsRightDonor(e: Expression | null) {
   if (e === null) return false;
-  return "Right" in e && "Precedence" in e && "LeftRightAssociative" in e;
+  return "Right" in e && ("Precedence" in e || "LeftPrecedence" in e) && "LeftRightAssociative" in e;
 }
 function IsLeftDonor(e: Expression | null) {
   if (e === null) return false;
-  return "Left" in e && "Precedence" in e && "LeftRightAssociative" in e;
+  return "Left" in e && ("Precedence" in e || "RightPrecedence" in e) && "LeftRightAssociative" in e;
 }
 
 export abstract class Expression extends Token {
@@ -59,9 +59,11 @@ export abstract class Expression extends Token {
     var l = right.Left;
     if (!IsRightDonor(l)) return r;
     var left = l as unknown as RightDonor;
+    let lp = left.Precedence ?? left.RightPrecedence!;
+    let rp = right.Precedence ?? right.LeftPrecedence!;
     if (
-      right.Precedence > left.Precedence ||
-      (right.Precedence === left.Precedence && !right.LeftRightAssociative)
+      rp > lp ||
+      (rp === lp && !right.LeftRightAssociative)
     ) {
       var lr = left.Right;
       left.Right = right as unknown as Expression;
@@ -77,9 +79,11 @@ export abstract class Expression extends Token {
     var r = left.Right;
     if (!IsLeftDonor(r)) return l;
     var right = r as unknown as LeftDonor;
+    let lp = left.Precedence ?? left.RightPrecedence!;
+    let rp = right.Precedence ?? right.LeftPrecedence!;
     if (
-      left.Precedence > right.Precedence ||
-      (right.Precedence === left.Precedence && right.LeftRightAssociative)
+      lp > rp ||
+      (rp === lp && right.LeftRightAssociative)
     ) {
       var rl = right.Left;
       right.Left = left as unknown as Expression;
@@ -147,7 +151,9 @@ export abstract class Expression extends Token {
 }
 
 export interface Donor {
-  Precedence: number;
+  Precedence?: number;
+  LeftPrecedence?: number;
+  RightPrecedence?: number;
   LeftRightAssociative: boolean;
 }
 

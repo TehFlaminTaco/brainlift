@@ -42,12 +42,17 @@ const pako = require("pako");
 
 export const AllReadOnlys: {[name: string]: string} = {};
 
-export const VERSION = "0.5.1";
+// MAJOR, MINOR, HOTFIX
+// MAJOR versions implement large changes that are likely to break most older programs
+// MINOR will likely work with older programs with minimal retooling, and include notable changes.
+// HOTFIX will work with most previous versions, or may be updating a previous MINOR revision to work with older MINOR revisions.
+export const VERSION = "0.6.0";
 
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;
 let editors: { [path: string]: Ace.Editor } = {};
 let term: Terminal;
+let SimpleIO: boolean = false;
 
 var base64abc = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "/"];
   
@@ -141,12 +146,15 @@ async function parseEditor(): Promise<Scope> {
     files[id] = editors[id].getValue();
     editors[id].getSession().setAnnotations([]);
     annotations[id] = [];
-  }
+  };
+  (document.getElementById("asmRun") as HTMLButtonElement).innerHTML = "⏵";
   term = new Terminal();
-  let rendered = term.Render();
-  window.requestAnimationFrame(() => {
-    document.getElementById("output")!.innerHTML = rendered;
-  });
+  if(!SimpleIO){
+    let rendered = term.Render();
+    window.requestAnimationFrame(() => {
+      document.getElementById("output")!.innerHTML = rendered;
+    });
+  }
   var scope = await Parse(files);
   scope.TypeInformation.forEach((i) => {
     let t = i[0];
@@ -162,6 +170,24 @@ async function parseEditor(): Promise<Scope> {
     editors[id].getSession().setAnnotations(annotations[id]);
   }
   return scope;
+}
+
+function UpdateURL(){
+  if('history'in window){
+    let userFiles: {[key:string]:string} = {};
+    for(let file in editors){
+      if (file in AllReadOnlys) continue;
+      userFiles[file] = editors[file].getValue();
+    }
+    let codeParam = compress(JSON.stringify(userFiles));
+    let url = new URL(window.location as any as string);
+    url.searchParams.set("code", codeParam);
+    if(SimpleIO)
+      url.searchParams.set("simpleio", (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value)
+    else
+      url.searchParams.delete("simpleio");
+    window.history.pushState(null, "", url);
+  }
 }
 
 function selectETab(event: any) {
@@ -204,17 +230,7 @@ function handleChange() {
   waitTimeout = setTimeout(async () => {
     waitTimeout = undefined;
     try {
-      if('history'in window){
-        let userFiles: {[key:string]:string} = {};
-        for(let file in editors){
-          if (file in AllReadOnlys) continue;
-          userFiles[file] = editors[file].getValue();
-        }
-        let codeParam = compress(JSON.stringify(userFiles));
-        let url = new URL(window.location as any as string);
-        url.searchParams.set("code", codeParam);
-        window.history.pushState(null, "", url);
-      }
+      UpdateURL();
       console.log("compiling...");
       var t = Date.now();
       try {
@@ -262,11 +278,55 @@ function handleChange() {
   }, 300);
 }
 
+function toggleSimpleIO(){
+  setSimpleIO(!SimpleIO);
+  UpdateURL()
+}
+
+function setSimpleIO(val: boolean){
+  SimpleIO = val;
+  if(SimpleIO){
+    setupSimpleIO();
+    (document.getElementById("simpleIOButton") as HTMLButtonElement).innerHTML = "📝";
+  }else{
+    (document.getElementById("output") as HTMLDivElement).innerHTML = term?.Render()??"";
+    (document.getElementById("simpleIOButton") as HTMLButtonElement).innerHTML = "💻";
+  }
+}
+
+function setupSimpleIO(){
+  let simpleIOWrapper = document.createElement("div") as HTMLDivElement;
+  simpleIOWrapper.className = "simpleIO";
+  let iHeader = document.createElement("H2") as HTMLHeadingElement;
+  let inp = document.createElement("textarea") as HTMLTextAreaElement;
+  let oHeader = document.createElement("H2") as HTMLHeadingElement;
+  let outp = document.createElement("textarea") as HTMLTextAreaElement;
+  inp.id = "simpleIOInput";
+  iHeader.textContent = "Input";
+  outp.id = "simpleIOOutput";
+  oHeader.textContent = "Output";
+  let outputArea = document.getElementById("output") as HTMLDivElement;
+  outputArea.innerHTML = "";
+
+  inp.addEventListener("blur", ()=>{
+    if(bsInterp && SimpleIO)
+        bsInterp.Input = inp.value;
+    UpdateURL()
+  })
+
+  simpleIOWrapper.append(iHeader);
+  simpleIOWrapper.append(inp);
+  simpleIOWrapper.append(oHeader);
+  simpleIOWrapper.append(outp);
+  outputArea.append(simpleIOWrapper);
+}
+
 function addGutter(file: string) {
   return function (e: Ace.Editor) {
     GenerateReadOnlys();
     let search = new URL(window.location as any as string).searchParams;
     if (search.has("code")) {
+      let inp = search.has("simpleio") ? search.get("simpleio")! : false;
       var decompressed = new TextDecoder().decode(decompress(search.get("code")!));
       console.log(decompressed);
       var unrolled = JSON.parse(decompressed);
@@ -274,6 +334,13 @@ function addGutter(file: string) {
       for (let file in unrolled) {
         if (file === "main.bc") continue;
         new CustomTab(file, unrolled[file]);
+      }
+      if(file==="main.bc"&& inp !== false){
+        setTimeout(()=>{
+        setSimpleIO(true);
+        (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value = inp as string;
+        UpdateURL();
+        },0);
       }
     } else {
       e.setValue(`include term.bc;
@@ -444,6 +511,9 @@ Term.KeyDown.Push(function(int h, int l){
 
 while(1){counter++;Term.PollEvents();}`);
     }
+
+    if(SimpleIO)
+      setupSimpleIO();
 
     editors[file] = e;
     let editor = e;
@@ -683,9 +753,9 @@ export default function App() {
       }
       bsInterp.Step();
       if (scope !== null) scope.RenderBSMemory(bsInterp);
-      if (bsInterp.Output.length > 0) {
+      if (!SimpleIO && bsInterp.Output.length > 0) {
         let hadFocus =
-          document.getElementById("output")! === document.activeElement;
+          document.getElementById("output")! === document.activeElement
         term.WriteAll(bsInterp.Output);
         bsInterp.Output = "";
         let rendered = term.Render();
@@ -693,10 +763,12 @@ export default function App() {
           document.getElementById("output")!.innerHTML = rendered;
         });
         if (hadFocus) document.getElementById("output")!.focus();
+      }else if(SimpleIO){
+        document.getElementById("simpleIOOutput")!.textContent = bsInterp.Output;
       }
       var codeText = document.getElementById("codeText")!;
       codeText.innerHTML = bsInterp.CodeWithPointerHighlight();
-      if (bsInterp.InputPointer > 0) {
+      if (!SimpleIO && bsInterp.InputPointer > 0) {
         bsInterp.Input = bsInterp.Input.substr(bsInterp.InputPointer);
         bsInterp.InputPointer = 0;
       }
@@ -718,6 +790,9 @@ export default function App() {
   }
 
   function ASMRun(event: any) {
+    if(bsInterp && !bsInterp.running){
+      bsInterp = new ASMInterpreter(bsInterp.Code);
+    }
     asmRunning = !asmRunning;
     let breaks: [file: string, line: number][] = [];
     for (let file in editors) {
@@ -757,12 +832,15 @@ export default function App() {
     if (asmRunning) {
       event.target.innerHTML = "⏸";
       document.getElementById("bf")!.classList.add("running");
+      if(bsInterp && SimpleIO)bsInterp.Input = (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value;
       asmRunTimer = setInterval(() => {
         if(!(bsInterp?.running ?? false)){
           event.target.click();
+          event.target.innerHTML = "↺";
           return;
         }
-        PushEvent(Event.Frame);
+        if(!SimpleIO)
+          PushEvent(Event.Frame);
         if (bsInterp !== undefined) {
           for (var id in editors) {
             let editor = editors[id];
@@ -780,10 +858,10 @@ export default function App() {
           while (Date.now() < t + 1000 / 60) {
             bsInterp.Step();
             if (breakIPs.has(bsInterp.IP)) {
-              event.target.innerHTML = "⏵";
+              event.target.innerHTML = "⏯";
               document.getElementById("bf")!.classList.remove("running");
               Scope.CURRENT!.RenderBSMemory(bsInterp);
-              if (bsInterp.Output.length > 0) {
+              if (!SimpleIO && bsInterp.Output.length > 0) {
                 let hadFocus =
                   document.getElementById("output")! === document.activeElement;
                 term.WriteAll(bsInterp.Output);
@@ -793,8 +871,10 @@ export default function App() {
                   document.getElementById("output")!.innerHTML = rendered;
                 });
                 if (hadFocus) document.getElementById("output")!.focus();
+              }else if(SimpleIO){
+                document.getElementById("simpleIOOutput")!.textContent = bsInterp.Output;
               }
-              if (bsInterp.InputPointer > 0) {
+              if (!SimpleIO && bsInterp.InputPointer > 0) {
                 bsInterp.Input = bsInterp.Input.substr(bsInterp.InputPointer);
                 bsInterp.InputPointer = 0;
               }
@@ -809,7 +889,7 @@ export default function App() {
             }
             if (!bsInterp.running) break;
           }
-          if (bsInterp.Output.length > 0) {
+          if (!SimpleIO && bsInterp.Output.length > 0) {
             let hadFocus =
               document.getElementById("output")! === document.activeElement;
             term.WriteAll(bsInterp.Output);
@@ -819,8 +899,10 @@ export default function App() {
               document.getElementById("output")!.innerHTML = rendered;
             });
             if (hadFocus) document.getElementById("output")!.focus();
+          }else if(SimpleIO){
+            document.getElementById("simpleIOOutput")!.textContent = bsInterp.Output;
           }
-          if (bsInterp.InputPointer > 0) {
+          if (!SimpleIO && bsInterp.InputPointer > 0) {
             bsInterp.Input = bsInterp.Input.substr(bsInterp.InputPointer);
             bsInterp.InputPointer = 0;
           }
@@ -841,6 +923,8 @@ export default function App() {
           bsInterp = new ASMInterpreter(
             (document.getElementById("codeBody") as HTMLTextAreaElement).value
           );
+          if(SimpleIO)
+            bsInterp.Input = (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value;
         }
       }, 0);
     } else {
@@ -872,6 +956,8 @@ export default function App() {
     console.log(`optimized in ${Date.now() - t}ms`);
     t = Date.now();
     bsInterp = new ASMInterpreter(parsed);
+    if(SimpleIO)
+      bsInterp.Input = (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value;
     console.log(`compiled in ${Date.now() - t}ms`);
     document.getElementById("codeText")!.innerHTML = parsed.join("\n");
     scope.RenderBSMemory(bsInterp);
@@ -900,7 +986,7 @@ export default function App() {
       "codePointer",
       "fullLine"
     );
-    if (bsInterp.Output.length > 0) {
+    if (!SimpleIO && bsInterp.Output.length > 0) {
       let hadFocus =
         document.getElementById("output")! === document.activeElement;
       term.WriteAll(bsInterp.Output);
@@ -910,8 +996,10 @@ export default function App() {
         document.getElementById("output")!.innerHTML = rendered;
       });
       if (hadFocus) document.getElementById("output")!.focus();
+    }else if(SimpleIO){
+      document.getElementById("simpleIOOutput")!.textContent = bsInterp.Output;
     }
-    if (bsInterp.InputPointer > 0) {
+    if (!SimpleIO && bsInterp.InputPointer > 0) {
       bsInterp.Input = bsInterp.Input.substr(bsInterp.InputPointer);
       bsInterp.InputPointer = 0;
     }
@@ -927,14 +1015,14 @@ export default function App() {
   }
 
   function terminalClick(ev: any) {
-    if (!term || !bsInterp) return;
+    if (!term || !bsInterp || SimpleIO) return;
     let col = ((ev.nativeEvent.offsetX / 457.438) * term.Width) | 0;
     let line = ((ev.nativeEvent.offsetY / 457.72) * term.Height) | 0;
     PushEvent(Event.Click, col, line);
   }
 
   function terminalKeyDown(ev: any) {
-    if (!term || !bsInterp) return;
+    if (!term || !bsInterp || SimpleIO) return;
     PushEvent(
       Event.KeyDown,
       ev.key.length === 1 ? ev.key.charCodeAt(0) : 0,
@@ -942,7 +1030,7 @@ export default function App() {
     );
   }
   function terminalKeyUp(ev: any) {
-    if (!term || !bsInterp) return;
+    if (!term || !bsInterp || SimpleIO) return;
     PushEvent(
       Event.KeyUp,
       ev.key.length === 1 ? ev.key.charCodeAt(0) : 0,
@@ -978,6 +1066,10 @@ export default function App() {
     let codeParam = compress(JSON.stringify(userFiles));
     let url = new URL(window.location as any as string);
     url.searchParams.set("code", codeParam);
+    if(SimpleIO)
+      url.searchParams.set("simpleio", (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value)
+    else
+      url.searchParams.delete("simpleio");
     let encoder = new TextEncoder();
     let byteCount = encoder.encode(mainCode).length;
     let textToCopy = `[BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}. [\`${mainCode}\`](${url})`;
@@ -1002,6 +1094,10 @@ export default function App() {
     let codeParam = compress(JSON.stringify(userFiles));
     let url = new URL(window.location as any as string);
     url.searchParams.set("code", codeParam);
+    if(SimpleIO)
+      url.searchParams.set("simpleio", (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value)
+    else
+      url.searchParams.delete("simpleio");
     let encoder = new TextEncoder();
     let byteCount = encoder.encode(mainCode).length;
     let textToCopy = `# [BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}\n\n${mainCode.replace(/^/mg, "\t")}\n\n[Try It Online!](${url})`;
@@ -1063,6 +1159,9 @@ export default function App() {
               ↺
             </button>
             <span className='buttonPadding'></span>
+            <button title="Terminal/Simple IO" onClick={toggleSimpleIO} id="simpleIOButton">
+              💻
+            </button>
             <button title="Copy Codegolf Answer" onClick={CopyCodegolf}>
               🥇
             </button>

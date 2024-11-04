@@ -382,7 +382,9 @@ export class FunctionDefinition extends Expression {
     if (this.Target instanceof Identifier && !this.IsMeta) {
       scope.Set(this.Target.Name, funcType);
     }
-    var bodyScope = scope.Sub();
+    var paddingScope = scope.Sub();
+    paddingScope.IsFunctionScope = false;
+    var bodyScope = paddingScope.Sub();
     bodyScope.CurrentFunction = label;
     bodyScope.IsFunctionScope = true;
     bodyScope.SetRequiredReturns(this.RetTypes?.concat() ?? null);

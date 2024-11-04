@@ -551,7 +551,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     '',
     (interp: ASMInterpreter, arg: number) => {
       interp.RegA = interp.Input.charCodeAt(interp.InputPointer++);
-      if (interp.InputPointer > interp.Input.length) interp.RegA = 0;
+      if (interp.InputPointer > interp.Input.length) interp.RegA = 0xffffffff>>>0;
     },
   ],
   [
@@ -559,7 +559,7 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     '',
     (interp: ASMInterpreter, arg: number) => {
       interp.RegB = interp.Input.charCodeAt(interp.InputPointer++);
-      if (interp.InputPointer > interp.Input.length) interp.RegB = 0;
+      if (interp.InputPointer > interp.Input.length) interp.RegB = 0xffffffff>>>0;
     },
   ],
   [
