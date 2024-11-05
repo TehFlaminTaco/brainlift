@@ -21,7 +21,7 @@ export class ExpressionStatement extends Statement {
     }
     return o;
   }
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(): false {
     return false;
   }
 }

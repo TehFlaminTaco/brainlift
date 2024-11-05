@@ -106,7 +106,9 @@ export class Assignment
     return [targetTypes, o];
   }
 
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    this.Left?.DefinitelyReturns(scope);
+    this.Right?.DefinitelyReturns(scope);
     return false;
   }
 

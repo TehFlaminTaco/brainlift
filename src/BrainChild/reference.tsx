@@ -29,6 +29,13 @@ export class Reference extends Expression {
   GetTypes(scope: Scope): VarType[] {
     return this.Target!.GetReferenceTypes(scope);
   }
+
+  DefinitlyReturns(scope: Scope): false|VarType[] {
+    return (this.Target as any as Expression).DefinitelyReturns(scope)
+  }
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    return (this.Target as any as Expression).PotentiallyReturns(scope);
+  }
 }
 
 Expression.Register(Reference.Claim);

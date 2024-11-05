@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirect to latest version</title>
-    <script>fetch("./version.txt").then(c=>c.text().then(txt=>window.location = `./v${txt}`))</script>
+    <script>fetch("./version.txt", {cache: "no-cache"}).then(c=>c.text().then(txt=>window.location = `./v${txt}`))</script>
 </head>
 <body>
     <noscript>BrainChild needs JS to run!</noscript>

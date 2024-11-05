@@ -96,8 +96,14 @@ export class While extends Expression implements Simplifyable {
     o.push(`jmp ${condition}`, `${afterTrue}:`);
     return [[], o];
   }
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    let c = this.Condition!.DefinitelyReturns(scope);
+    if(c)return c;
+    this.Body!.DefinitelyReturns(scope);
     return false;
+  }
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    return this.Condition!.DefinitelyReturns(scope) || VarType.MostSimilar(this.Condition!.PotentiallyReturns(scope),this.Body!.PotentiallyReturns(scope),true);
   }
   GetTypes(scope: Scope): VarType[] {
     if (this.Simplify(scope) !== null) return [VarType.Int];

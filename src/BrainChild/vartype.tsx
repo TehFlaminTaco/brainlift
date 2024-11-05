@@ -223,6 +223,21 @@ export class VarType extends Token {
     return true;
   }
 
+  static MostSimilar(a: false|VarType[], b: false|VarType[], potential: boolean = false): false|VarType[] {
+    if(a === false || b === false)
+        return potential ? a||b : false;
+    let similarTypes: VarType[] = [];
+    for (let i = 0; i < a.length && i < b.length; i++){
+      if(VarType.CanCoax([a[i]],[b[i]])[1])
+        similarTypes.push(b[i])
+      else if(VarType.CanCoax([b[i]],[a[i]])[1])
+        similarTypes.push(a[i])
+      else
+        break;
+    }
+    return similarTypes;
+  }
+
   static CountMatches(
     targetStack: VarType[],
     receivedStack: VarType[]

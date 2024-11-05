@@ -46,7 +46,7 @@ export const AllReadOnlys: {[name: string]: string} = {};
 // MAJOR versions implement large changes that are likely to break most older programs
 // MINOR will likely work with older programs with minimal retooling, and include notable changes.
 // HOTFIX will work with most previous versions, or may be updating a previous MINOR revision to work with older MINOR revisions.
-export const VERSION = "0.6.1";
+export const VERSION = "0.7.0";
 
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;
@@ -502,11 +502,12 @@ Term.Frame.Push(()=>{
     snake.Draw();
 });
 
-Term.KeyDown.Push(function(int h, int l){
+Term.KeyDown.Push((int h, int l) => {
     if(h=='w')if(1 == snake.Direction%2)return snake.Direction = 0;
     if(h=='d')if(0 == snake.Direction%2)return snake.Direction = 1;
     if(h=='s')if(1 == snake.Direction%2)return snake.Direction = 2;
     if(h=='a')if(0 == snake.Direction%2)return snake.Direction = 3;
+    return
 })
 
 while(1){counter++;Term.PollEvents();}`);
@@ -1104,7 +1105,7 @@ export default function App() {
     navigator.clipboard.writeText(textToCopy);
   }
   
-  fetch("../version.txt").then(c=>c.text().then(txt=>{
+  fetch("../version.txt", {cache: "no-cache"}).then(c=>c.text().then(txt=>{
     if(txt.match(/^[\d.]+$/) && txt != VERSION){
       (document.getElementById("updateHeader") as any).innerHTML = `v${VERSION} - Latest version is v${txt} - Click <a href="#" onclick="window.location=(''+window.location).replace('${VERSION}','${txt}')">HERE</a> to try it out`
     }else{

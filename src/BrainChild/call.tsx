@@ -213,6 +213,30 @@ export class Call extends Expression implements LeftDonor {
 
     return [functionMatchesTypes[0].RetTypes, o];
   }
+
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    let c = this.Left!.DefinitelyReturns(scope);
+    if(c)return c;
+    for (let i = 0; i < this.Arguments.length; i++) {
+      c = this.Arguments[i].DefinitelyReturns(scope);
+      if (c) return c;
+    }
+    return false;
+  }
+
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    let res = this.Left!.DefinitelyReturns(scope);
+    if(res)return res;
+    res = this.Left!.PotentiallyReturns(scope);
+    for (let i = 0; i < this.Arguments.length; i++) {
+      let c = this.Arguments[i].DefinitelyReturns(scope);
+      if (c) return c;
+      res = VarType.MostSimilar(res, this.Arguments[i].PotentiallyReturns(scope), true)
+      if(res && !res.length)
+        return res;
+    }
+    return res;
+  }
 }
 
 Expression.RegisterRight(Call.RightClaim);

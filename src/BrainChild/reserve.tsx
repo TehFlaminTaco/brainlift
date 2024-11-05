@@ -204,6 +204,27 @@ export class Reserve extends Expression {
     if (this.Length !== null) return [VarType.VoidPtr];
     return [this.Type!];
   }
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    if(this.Length !== null) return false;
+    for (let i = 0; i < this.Arguments.length; i++) {
+      let c = this.Arguments[i].DefinitelyReturns(scope);
+      if (c) return c;
+    }
+    return false;
+  }
+
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    if(this.Length !== null) return false;
+    let res: false|VarType[] = false;
+    for (let i = 0; i < this.Arguments.length; i++) {
+      let c = this.Arguments[i].DefinitelyReturns(scope);
+      if (c) return c;
+      res = VarType.MostSimilar(res, this.Arguments[i].PotentiallyReturns(scope), true)
+      if(res && !res.length)
+        return res;
+    }
+    return res;
+  }
 }
 
 Expression.Register(Reserve.Claim);

@@ -77,6 +77,10 @@ export class Dereference
     dereferenced.PointerDepth--;
     return o;
   }
+  DefinitelyReturns(scope: Scope): false {
+    (this.Right as Expression|null)?.DefinitelyReturns(scope);
+    return false;
+  }
   GetTypes(scope: Scope): VarType[] {
     var res = this.Right!.GetTypes(scope);
     var oTypes: VarType[] = [];

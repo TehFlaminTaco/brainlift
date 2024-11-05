@@ -85,6 +85,11 @@ export class Cumulate extends Expression implements Donor {
     return [ts, o];
   }
 
+  DefinitelyReturns(scope: Scope): false {
+    (this.Target as Expression|null)?.DefinitelyReturns(scope);
+    return false;
+  }
+
   GetTypes(scope: Scope): VarType[] {
     return this.Target!.GetTypes(scope);
   }

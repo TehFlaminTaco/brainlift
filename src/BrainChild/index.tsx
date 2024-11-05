@@ -609,6 +609,31 @@ export class Index
     if (this.Target instanceof Identifier) this.Curry = true;
   }
 
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    let c = this.Left!.DefinitelyReturns(scope);
+    if(c) return c;
+    if(this.Target instanceof Identifier)
+        return this.Target.DefinitelyReturns(scope);
+    for(let i=0; i < this.Target!.length; i++){
+      c = this.Target![i].DefinitelyReturns(scope);
+      if(c)return c;
+    }
+    return false;
+  }
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    let c = this.Left!.DefinitelyReturns(scope);
+    if(c) return c;
+    let res = this.Left!.PotentiallyReturns(scope);
+    if(this.Target instanceof Identifier)
+        return this.Target.DefinitelyReturns(scope)|| VarType.MostSimilar(res, this.Target.PotentiallyReturns(scope), true);
+    for(let i=0; i < this.Target!.length; i++){
+      c = this.Target![i].DefinitelyReturns(scope);
+      if(c)return c;
+      res = VarType.MostSimilar(res, this.Target![i].PotentiallyReturns(scope), true)
+    }
+    return res;
+  }
+
   GetTypes(scope: Scope): VarType[] {
     var valRes = this.Left!.GetTypes(scope);
     if (valRes.length === 0)

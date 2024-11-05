@@ -99,12 +99,11 @@ export class If extends Expression implements Simplifyable {
     o.push(`${afterTrue}:`);
     return [resTypes, o];
   }
-  DefinitelyReturns(): boolean {
-    return (
-      this.Else != null &&
-      this.Body!.DefinitelyReturns() &&
-      this.Else!.DefinitelyReturns()
-    );
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    return this.Condition!.DefinitelyReturns(scope) || this.Else != null ? VarType.MostSimilar(this.Body!.DefinitelyReturns(scope), this.Else!.DefinitelyReturns(scope)) : false;
+  }
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    return VarType.MostSimilar(this.Condition!.DefinitelyReturns(scope), VarType.MostSimilar(this.Body!.PotentiallyReturns(scope),this.Else?.PotentiallyReturns(scope)??false, true), true);
   }
   Simplify(scope: Scope): number | null {
     if (this.Condition && IsSimplifyable(this.Condition)) {

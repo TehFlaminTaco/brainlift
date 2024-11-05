@@ -15,12 +15,16 @@ function IsLeftDonor(e: Expression | null) {
 }
 
 export abstract class Expression extends Token {
+  static PriorityExpressionClaimers: Function[] = [];
   static ExpressionClaimers: Function[] = [];
   static ExpressionRightClaimers: Function[] = [];
 
   static Claim(claimer: Claimer): Expression | null {
     var s: Expression | null = null;
     var i = 0;
+    while (s === null && i < Expression.PriorityExpressionClaimers.length) {
+      s = Expression.PriorityExpressionClaimers[i++](claimer);
+    }
     while (s === null && i < Expression.ExpressionClaimers.length) {
       s = Expression.ExpressionClaimers[i++](claimer);
     }
@@ -45,8 +49,8 @@ export abstract class Expression extends Token {
     return s;
   }
 
-  static Register(method: Function) {
-    Expression.ExpressionClaimers.splice(0, 0, method);
+  static Register(method: Function, priority: boolean = false) {
+    (priority ? Expression.PriorityExpressionClaimers : Expression.ExpressionClaimers).splice(0, 0, method);
   }
 
   static RegisterRight(method: Function) {
@@ -145,8 +149,12 @@ export abstract class Expression extends Token {
     }
   }
 
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(scope: Scope): false|VarType[] {
     return false;
+  }
+
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    return this.DefinitelyReturns(scope);
   }
 }
 

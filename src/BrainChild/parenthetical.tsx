@@ -88,5 +88,25 @@ export class Parenthetical extends Expression implements Simplifyable {
       return (this.Values[0] as unknown as Simplifyable).Simplify(scope);
     return null;
   }
+
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    for (let i = 0; i < this.Values.length; i++) {
+      let c = this.Values[i].DefinitelyReturns(scope);
+      if (c) return c;
+    }
+    return false;
+  }
+
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    let res: false|VarType[] = false;
+    for (let i = 0; i < this.Values.length; i++) {
+      let c = this.Values[i].DefinitelyReturns(scope);
+      if (c) return c;
+      res = VarType.MostSimilar(res, this.Values[i].PotentiallyReturns(scope), true)
+      if(res && !res.length)
+        return res;
+    }
+    return res;
+  }
 }
 Expression.Register(Parenthetical.Claim);

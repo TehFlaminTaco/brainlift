@@ -236,6 +236,13 @@ export class MathExp
     }
     return null;
   }
+
+  DefinitlyReturns(scope: Scope): false|VarType[] {
+    return this.Left!.DefinitelyReturns(scope)||this.Right!.DefinitelyReturns(scope)
+  }
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    return this.Left!.DefinitelyReturns(scope)||this.Right!.DefinitelyReturns(scope)||VarType.MostSimilar(this.Left!.PotentiallyReturns(scope),this.Right!.PotentiallyReturns(scope))
+  }
 }
 
 export class UnaryMathExp
@@ -330,6 +337,13 @@ export class UnaryMathExp
       }
     }
     return null;
+  }
+
+  DefinitlyReturns(scope: Scope): false|VarType[] {
+    return this.Right!.DefinitelyReturns(scope)
+  }
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    return this.Right!.PotentiallyReturns(scope);
   }
 }
 

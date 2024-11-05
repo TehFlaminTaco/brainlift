@@ -1,6 +1,7 @@
 import { Claimer } from "./brainchild";
 import { Token, TokenError } from "./token";
 import { Scope } from "./Scope";
+import { VarType } from "./vartype";
 
 export abstract class Statement extends Token {
   static StatementClaimers: Function[] = [];
@@ -55,7 +56,7 @@ export abstract class Statement extends Token {
     }
   }
 
-  abstract DefinitelyReturns(): boolean;
+  abstract DefinitelyReturns(scope: Scope): false|VarType[];
 }
 
 Statement.RegisterTopLevel(Statement.Claim);

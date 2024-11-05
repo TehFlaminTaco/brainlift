@@ -69,11 +69,24 @@ export class Block extends Expression implements Simplifyable {
     return [lastTypes, o];
   }
 
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(scope: Scope): false|VarType[] {
     for (let i = 0; i < this.Expressions.length; i++) {
-      if (this.Expressions[i].DefinitelyReturns()) return true;
+      let c = this.Expressions[i].DefinitelyReturns(scope);
+      if (c) return c;
     }
     return false;
+  }
+
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    let res: false|VarType[] = false;
+    for (let i = 0; i < this.Expressions.length; i++) {
+      let c = this.Expressions[i].DefinitelyReturns(scope);
+      if (c) return c;
+      res = VarType.MostSimilar(res, this.Expressions[i].PotentiallyReturns(scope), true)
+      if(res && !res.length)
+        return res;
+    }
+    return res;
   }
 
   GetSubScope(scope: Scope): Scope {

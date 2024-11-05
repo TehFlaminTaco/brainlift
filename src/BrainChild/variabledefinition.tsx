@@ -190,6 +190,15 @@ export class VariableDecleration
     }
     return true;
   }
+
+  DefinitelyReturns(scope: Scope): false {
+    if (scope !== this.LastScope) {
+      this.Label = "";
+      this.LastScope = scope;
+    }
+    this.Label ||= scope.Set(this.Identifier!.Name, this.Type!);
+    return false;
+  }
 }
 
 Expression.Register(VariableDecleration.Claim);

@@ -599,7 +599,7 @@ export class Class extends Statement {
     return asm;
   }
 
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(): false {
     return false;
   }
 }

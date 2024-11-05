@@ -520,7 +520,7 @@ export class Macro extends Statement {
     return [];
   }
 
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(): false {
     return false;
   }
 }
@@ -630,6 +630,32 @@ export class Macrod extends Expression implements Simplifyable {
       this.Unpacked = exp;
     }
     return this.Unpacked.GetTypes(scope);
+  }
+
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    if (!this.Unpacked) {
+      let claimer = new Claimer(this.Text, this.Claimer.File);
+      let exp = Expression.Claim(claimer);
+      if (exp === null)
+        throw new Error(
+          `Failed to resolve macro to expression! Expanded: ${this.Text}`
+        );
+      this.Unpacked = exp;
+    }
+    return this.Unpacked.DefinitelyReturns(scope);
+  }
+
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    if (!this.Unpacked) {
+      let claimer = new Claimer(this.Text, this.Claimer.File);
+      let exp = Expression.Claim(claimer);
+      if (exp === null)
+        throw new Error(
+          `Failed to resolve macro to expression! Expanded: ${this.Text}`
+        );
+      this.Unpacked = exp;
+    }
+    return this.Unpacked.PotentiallyReturns(scope);
   }
 }
 

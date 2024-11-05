@@ -75,6 +75,26 @@ export class New extends Expression {
     o.push(...constructorMetamethod[2]);
     return [constructorMetamethod[0], o];
   }
+
+  DefinitelyReturns(scope: Scope): false|VarType[] {
+    for (let i = 0; i < this.Arguments.length; i++) {
+      let c = this.Arguments[i].DefinitelyReturns(scope);
+      if (c) return c;
+    }
+    return false;
+  }
+
+  PotentiallyReturns(scope: Scope): false|VarType[] {
+    let res: false|VarType[] = false;
+    for (let i = 0; i < this.Arguments.length; i++) {
+      let c = this.Arguments[i].DefinitelyReturns(scope);
+      if (c) return c;
+      res = VarType.MostSimilar(res, this.Arguments[i].PotentiallyReturns(scope), true)
+      if(res && !res.length)
+        return res;
+    }
+    return res;
+  }
   
   GetTypes(scope: Scope): VarType[] {
     let falseClaimer = new Claimer("");

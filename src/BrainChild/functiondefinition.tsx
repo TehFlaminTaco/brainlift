@@ -95,9 +95,10 @@ export class FunctionDefinition extends Expression {
       VarType.CurrentGenericArgs = oldGenericTypes;
       return null;
     }
-    var retTypes = [];
+    var retTypes: VarType[]|null = null;
 
     if (claimer.Claim(/->/).Success) {
+      retTypes = [];
       var retType = VarType.Claim(claimer);
       while (retType !== null) {
         retTypes.push(retType);
@@ -126,7 +127,7 @@ export class FunctionDefinition extends Expression {
     }
     var funct = new FunctionDefinition(claimer, fnc);
     funct.Args = args;
-    funct.RetTypes = retTypes;
+    funct.RetTypes = retTypes??[];
     funct.Target = target;
     funct.Body = body;
     return funct;
@@ -236,9 +237,9 @@ export class FunctionDefinition extends Expression {
       VarType.CurrentGenericArgs = oldGenericTypes;
       return null;
     }
-    var retTypes = [];
-
+    var retTypes: VarType[]|null = null;
     if (claimer.Claim(/->/).Success) {
+      retTypes=[];
       var retType = VarType.Claim(claimer);
       while (retType !== null) {
         retTypes.push(retType);
@@ -267,7 +268,7 @@ export class FunctionDefinition extends Expression {
     }
     var funct = new FunctionDefinition(claimer, fnc);
     funct.Args = args;
-    funct.RetTypes = retTypes;
+    funct.RetTypes = retTypes??[];
     funct.Target = target;
     funct.Body = body;
     funct.IsMeta = true;
@@ -357,13 +358,11 @@ export class FunctionDefinition extends Expression {
   }
 
   Evaluate(scope: Scope): [VarType[], string[]] {
-    if (this.RetTypes === null) {
-      this.RetTypes = this.Body!.GetTypes(scope);
-    }
+    this.GetTypes(scope); // Ensures RetTyeps are setup if needed. Hacky.
     var falseClaimer = new Claimer("");
     var falseClaim = falseClaimer.Flag();
     var funcType = new FuncType(falseClaimer, falseClaim);
-    funcType.RetTypes = this.RetTypes.concat();
+    funcType.RetTypes = this.RetTypes!.concat();
     funcType.ArgTypes = this.Args.map((c) => c.Type!);
     let simpleName = "function";
     if (this.Target instanceof Identifier) {
@@ -390,14 +389,14 @@ export class FunctionDefinition extends Expression {
     bodyScope.SetRequiredReturns(this.RetTypes?.concat() ?? null);
     var o = [this.GetLine(), `${label}:`];
     for (let i = 0; i < this.Args.length; i++) {
-      this.Args[i].TryEvaluate(bodyScope)[1].map((c) => "  " + c);
+      this.Args[i].TryEvaluate(bodyScope);
     }
     for (let i = this.Args.length - 1; i >= 0; i--) {
       o.push(`  seta ${this.Args[i].Label}`, ...this.Args[i].Type!.Put("a", "a"));
     }
     var res = this.Body!.TryEvaluate(bodyScope);
     if (
-      !this.Body!.DefinitelyReturns() &&
+      !this.Body!.DefinitelyReturns(bodyScope) &&
       !VarType.CanCoax(bodyScope.GetRequiredReturns()!, res[0])
     ) {
       throw new Error(
@@ -405,7 +404,7 @@ export class FunctionDefinition extends Expression {
       );
     }
     o.push(...res[1].map((c) => "  " + c));
-    if (!this.Body!.DefinitelyReturns()) {
+    if (!this.Body!.DefinitelyReturns(bodyScope)) {
       o.push(...VarType.Coax(bodyScope.GetRequiredReturns()!, res[0])[0]);
       o.push(`  ret`);
     }
@@ -425,7 +424,7 @@ export class FunctionDefinition extends Expression {
         if (
           VarType.AllEquals(scope.MetaMethods[name][i][1], funcType.ArgTypes) &&
           (name === "cast"
-            ? VarType.AllEquals(scope.MetaMethods[name][i][0], this.RetTypes)
+            ? VarType.AllEquals(scope.MetaMethods[name][i][0], this.RetTypes!)
             : true)
         ) {
           throw new Error(
@@ -454,7 +453,7 @@ export class FunctionDefinition extends Expression {
       ],
     ];
   }
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(): false {
     return false;
   }
   GetTypes(scope: Scope): VarType[] {
@@ -462,7 +461,42 @@ export class FunctionDefinition extends Expression {
       if (!(this.Body instanceof Expression)) {
         throw new Error(`Impossible`);
       }
-      this.RetTypes = this.Body.GetTypes(scope);
+      var falseClaimer = new Claimer("");
+      var falseClaim = falseClaimer.Flag();
+      var funcType = new FuncType(falseClaimer, falseClaim);
+      funcType.RetTypes = [];
+      funcType.ArgTypes = this.Args.map((c) => c.Type!);
+      let simpleName = "function";
+      if (this.Target instanceof Identifier) {
+        simpleName = this.Target.Name;
+      }
+      var label: string =
+        this.Label.length > 0
+          ? this.Label
+          : scope.GetSafeName(
+              simpleName +
+                "_" +
+                funcType.RetTypes.join("_") +
+                "_" +
+                funcType.ArgTypes.join("_")
+            );
+      if (this.Target instanceof Identifier && !this.IsMeta) {
+        scope.Set(this.Target.Name, funcType);
+      }
+      var paddingScope = scope.Sub();
+      paddingScope.IsFunctionScope = false;
+      var bodyScope = paddingScope.Sub();
+      bodyScope.CurrentFunction = label;
+      bodyScope.IsFunctionScope = true;
+      var o = [this.GetLine(), `${label}:`];
+      for (let i = 0; i < this.Args.length; i++) {
+        this.Args[i].GetTypes(bodyScope);
+      }
+      try {
+        this.RetTypes = this.Body.PotentiallyReturns(scope) || [];
+      }catch{
+        this.RetTypes = [];
+      }
     }
     var falseClaimer = new Claimer("");
     var falseFlag = falseClaimer.Flag();
@@ -474,5 +508,5 @@ export class FunctionDefinition extends Expression {
 }
 
 Expression.Register(FunctionDefinition.Claim);
-Expression.Register(FunctionDefinition.ClaimArrow);
+Expression.Register(FunctionDefinition.ClaimArrow, true);
 Expression.Register(FunctionDefinition.ClaimMetamethod);

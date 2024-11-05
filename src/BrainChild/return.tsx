@@ -58,8 +58,8 @@ export class Return extends Expression {
     if (!tailCall) o.push(`ret`);
     return [[], o];
   }
-  DefinitelyReturns(): boolean {
-    return true;
+  DefinitelyReturns(scope: Scope): VarType[] {
+    return this.Values.map(c=>c.GetTypes(scope)).flat();
   }
   GetTypes(): VarType[] {
     return [];

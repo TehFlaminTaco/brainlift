@@ -57,8 +57,8 @@ export class Include extends Statement {
     return o;
   }
 
-  DefinitelyReturns(): boolean {
-    return true;
+  DefinitelyReturns(): false {
+    return false;
   }
 }
 Statement.RegisterTopLevel(Include.Claim);

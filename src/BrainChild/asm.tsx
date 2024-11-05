@@ -52,7 +52,7 @@ export class ASM extends Expression {
     return this.RetTypes;
   }
 
-  DefinitelyReturns(): boolean {
+  DefinitelyReturns(): false {
     return false;
   }
 }
