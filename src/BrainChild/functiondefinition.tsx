@@ -408,6 +408,8 @@ export class FunctionDefinition extends Expression {
       o.push(...VarType.Coax(bodyScope.GetRequiredReturns()!, res[0])[0]);
       o.push(`  ret`);
     }
+    o.push(...bodyScope.Deferred);
+    o.push(...paddingScope.Deferred);
     scope.Assembly.push(...o);
     let name = this.Target + "";
     if (this.Target instanceof Identifier) name = this.Target.Name;

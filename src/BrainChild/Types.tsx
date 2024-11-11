@@ -76,3 +76,9 @@ export function GenerateFuncType(typ: FuncType): TypeDefinition {
   return t;
 }
 TypeInt.TypeType = new TypeDefinition();
+
+
+export let TypeCompiler: TypeDefinition = new TypeDefinition();
+TypeCompiler.Name = "COMPILER";
+TypeCompiler.Wide = true;
+TypeCompiler.Size = 0;

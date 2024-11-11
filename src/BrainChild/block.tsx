@@ -66,6 +66,8 @@ export class Block extends Expression implements Simplifyable {
         lastTypes = res[0];
       }
     }
+    if(!this.DefinitelyReturns(subScope))
+      o.push(...subScope.Deferred);
     return [lastTypes, o];
   }
 

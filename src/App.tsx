@@ -8,7 +8,7 @@ import "ace-builds/src-noconflict/mode-lua";
 import "./mode-brainchild";
 import "./BrainChild/Types";
 import "./BrainChild/vartype";
-import { Parse } from "./BrainChild/brainchild";
+import { ASMOnly, Parse } from "./BrainChild/brainchild";
 import { Scope } from "./BrainChild/Scope";
 import "./BrainChild/const";
 import "./BrainChild/block";
@@ -35,6 +35,8 @@ import "./BrainChild/cumulate";
 import "./BrainChild/macrodef";
 import "./BrainChild/sizeof";
 import "./BrainChild/reserve";
+import "./BrainChild/using";
+import "./BrainChild/defer";
 import { TokenError } from "./BrainChild/token";
 import { GenerateReadOnlys } from "./ReadOnlys";
 import { Terminal, Event } from "./Terminal";
@@ -46,7 +48,7 @@ export const AllReadOnlys: {[name: string]: string} = {};
 // MAJOR versions implement large changes that are likely to break most older programs
 // MINOR will likely work with older programs with minimal retooling, and include notable changes.
 // HOTFIX will work with most previous versions, or may be updating a previous MINOR revision to work with older MINOR revisions.
-export const VERSION = "0.7.0";
+export const VERSION = "0.8.0";
 
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;
@@ -220,6 +222,7 @@ function PushEvent(
   }
 }
 
+let ASMOnlyBytes: Uint8Array = new Uint8Array();
 let waitTimeout: NodeJS.Timer | undefined = undefined;
 function handleChange() {
   console.clear();
@@ -242,6 +245,11 @@ function handleChange() {
         console.log(`optimized in ${Date.now() - t}ms`);
         t = Date.now();
         bsInterp = new ASMInterpreter(parsed);
+        if(ASMOnly){
+          ASMOnlyBytes = new Uint8Array(bsInterp.Heap.length);
+          for(let i=0; i < bsInterp.Heap.length; i++)
+            ASMOnlyBytes[i] = bsInterp.Heap[i];
+        }
         console.log(`compiled in ${Date.now() - t}ms`);
         document.getElementById("codeText")!.innerHTML = parsed.join("\n");
         scope.RenderBSMemory(bsInterp);
@@ -345,15 +353,7 @@ function addGutter(file: string) {
     } else {
       e.setValue(`include term.bc;
 include extmacros.bc;
-include int.bc;
-int seed = 1;
-
-function rand() -> int {
-    seed ~= (seed * 128);
-    seed ~= (seed / 512);
-    seed ~= (seed * 256);
-    return seed;
-}
+include rand.bc;
 
 metamethod get_X(pVec2 this) -> int { (this -> int)%0x10000 }
 metamethod get_Y(pVec2 this) -> int { (this -> int)/0x10000 }
@@ -457,7 +457,7 @@ int counter = 0;
 int grace = 3;
 Term.PollEvents();
 Term.Frame.Push(()=>{
-    seed += counter;
+    seed(counter,rand());
     rand();
     if(apple.X > 63){
         var a = (rand() -> pVec2);
@@ -1071,10 +1071,17 @@ export default function App() {
       url.searchParams.set("simpleio", (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value)
     else
       url.searchParams.delete("simpleio");
-    let encoder = new TextEncoder();
-    let byteCount = encoder.encode(mainCode).length;
-    let textToCopy = `[BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}. [\`${mainCode}\`](${url})`;
-    navigator.clipboard.writeText(textToCopy);
+    if(ASMOnly){
+      let code = [...ASMOnlyBytes].map(c=>c.toString(16).toUpperCase().padStart(2,"0")).join(' ');
+      let byteCount = ASMOnlyBytes.length;
+      let textToCopy = `[BrainChild ASM](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}. [\`${code}\`](${url})`;
+      navigator.clipboard.writeText(textToCopy);
+    }else{
+      let encoder = new TextEncoder();
+      let byteCount = encoder.encode(mainCode).length;
+      let textToCopy = `[BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}. [\`${mainCode}\`](${url})`;
+      navigator.clipboard.writeText(textToCopy);
+    }
   }
 
   /*
@@ -1099,6 +1106,13 @@ export default function App() {
       url.searchParams.set("simpleio", (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value)
     else
       url.searchParams.delete("simpleio");
+    if(ASMOnly){
+      let hex = ASMInterpreter.RenderHeapPlain(ASMOnlyBytes).replace(/^/mg,"\t");
+      let byteCount = ASMOnlyBytes.length;
+      let textToCopy = `# [BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}\n\n${mainCode.replace(/^/mg, "\t")}\n\n## Hex-dump of bytecode\n\n${hex}\n[Try It Online!](${url})`;
+      navigator.clipboard.writeText(textToCopy);
+      return;
+    }
     let encoder = new TextEncoder();
     let byteCount = encoder.encode(mainCode).length;
     let textToCopy = `# [BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}\n\n${mainCode.replace(/^/mg, "\t")}\n\n[Try It Online!](${url})`;

@@ -56,6 +56,7 @@ export class Scope {
   TakenLabels: { [label: string]: boolean } = {};
   CurrentFile: string = "main.bc";
   CurrentFunction: string = "";
+  Deferred: string[] = [];
 
   private ScratchLabel: string|null = null;
   MaxScratchRequired: number = 0;
@@ -232,7 +233,8 @@ export class Scope {
     let failed: boolean = false;
     let argTypes: VarType[] = [];
     let returnTypes: VarType[] = [];
-    // Iterate through inTypes, if the metamethod ArgTypes is a generic, and the inType is a specific type, replace the generic with the specific type and add it to the map
+    let fakeClaimer = new Claimer("");
+    let fakeClaim = fakeClaimer.Flag();// Iterate through inTypes, if the metamethod ArgTypes is a generic, and the inType is a specific type, replace the generic with the specific type and add it to the map
     // If it's already in the map, check that one coaxes into the other, and simplify if possible
     // If they don't coax, fail.
     // Recurse through the generic arguments of each type as well.
@@ -276,7 +278,29 @@ export class Scope {
         );
         return inType;
       }
-
+      // If a and b are functypes, recurse through their return types and argTypes.
+      if(inMM instanceof FuncType && inType instanceof FuncType){
+        let inMMFunc = inMM as FuncType;
+        let inTypeFunc = inType as FuncType;
+        if(inMMFunc.ArgTypes.length !== inTypeFunc.ArgTypes.length || inMMFunc.RetTypes.length !== inTypeFunc.RetTypes.length){
+          failed = true;
+          return inMM;
+        }
+        let newFncType = new FuncType(fakeClaimer, fakeClaim);
+        newFncType.ArgTypes = [];
+        newFncType.RetTypes = [];
+        let oldExact = exactly;
+        exactly = true;
+        for(let i=0; i < inMMFunc.ArgTypes.length; i++){
+          newFncType.ArgTypes.push(trySwap(inMMFunc.ArgTypes[i], inTypeFunc.ArgTypes[i]))
+        }
+        for(let i=0; i < inMMFunc.RetTypes.length; i++){
+          newFncType.RetTypes.push(trySwap(inMMFunc.RetTypes[i], inTypeFunc.RetTypes[i]))
+        }
+        exactly = oldExact;
+        if(failed)return inMM;
+        return newFncType;
+      }
       // Check that a is b to the precision of exactly
       if (
         !(exactly ? inMM.Equals(inType) : VarType.CanCoax([inMM], [inType]))
@@ -656,6 +680,8 @@ free:
   ): [Type: VarType, AssembledName: string, ConstantValue: number | null] {
     if(Identifier === "_")
       return [VarType.Discard, "", 0];
+    if(Identifier === "COMPILER")
+      return [VarType.Compiler, "", 0];
     var o = this.Vars[Identifier] ?? this.Parent?.Get(Identifier);
     if (!o) {
       throw new Error(`Unknown identifier ${Identifier}`);

@@ -120,7 +120,7 @@ export class Call extends Expression implements LeftDonor {
       callArgumentTypes.push(this.Left.CurryType!);
     }
     var functionMatchesTypes: FuncType[] = functionTypes.filter((c) => {
-      let mapped = c.ArgTypes.map((c) => c.WithFunctionGenerics(this.Generics));
+      let mapped = c.ArgTypes;//.map((c) => c.WithFunctionGenerics(this.Generics));
       if (VarType.CanCoax(mapped, callArgumentTypes)[0]) return true;
       // All of this is just checking if the last two arguments of a callable are an int then a pointer.
       // There's gotta be an easier way to do that... ;-;
@@ -145,9 +145,9 @@ export class Call extends Expression implements LeftDonor {
       throw new Error(
         `Cannot call, argument mismatch. Expected: ${functionTypes[0].ArgTypes} Got: ${callArgumentTypes}`
       );
-    var funcType = functionMatchesTypes[0].WithFunctionGenerics(
-      this.Generics
-    ) as FuncType;
+    var funcType = functionMatchesTypes[0];//.WithFunctionGenerics(
+    //  this.Generics
+    //) as FuncType;
     // If we CAN use Paramaterized form, use Paramaterized form.
     let paramCoax;
     if (
@@ -202,7 +202,7 @@ export class Call extends Expression implements LeftDonor {
     o.push(
       ...VarType.Coax(
         [funcType],
-        resolveTarget[0].map((c) => c.WithFunctionGenerics(this.Generics))
+        resolveTarget[0].map((c) => c/*.WithFunctionGenerics(this.Generics)*/)
       )[0]
     );
     if (!this.IsFinalExpression && !this.TailCall)

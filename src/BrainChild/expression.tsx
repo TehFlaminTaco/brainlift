@@ -25,6 +25,7 @@ export abstract class Expression extends Token {
     while (s === null && i < Expression.PriorityExpressionClaimers.length) {
       s = Expression.PriorityExpressionClaimers[i++](claimer);
     }
+    i = 0;
     while (s === null && i < Expression.ExpressionClaimers.length) {
       s = Expression.ExpressionClaimers[i++](claimer);
     }

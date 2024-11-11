@@ -518,7 +518,7 @@ export class Class extends Statement {
     for (var i = 0; i < this.StaticMembers.length; i++) {
       let member = this.StaticMembers[i];
       if (member instanceof FunctionDefinition) {
-        member.IsMeta = true;
+        //member.IsMeta = true;
         member.TryEvaluate(scope);
       }
     }
@@ -526,7 +526,7 @@ export class Class extends Statement {
     for (let i = 0; i < this.VirtualMembers.length; i++) {
       let member = this.VirtualMembers[i];
       if (member instanceof FunctionDefinition) {
-        member.IsMeta = true;
+        //member.IsMeta = true;
         member.TryEvaluate(scope);
       }
     }

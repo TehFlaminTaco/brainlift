@@ -1,3 +1,4 @@
+import { VERSION } from "../App";
 import { Claimer } from "./brainchild";
 import { Expression, LeftDonor } from "./expression";
 import { Identifier } from "./identifier";
@@ -14,6 +15,39 @@ import {
 } from "./variable";
 import { VarType } from "./vartype";
 
+function CompilerGet(target: String): number|null {
+  switch(target){
+    case "random":
+      return ((Math.random()*0xFFFF_FFFF)>>>0);
+    case "version_major":
+        return +VERSION.match(/^(\d+)/)![1]>>>0;
+    case "version_minor":
+      return +VERSION.match(/^\d+\.(\d+)/)![1]>>>0;
+    case "version_patch":
+      return +VERSION.match(/^\d+\.\d+\.(\d+)/)![1]>>>0;
+    case "version":
+      let m = VERSION.match(/^(\d+)\.(\d+)\.(\d+)/)!;
+      return (+m[1] * 1000000 + +m[2] * 1000 + +m[3])>>>0;
+  }
+  return null;
+}
+
+function CompilerEvaluate(scope: Scope, target: String): [VarType[], string[]] {
+  let c = CompilerGet(target)
+  if(c !== null) return [[VarType.Int], [`apush ${(c&0xffff_ffff) >>> 0}`]]
+  switch (target){
+    case "file":
+      let label = scope.GetSafeName("string" + scope.CurrentFile);
+      scope.Assembly.push(`${label}: db ${scope.CurrentFile.length},${scope.CurrentFile.split('').map(c=>c.charCodeAt(0)).join(',')}`)
+      return [[VarType.String], [`apush ${label}`]];
+    case "aftercode":
+      return [[VarType.IntPtr], [`apush aftercode`]];
+    case "entry":
+      return [[VarType.IntPtr], [`apush postdata`]];
+  }
+  throw new Error(`No compiler constant with the name ${target}`);
+}
+
 export class Index
   extends Expression
   implements
@@ -29,6 +63,8 @@ export class Index
     if (valRes.length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
     let vType = valRes[0];
+    if(valRes[0].TypeName === "COMPILER")
+      return this.Target instanceof Identifier ? CompilerGet(this.Target!.Name) : null;
     let typeDef = this.Generics.length
       ? vType.GetDefinition().WithGenerics(this.Generics)
       : vType.GetDefinition();
@@ -162,6 +198,8 @@ export class Index
     var valRes = this.Left!.TryEvaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
+    if(valRes[0][0].TypeName === "COMPILER" && this.Target instanceof Identifier)
+      return CompilerEvaluate(scope, this.Target!.Name);
     o.push(...valRes[1]);
     for (var i = 1; i < valRes[0].length; i++) {
       o.push(...valRes[0][i].APop());
@@ -394,6 +432,8 @@ export class Index
     var valRes = this.Left!.TryEvaluate(scope);
     if (valRes[0].length === 0)
       throw new Error(`Cannot index expression that does not resolve in value`);
+    if(valRes[0][0].TypeName === "COMPILER" && this.Target instanceof Identifier)
+      return CompilerEvaluate(scope, this.Target!.Name)[1];
     o.push(...valRes[1]);
     for (var i = 1; i < valRes[0].length; i++) {
       o.push(...valRes[0][i].APop());

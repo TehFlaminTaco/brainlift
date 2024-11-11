@@ -28,6 +28,11 @@ export class Return extends Expression {
     var tStack: VarType[] = [];
     var o: string[] = [this.GetLine()];
     var tailCall = false;
+    let curScope: Scope|null = scope;
+    while(curScope && curScope.IsFunctionScope){
+      o.push(...curScope.Deferred)
+      curScope = curScope.Parent;
+    }
     for (var i = 0; i < this.Values.length; i++) {
       var v = this.Values[i];
       if (i === this.Values.length - 1 && v instanceof Call) {
@@ -55,7 +60,9 @@ export class Return extends Expression {
       );
     }
     o.push(...VarType.Coax(scope.GetRequiredReturns()!, tStack)[0]);
-    if (!tailCall) o.push(`ret`);
+    if (!tailCall){
+      o.push(`ret`);
+    }
     return [[], o];
   }
   DefinitelyReturns(scope: Scope): VarType[] {

@@ -828,7 +828,7 @@ export class ASMInterpreter {
 
   Step() {
     if (!this.running) return;
-    let command = this.Heap[this.IP];
+    let command = this.Heap[this.IP] ?? 0x01;
     let arg = (this.Heap[this.IP + 1] << 24)
             + (this.Heap[this.IP + 2] << 16)
             + (this.Heap[this.IP + 3] <<  8)
@@ -842,6 +842,34 @@ export class ASMInterpreter {
       this.running = false;
       throw new Error(`Unknown instruction ${command}`);
     }
+  }
+
+  static RenderHeapPlain(Heap: Uint8Array){
+    let heap = "           0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n";
+    for (let i = 0; i < Heap.length; i += 16) {
+      heap += `${hexPad(i, 8)}: `;
+      for (let j = 0; j < 16; j++) {
+        if (Heap[i + j] !== undefined) {
+          heap += `${hexPad(Heap[i + j], 2)}`;
+          heap += " ";
+        } else heap += `   `;
+      }
+      heap += `| `;
+      for (let j = 0; j < 16; j++) {
+        var char: string = " ";
+        if (Heap[i + j] !== undefined) {
+          let v = Heap[i + j];
+          if (v >= 32 && v < 127) {
+            char = String.fromCharCode(v);
+          } else {
+            char = ".";
+          }
+        }
+        heap += char;
+      }
+      heap += "\n";
+    }
+    return heap;
   }
 
   RenderHeap(): string {

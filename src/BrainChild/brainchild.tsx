@@ -24,12 +24,15 @@ import { FakeToken } from "./faketoken";
 import { Include } from "./include";
 import { Macro } from "./macrodef";
 import { VarType } from "./vartype";
+import { ExpressionStatement } from "./expressionstatement";
+import { ASM } from "./asm";
 
 export var Keywords = [
   "abstract",
   "asm",
   "class",
   "const",
+  "defer",
   "discard",
   "else",
   "func",
@@ -46,6 +49,8 @@ export var Keywords = [
   "return",
   "static",
   "struct",
+  "temp",
+  "using",
   "var",
   "void",
   "while",
@@ -150,6 +155,8 @@ export function DoParse(f: string) {
   }
 }
 
+export let ASMOnly: boolean = false;
+
 let waitTimeout: NodeJS.Timer | undefined = undefined;
 export async function Parse(files: { [file: string]: string }): Promise<Scope> {
   CurrentFiles = files;
@@ -184,6 +191,15 @@ export async function Parse(files: { [file: string]: string }): Promise<Scope> {
       if (KnownCodes[f]) continue;
       DoParse(f);
     }
+    if(Include.Parsed["main.bc"].every(c=>c instanceof ExpressionStatement && (c as ExpressionStatement).Body instanceof ASM)){
+      // Assembly only.
+      let asm = Include.Parsed["main.bc"].map(c=>((c as ExpressionStatement).Body as ASM).Instructions).flat();
+      scope.Assembly = asm;
+      ASMOnly = true;
+      resolve(scope);
+      return;
+    }
+    ASMOnly = false;
     let typeDefs: Class[] = Include.Parsed["main.bc"].filter(
       (c) => c instanceof Class
     ) as Class[];
@@ -239,7 +255,7 @@ export async function Parse(files: { [file: string]: string }): Promise<Scope> {
         }
         if(scope.MaxScratchRequired > 0)
           scope.Assembly.push(`${scope.GetScratch(0)}: db ${new Array(scope.MaxScratchRequired).fill(0).join(",")}`);
-        scope.Assembly.push("postdata:", ...o);
+        scope.Assembly.push("postdata:", ...o, ...scope.Deferred);
         scope.Assembly.push(`halt`);
         if (scope.UsingAllocator()) scope.Assembly.push(`aftercode: db 1, 0`);
         console.dir(Include.Parsed["main.bc"]);

@@ -11,6 +11,7 @@ import {
   TypeDefinition,
   GenerateFuncType,
   TypeDiscard,
+  TypeCompiler,
 } from "./Types";
 
 function hexPad(value: number, amount: number = 2) {
@@ -36,6 +37,7 @@ export class VarType extends Token {
   static Type: VarType;
   static String: VarType;
   static Discard: VarType;
+  static Compiler: VarType;
 
   static Claim(claimer: Claimer): VarType | null {
     var ftype = FuncType.Claim(claimer);
@@ -543,6 +545,7 @@ export class VarType extends Token {
     if (this.TypeName === "int") return TypeInt;
     if (this.TypeName === "void") return TypeVoid;
     if (this.TypeName === "discard") return TypeDiscard;
+    if (this.TypeName === "COMPILER") return TypeCompiler;
     if (this.TypeName.startsWith("$")) return TypeVoid;
     var userType = Scope.CURRENT.UserTypes[this.TypeName];
     if (!userType) throw new Error(`Undefined type ${this.TypeName}`);
@@ -820,3 +823,5 @@ VarType.String = new VarType(falseClaimer, falseFlag);
 VarType.String.TypeName = "string";
 VarType.Discard = new VarType(falseClaimer, falseFlag);
 VarType.Discard.TypeName = "discard";
+VarType.Compiler = new VarType(falseClaimer, falseFlag);
+VarType.Compiler.TypeName = "COMPILER";
