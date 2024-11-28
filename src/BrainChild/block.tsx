@@ -52,7 +52,7 @@ export class Block extends Expression implements Simplifyable {
     if (simpleRes !== null)
       return [
         this.GetTypes(scope),
-        [`apush ${(simpleRes & 0xffffffff) >>> 0}`],
+        [`xpush ${(simpleRes & 0xffffffff) >>> 0}`],
       ];
     var subScope = this.GetSubScope(scope);
     var o = [];
@@ -61,7 +61,7 @@ export class Block extends Expression implements Simplifyable {
       var res = this.Expressions[i].TryEvaluate(subScope);
       o.push(...res[1]);
       if (i < this.Expressions.length - 1) {
-        for (let j = 0; j < res[0].length; j++) o.push(...res[0][j].APop())
+        for (let j = 0; j < res[0].length; j++) o.push(...res[0][j].XPop())
       } else {
         lastTypes = res[0];
       }

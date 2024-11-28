@@ -38,7 +38,7 @@ export class Const extends Expression implements Simplifyable {
     let res = (this.Child as any as Simplifyable).Simplify(scope);
     if (res === null)
       throw new Error("Could not resolve expression as constant");
-    return [this.GetTypes(scope), [`apush ${(res & 0xffffffff) >>> 0}`]];
+    return [this.GetTypes(scope), [`xpush ${(res & 0xffffffff) >>> 0}`]];
   }
   GetTypes(scope: Scope): VarType[] {
     return this.Child!.GetTypes(scope);

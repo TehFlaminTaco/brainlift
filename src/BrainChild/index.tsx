@@ -34,16 +34,16 @@ function CompilerGet(target: String): number|null {
 
 function CompilerEvaluate(scope: Scope, target: String): [VarType[], string[]] {
   let c = CompilerGet(target)
-  if(c !== null) return [[VarType.Int], [`apush ${(c&0xffff_ffff) >>> 0}`]]
+  if(c !== null) return [[VarType.Int], [`xpush ${(c&0xffff_ffff) >>> 0}`]]
   switch (target){
     case "file":
       let label = scope.GetSafeName("string" + scope.CurrentFile);
       scope.Assembly.push(`${label}: db ${scope.CurrentFile.length},${scope.CurrentFile.split('').map(c=>c.charCodeAt(0)).join(',')}`)
-      return [[VarType.String], [`apush ${label}`]];
+      return [[VarType.String], [`xpush ${label}`]];
     case "aftercode":
-      return [[VarType.IntPtr], [`apush aftercode`]];
+      return [[VarType.IntPtr], [`xpush aftercode`]];
     case "entry":
-      return [[VarType.IntPtr], [`apush postdata`]];
+      return [[VarType.IntPtr], [`xpush postdata`]];
   }
   throw new Error(`No compiler constant with the name ${target}`);
 }
@@ -202,7 +202,7 @@ export class Index
       return CompilerEvaluate(scope, this.Target!.Name);
     o.push(...valRes[1]);
     for (var i = 1; i < valRes[0].length; i++) {
-      o.push(...valRes[0][i].APop());
+      o.push(...valRes[0][i].XPop());
     }
     var vType = valRes[0][0];
     var typeDef = this.Generics.length
@@ -223,24 +223,24 @@ export class Index
       var virtualChild = typeDef.VirtualChildren[targetName];
       if (virtualChild) {
         o.push(
-          ...valRes[0][0].APop(),
+          ...valRes[0][0].XPop(),
           `seta ${virtualChild[1].ClassLabel}`,
           `adda ${virtualChild[2]}`,
-          ...virtualChild[0].Get("a","a")
+          ...virtualChild[0].Get("x","a")
         );
         return [[virtualChild[0]], o];
       }
       let constChild = typeDef.ConstantChildren[targetName];
       if (constChild) {
-        o.push(...valRes[0][0].APop(), `apush ${(constChild[1] & 0xffffffff) >>> 0}`);
+        o.push(...valRes[0][0].XPop(), `xpush ${(constChild[1] & 0xffffffff) >>> 0}`);
         return [[constChild[0]], o];
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
       if(typeDef.Wide){ // if it's wide, convert to a reference to it.
-        o.push(`setb ${scope.GetScratch(typeDef.Size)}`, ...vType.Put("a","b"), `apush ${scope.GetScratch(typeDef.Size)}`);
+        o.push(`setb ${scope.GetScratch(typeDef.Size)}`, ...vType.Put("x","b"), `xpush ${scope.GetScratch(typeDef.Size)}`);
       }
-      o.push(`apopa`, `adda ${child[1]}`, ...child[0].Get("a","a"));
+      o.push(`xpopa`, `adda ${child[1]}`, ...child[0].Get("x","a"));
       return [[child[0]], o];
     } else {
       var indexTypes: VarType[] = [vType];
@@ -271,9 +271,9 @@ export class Index
         // If there IS a meta, call it with a pointer to the Left value.
         if (!IsReferenceable(this.Left!)) throw new Error("Cannot assign to a struct on the stack.");
         return [
-          ...anyType.FlipAB(),
+          ...anyType.FlipXY(),
           ...(this.Left as any as Referenceable).GetPointer(scope),
-          ...anyType.FlipBA(),
+          ...anyType.FlipYX(),
           ...VarType.Coax(meta[1], [ptrType, anyType])[0],
           ...meta[2]
         ];
@@ -284,7 +284,7 @@ export class Index
         return [
           `seta ${virtualChild[1].ClassLabel}`,
           `adda ${virtualChild[2]}`,
-          ...virtualChild[0].Put("a","a")
+          ...virtualChild[0].Put("x","a")
         ];
       }
 
@@ -302,19 +302,19 @@ export class Index
       let leftRes = this.Left!.TryEvaluate(scope);
       let o = [...leftRes[1]];
       for (let i=1; i<leftRes[0].length; i++){
-        o.push(...leftRes[0][i].APop());
+        o.push(...leftRes[0][i].XPop());
       }
       // Write the current value unto scratch
       o.push(`setb ${scope.GetScratch(value.GetDefinition().Size)}`);
-      o.push(...leftRes[0][0].Put("a","b"));
+      o.push(...leftRes[0][0].Put("x","b"));
       // Add the offset of the child
       o.push(`seta ${scope.GetScratch(value.GetDefinition().Size)}`);
       o.push(`adda ${child[1]}`);
       // Write the new value
-      o.push(...child[0].Put("a","a"));
+      o.push(...child[0].Put("x","a"));
       // Read the new value back into the scratch
       o.push(`seta ${scope.GetScratch(value.GetDefinition().Size)}`);
-      o.push(...leftRes[0][0].Get("a","a"));
+      o.push(...leftRes[0][0].Get("x","a"));
       // Assign the new value
       o.push(...(this.Left as any as Assignable).Assign(scope, leftRes[0][0]));
       return o;
@@ -363,29 +363,29 @@ export class Index
       var targetName = this.Target!.Name;
       var meta = scope.GetMetamethod("set_" + targetName, [vType, anyType]);
       if (meta) {
-        o.push(...anyType.FlipAB());
+        o.push(...anyType.FlipXY());
         o.push(...valRes[1]);
         for (let i = 1; i < valRes[0].length; i++) {
-          o.push(...valRes[0][i].APop());
+          o.push(...valRes[0][i].XPop());
         }
-        o.push(...anyType.FlipBA());
+        o.push(...anyType.FlipYX());
         o.push(...VarType.Coax(meta[1], [vType, anyType])[0]);
         o.push(...meta[2]);
         return o;
       }
       o.push(...valRes[1]);
       for (var i = 1; i < valRes[0].length; i++) {
-        o.push(...valRes[0][i].APop());
+        o.push(...valRes[0][i].XPop());
       }
       var virtualChild = typeDef.VirtualChildren[targetName];
       if (virtualChild) {
         o.push(
-          ...anyType.FlipAB(),
-          ...valRes[0][0].APop(),
-          ...anyType.FlipBA(),
+          ...anyType.FlipXY(),
+          ...valRes[0][0].XPop(),
+          ...anyType.FlipYX(),
           `seta ${virtualChild[1].ClassLabel}`,
           `adda ${virtualChild[2]}`,
-          ...anyType.Put("a","a")
+          ...anyType.Put("x","a")
         );
         return o;
       }
@@ -397,13 +397,13 @@ export class Index
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
-      o.push(`apopa`, `adda ${child[1]}`, ...child[0].Put("a","a"));
+      o.push(`xpopa`, `adda ${child[1]}`, ...child[0].Put("x","a"));
       return o;
     } else {
-      o.push(...anyType.FlipAB());
+      o.push(...anyType.FlipXY());
       o.push(...valRes[1]);
       for (let i = 1; i < valRes[0].length; i++) {
-        o.push(...valRes[0][i].APop());
+        o.push(...valRes[0][i].XPop());
       }
       var indexTypes: VarType[] = [vType];
       for (let i = 0; i < this.Target!.length; i++) {
@@ -421,7 +421,7 @@ export class Index
           )}).`
         );
       }
-      o.push(...anyType.FlipBA());
+      o.push(...anyType.FlipYX());
       o.push(...VarType.Coax(meta[1], indexTypes)[0]);
       o.push(...meta[2]);
       return o;
@@ -436,7 +436,7 @@ export class Index
       return CompilerEvaluate(scope, this.Target!.Name)[1];
     o.push(...valRes[1]);
     for (var i = 1; i < valRes[0].length; i++) {
-      o.push(...valRes[0][i].APop());
+      o.push(...valRes[0][i].XPop());
     }
     var vType = valRes[0][0];
     var typeDef = this.Generics.length
@@ -457,24 +457,24 @@ export class Index
       var virtualChild = typeDef.VirtualChildren[targetName];
       if (virtualChild) {
         o.push(
-          ...valRes[0][0].APop(),
+          ...valRes[0][0].XPop(),
           `seta ${virtualChild[1].ClassLabel}`,
           `adda ${virtualChild[2]}`,
-          ...virtualChild[0].Get("a","a")
+          ...virtualChild[0].Get("x","a")
         );
         return o;
       }
       let constChild = typeDef.ConstantChildren[targetName];
       if (constChild) {
-        o.push(...valRes[0][0].APop(), `apush ${(constChild[1] & 0xffffffff) >>> 0}`);
+        o.push(...valRes[0][0].XPop(), `xpush ${(constChild[1] & 0xffffffff) >>> 0}`);
         return o;
       }
       var child = typeDef.Children[targetName];
       if (!child) throw new Error(`Value does not have member ${targetName}`);
       if(typeDef.Wide){ // if it's wide, convert to a reference to it.
-        o.push(`setb ${scope.GetScratch(typeDef.Size)}`, ...vType.Put("a","b"), `apush ${scope.GetScratch(typeDef.Size)}`);
+        o.push(`setb ${scope.GetScratch(typeDef.Size)}`, ...vType.Put("x","b"), `xpush ${scope.GetScratch(typeDef.Size)}`);
       }
-      o.push(`apopa`, `adda ${child[1]}`, ...child[0].Get("a","a"));
+      o.push(`xpopa`, `adda ${child[1]}`, ...child[0].Get("x","a"));
       return o;
     } else {
       var indexTypes: VarType[] = [vType];
@@ -521,10 +521,10 @@ export class Index
       let virtualChild = pointerType.GetDefinition().VirtualChildren[targetName];
       if(virtualChild){
         o.push(
-          ...pointerType.APop(),
+          ...pointerType.XPop(),
           `seta ${virtualChild[1].ClassLabel}`,
           `adda ${virtualChild[2]}`,
-          `apusha`
+          `xpusha`
         );
         return o;
       }
@@ -538,7 +538,7 @@ export class Index
       // If there is no constant child, check for a regular child.
       let child = pointerType.GetDefinition().Children[targetName];
       if(!child) throw new Error(`Value does not have member ${targetName}`);
-      o.push(`apopa`, `adda ${child[1]}`, `apusha`);
+      o.push(`xpopa`, `adda ${child[1]}`, `xpusha`);
       return o;
     }else{
       // If the target is not an identifier, we're indexing.
@@ -570,7 +570,7 @@ export class Index
     }
     o.push(...valRes[1]);
     for (var i = 1; i < valRes[0].length; i++) {
-      o.push(...valRes[0][i].APop());
+      o.push(...valRes[0][i].XPop());
     }
     var vType = valRes[0][0];
     var typeDef = this.Generics.length
@@ -589,7 +589,7 @@ export class Index
           `Cannot derefence Type ${vType} with types (${indexTypes}).`
         );
       }
-      o.push(...VarType.Coax([vType], meta[1])[0]);
+      o.push(...VarType.Coax(indexTypes, meta[1])[0]);
       o.push(...meta[2]);
       return o;
     }
@@ -601,10 +601,10 @@ export class Index
     var virtualChild = typeDef.VirtualChildren[targetName];
     if (virtualChild) {
       o.push(
-        ...valRes[0][0].APop(),
+        ...valRes[0][0].XPop(),
         `seta ${virtualChild[1].ClassLabel}`,
         `adda ${virtualChild[2]}`,
-        `apusha`
+        `xpusha`
       );
       return o;
     }
@@ -614,7 +614,7 @@ export class Index
     }
     var child = typeDef.Children[targetName];
     if (!child) throw new Error(`Value does not have member ${targetName}`);
-    o.push(`apopa`, `adda ${child[1]}`, `apusha`);
+    o.push(`xpopa`, `adda ${child[1]}`, `xpusha`);
     return o;
   }
   GetReferenceTypes(scope: Scope): VarType[] {

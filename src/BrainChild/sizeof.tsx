@@ -24,7 +24,7 @@ export class SizeOf extends Expression implements Simplifyable {
     
     Evaluate(scope: Scope): [VarType[], string[]] {
         let t = this.Type!.GetDefinition();
-        return [ [VarType.Int], [this.GetLine(), `apush ${t.Size}`] ];
+        return [ [VarType.Int], [this.GetLine(), `xpush ${t.Size}`] ];
     }
 
     GetTypes(scope: Scope): VarType[] {

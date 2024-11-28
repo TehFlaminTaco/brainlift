@@ -19,8 +19,31 @@ export class ASM extends Expression {
       return null;
     
     let target = Identifier.Claim(claimer);
+    let oldGenericTypes = VarType.CurrentGenericArgs;
+    VarType.CurrentGenericArgs = {};
+    for (let o in oldGenericTypes) {
+      VarType.CurrentGenericArgs[o] = oldGenericTypes[o];
+    }
+
+    let generics: string[] = [];
+    let genArgNum = 0;
+    if (claimer.Claim(/</).Success) {
+      let arg = Identifier.Claim(claimer);
+      while (arg !== null) {
+        generics.push("functiongeneric$" + genArgNum);
+        VarType.CurrentGenericArgs[arg.Name] = "functiongeneric$" + genArgNum++;
+        if (!claimer.Claim(/,/).Success) break;
+        arg = Identifier.Claim(claimer);
+      }
+      if (!claimer.Claim(/>/).Success) {
+        VarType.CurrentGenericArgs = oldGenericTypes;
+        flag.Fail();
+        return null;
+      }
+    }
     if (!claimer.Claim(/\(/).Success) {
       flag.Fail();
+      VarType.CurrentGenericArgs = oldGenericTypes;
       return null;
     }
     var args: VarType[] = [];
@@ -32,6 +55,7 @@ export class ASM extends Expression {
     }
     if (!claimer.Claim(/\)/).Success) {
       flag.Fail();
+      
       return null;
     }
     var retTypes: VarType[]|null = null;
@@ -45,6 +69,8 @@ export class ASM extends Expression {
         retType = VarType.Claim(claimer);
       }
     }
+
+    VarType.CurrentGenericArgs = oldGenericTypes;
 
     if (!claimer.Claim(/\{/).Success) {
       flag.Fail();
@@ -111,10 +137,10 @@ export class ASM extends Expression {
       let o: string[] = [];
       if(this.Target !== null){
         scope.Set(this.Target.Name, this.GetTypes()[0], true);
-        o.push(`apush ${this.FuncLabel}`);
+        o.push(`xpush ${this.FuncLabel}`);
         o.push(...this.Target.Assign(scope));
       }
-      o.push(`apush ${this.FuncLabel}`);
+      o.push(`xpush ${this.FuncLabel}`);
       return [this.GetTypes(), o]
     }
     return [

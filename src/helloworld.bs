@@ -4,7 +4,7 @@ Message:
   db "Hello, World!", '\n', 0x00
 
 Print:
-  apopa
+  xpopa
   PrintLoop:
     cpyab
     ptrb
@@ -16,6 +16,6 @@ Print:
     jmp PrintLoop
 
 Main:
-  apush Message
+  xpush Message
   call Print
   halt

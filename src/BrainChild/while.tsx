@@ -67,7 +67,7 @@ export class While extends Expression implements Simplifyable {
   Evaluate(scope: Scope): [VarType[], string[]] {
     let simpleRes = this.Simplify(scope);
     if (simpleRes !== null)
-      return [[VarType.Int], [`apush ${(simpleRes & 0xffffffff) >>> 0}`]];
+      return [[VarType.Int], [`xpush ${(simpleRes & 0xffffffff) >>> 0}`]];
     var o: string[] = [this.GetLine()];
     var condition = scope.GetSafeName(`whlcond${this.Condition!.toString()}`);
     var whileTrue = scope.GetSafeName(`whltrue${this.Condition!.toString()}`);
@@ -76,7 +76,7 @@ export class While extends Expression implements Simplifyable {
     o.push(`${condition}:`);
     o.push(...valueRes[1]);
     for (var i = 1; i < valueRes[0].length; i++) {
-      o.push(...valueRes[0][i].APop());
+      o.push(...valueRes[0][i].XPop());
     }
     var resType = valueRes[0][0];
     var meta = scope.GetMetamethod("truthy", [resType]);
@@ -88,11 +88,11 @@ export class While extends Expression implements Simplifyable {
     }
     o.push(...meta[2]);
     o.push(...VarType.Coax([VarType.Int], meta[0])[0]);
-    o.push(`apopa`, `jnza ${whileTrue}`);
+    o.push(`xpopa`, `jnza ${whileTrue}`);
     o.push(`jmp ${afterTrue}`, `${whileTrue}:`);
     let res = this.Body!.TryEvaluate(scope);
     o.push(...res[1].map((c) => `  ${c}`));
-    for (let i = 0; i < res[0].length; i++) o.push(`apop`);
+    for (let i = 0; i < res[0].length; i++) o.push(`xpop`);
     o.push(`jmp ${condition}`, `${afterTrue}:`);
     return [[], o];
   }

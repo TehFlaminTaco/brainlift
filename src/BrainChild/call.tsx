@@ -56,18 +56,167 @@ export class Call extends Expression implements LeftDonor {
     return call;
   }
 
+  RemapGenerics(inargs: VarType[], args: VarType[], rets: VarType[]): [args: VarType[], rets: VarType[]]{
+    var genericifiedMap: { [generic: string]: VarType } = {};
+    let failed: boolean = false;
+    let argTypes: VarType[] = [];
+    let returnTypes: VarType[] = [];
+    let fakeClaimer = new Claimer("");
+    let fakeClaim = fakeClaimer.Flag();// Iterate through inTypes, if the metamethod ArgTypes is a generic, and the inType is a specific type, replace the generic with the specific type and add it to the map
+    let exactly = false;
+    // If it's already in the map, check that one coaxes into the other, and simplify if possible
+    // If they don't coax, fail.
+    // Recurse through the generic arguments of each type as well.
+    // Finally, apply the same mapping to the metamethod's ReturnTypes
+    // And return the modified metamethod.
+    let trySwap = function (inMM: VarType, inType: VarType): VarType {
+      if (failed) return inMM;
+      if (inMM.TypeName.startsWith("functiongeneric$")) {
+        // If inMM pointerDepth is greater than 0, then this will 'mess' with our mapping. So we have to adjust the map according.
+        // Check if it's already in the map
+        if (inMM.TypeName in genericifiedMap) {
+          let mapped = genericifiedMap[inMM.TypeName].WithDeltaPointerDepth(
+            inMM.PointerDepth
+          );
+          // If we can coax/equal to directly to what's in the map, return that
+          if (
+            exactly
+              ? mapped.Equals(inType)
+              : VarType.CanCoax([mapped], [inType])
+          ) {
+            return mapped;
+          }
+          // If what's in the map can coax/equal to what we have, update the map and return the new type
+          // Frustratingly, I think we have to do 2 passes to ensure all the casts are called correctly later.
+          if (
+            exactly
+              ? inType.Equals(mapped)
+              : VarType.CanCoax([inType], [mapped])
+          ) {
+            genericifiedMap[inMM.TypeName] = inType.WithDeltaPointerDepth(
+              -inMM.PointerDepth
+            );
+            return inType;
+          }
+          failed = true;
+          return inMM;
+        }
+        // Otherwise, we're adding it to the map
+        genericifiedMap[inMM.TypeName] = inType.WithDeltaPointerDepth(
+          -inMM.PointerDepth
+        );
+        return inType;
+      }
+      // If a and b are functypes, recurse through their return types and argTypes.
+      if(inMM instanceof FuncType && inType instanceof FuncType){
+        let inMMFunc = inMM as FuncType;
+        let inTypeFunc = inType as FuncType;
+        if(inMMFunc.ArgTypes.length !== inTypeFunc.ArgTypes.length || inMMFunc.RetTypes.length !== inTypeFunc.RetTypes.length){
+          failed = true;
+          return inMM;
+        }
+        let newFncType = new FuncType(fakeClaimer, fakeClaim);
+        newFncType.ArgTypes = [];
+        newFncType.RetTypes = [];
+        let oldExact = exactly;
+        exactly = true;
+        for(let i=0; i < inMMFunc.ArgTypes.length; i++){
+          newFncType.ArgTypes.push(trySwap(inMMFunc.ArgTypes[i], inTypeFunc.ArgTypes[i]))
+        }
+        for(let i=0; i < inMMFunc.RetTypes.length; i++){
+          newFncType.RetTypes.push(trySwap(inMMFunc.RetTypes[i], inTypeFunc.RetTypes[i]))
+        }
+        exactly = oldExact;
+        if(failed)return inMM;
+        return newFncType;
+      }
+      // Check that a is b to the precision of exactly
+      if (
+        !(exactly ? inMM.Equals(inType) : VarType.CanCoax([inMM], [inType]))
+      ) {
+        failed = true;
+        return inMM;
+      }
+      // Recurse through the generic arguments of each type as well.
+      if (inMM.Generics.length > 0) {
+        let newGenericArgs: VarType[] = [];
+        for (
+          let i = 0;
+          i < Math.min(inMM.Generics.length, inType.Generics.length);
+          i++
+        ) {
+          newGenericArgs.push(trySwap(inMM.Generics[i], inType.Generics[i]));
+        }
+        for(let i=inType.Generics.length; i < inMM.Generics.length; i++){ // If there are more EXPECTED generic args then real generic args, just use $i
+          let fakeClaimer = new Claimer("","");
+          let fakeClaim = fakeClaimer.Flag();
+          let vt: VarType = new VarType(fakeClaimer, fakeClaim);
+          vt.PointerDepth = 0;
+          vt.TypeName = "functiongeneric$"+i;
+          vt.Generics = [];
+          newGenericArgs.push(trySwap(inMM.Generics[i], vt));
+        }
+        return inMM.WithGenerics(newGenericArgs);
+      }
+      return inMM;
+    };
+    // Used to modify returnTypes after the fact
+    let forceSwap = function (inMM: VarType): VarType {
+      if (inMM.TypeName.startsWith("functiongeneric$")) {
+        if (inMM.TypeName in genericifiedMap) {
+          return genericifiedMap[inMM.TypeName].WithDeltaPointerDepth(
+            inMM.PointerDepth
+          );
+        }
+      }
+      if (inMM.Generics.length > 0) {
+        let newGenericArgs: VarType[] = [];
+        for (let i = 0; i < inMM.Generics.length; i++) {
+          newGenericArgs.push(forceSwap(inMM.Generics[i]));
+        }
+        return inMM.WithGenerics(newGenericArgs);
+      }
+      return inMM;
+    };
+    if (args.length !== inargs.length) {
+      failed = true;
+      return [args,rets];
+    }
+    // The first loop is done to ensure all types are mapped to their least-generic form.
+    for (let i = 0; i < args.length; i++) {
+      trySwap(args[i], inargs[i]);
+      if (failed) return [args,rets];
+    }
+    // This loop generates argTypes
+    for (let i = 0; i < args.length; i++) {
+      argTypes.push(trySwap(args[i], inargs[i]));
+      if (failed)
+        // Impossible?
+        return [args,rets];
+    }
+    // This loop generates returnTypes
+    for (let i = 0; i < rets.length; i++) {
+      returnTypes.push(forceSwap(rets[i]));
+    }
+    return [argTypes, returnTypes];
+  }
+
   GetTypes(scope: Scope): VarType[] {
     var callArgumentTypes: VarType[] = [];
+    let curried: VarType|null = null;
     if (this.Left! instanceof Index) {
       this.Left.TryCurry(scope);
+      if(this.Left.Curry)curried = this.Left.Left!.GetTypes(scope)[0]
     }
     var resolveTarget = this.Left!.GetTypes(scope);
     for (var i = 0; i < this.Arguments.length; i++) {
       var resolveArgument = this.Arguments[i].GetTypes(scope);
       callArgumentTypes.push(...resolveArgument);
     }
-
-    let meta = scope.GetMetamethod("call", [...resolveTarget, ...callArgumentTypes]);
+    let args = [...resolveTarget, ...callArgumentTypes];
+    if(curried !== null)
+        args.push(curried);
+    let meta = scope.GetMetamethod("call", args, {strictTo: resolveTarget.length});
     if(meta){
       return meta[0];
     }
@@ -93,8 +242,10 @@ export class Call extends Expression implements LeftDonor {
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var o: string[] = [this.GetLine()];
     var callArgumentTypes: VarType[] = [];
+    let curried: VarType|null = null;
     if (this.Left! instanceof Index) {
       this.Left.TryCurry(scope);
+      if(this.Left.Curry)curried = this.Left.Left!.GetTypes(scope)[0]
     }
     var resolveTarget = this.Left!.TryEvaluate(scope);
     for (var i = 0; i < this.Arguments.length; i++) {
@@ -103,12 +254,21 @@ export class Call extends Expression implements LeftDonor {
       callArgumentTypes.push(...resolveArgument[0]);
     }
 
-    let meta = scope.GetMetamethod("call", [...resolveTarget[0], ...callArgumentTypes], {strictTo: resolveTarget[0].length});
+    let args = [...resolveTarget[0], ...callArgumentTypes];
+    if(curried !== null)
+        args.push(curried);
+    let meta = scope.GetMetamethod("call", args, {strictTo: resolveTarget[0].length});
     if(meta){
-      o = resolveTarget[1].concat(o);
-      o.push(...VarType.Coax(meta[1], [...resolveTarget[0], ...callArgumentTypes])[0])
+      let [metaargs, metarets] = this.RemapGenerics(args,meta[1],meta[0]);
+      let prefix: string[] = resolveTarget[1];
+      if(curried !== null)
+        prefix.push(...curried!.FlipXY())
+      o = prefix.concat(o);
+      if(curried !== null)
+        o.push(...curried!.FlipYX());
+      o.push(...VarType.Coax(metaargs, args)[0])
       o.push(...meta[2]);
-      return [meta[0], o];
+      return [metarets, o];
     }
 
     var functionTypes: FuncType[] = resolveTarget[0].filter(
@@ -145,10 +305,12 @@ export class Call extends Expression implements LeftDonor {
       throw new Error(
         `Cannot call, argument mismatch. Expected: ${functionTypes[0].ArgTypes} Got: ${callArgumentTypes}`
       );
-    var funcType = functionMatchesTypes[0];//.WithFunctionGenerics(
-    //  this.Generics
-    //) as FuncType;
-    // If we CAN use Paramaterized form, use Paramaterized form.
+    var funcType = functionMatchesTypes[0];
+    let [funcArgs, funcRets] = this.RemapGenerics(callArgumentTypes,funcType.ArgTypes,funcType.RetTypes);
+    let mapped = funcType.Clone();
+    mapped.ArgTypes = funcArgs;
+    mapped.RetTypes = funcRets;
+    funcType = mapped;
     let paramCoax;
     if (
       !VarType.CanCoax(funcType.ArgTypes, callArgumentTypes)[0] &&
@@ -191,10 +353,10 @@ export class Call extends Expression implements LeftDonor {
         // First, Coax
         // o.push(...VarType.Coax([targetType], [callArgumentTypes[i]])[0]);
         // Then, store
-        o.push(`setb ${paramsName}`, `addb ${i * size}`, ...targetType.Put("a","b"));
+        o.push(`setb ${paramsName}`, `addb ${i * size}`, ...targetType.Put("x","b"));
       }
       // Then, add the length of the array, and the array itself
-      o.push(`apush ${elementCount}`, `apush ${paramsName}`);
+      o.push(`xpush ${elementCount}`, `xpush ${paramsName}`);
     } else {
       o.push(...VarType.Coax(funcType.ArgTypes, callArgumentTypes)[0]);
     }
@@ -207,7 +369,7 @@ export class Call extends Expression implements LeftDonor {
     );
     if (!this.IsFinalExpression && !this.TailCall)
       o.push(...scope.DumpFunctionVariables());
-    o.push(`apopa`, this.TailCall ? `jmpa` : `calla`);
+    o.push(`xpopa`, this.TailCall ? `jmpa` : `calla`);
     if (!this.IsFinalExpression && !this.TailCall)
       o.push(...scope.LoadFunctionVariables());
 

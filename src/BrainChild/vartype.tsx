@@ -106,10 +106,10 @@ export class VarType extends Token {
     if (this.TypeName === "var") return true;
     if (this.TypeName === "discard") return true;
     if (other.TypeName === "discard") return false;
-    if (this.TypeName === "void") {
+    if (this.TypeName === "void" || this.TypeName.startsWith("functiongeneric$")) {
       return this.PointerDepth <= other.PointerDepth;
     }
-    if (other.TypeName === "void") {
+    if (other.TypeName === "void" || other.TypeName.startsWith("functiongeneric$")) {
       return this.PointerDepth >= other.PointerDepth;
     }
     if (
@@ -126,10 +126,10 @@ export class VarType extends Token {
     if (this.TypeName === "var") return true;
     if (this.TypeName === "discard") return true;
     if (other.TypeName === "discard") return false;
-    if (this.TypeName === "void") {
+    if (this.TypeName === "void" || this.TypeName.startsWith("functiongeneric$")) {
       return !other.IsWide() && this.PointerDepth <= other.PointerDepth;
     }
-    if (other.TypeName === "void") {
+    if (other.TypeName === "void" || other.TypeName.startsWith("functiongeneric$")) {
       return !this.IsWide() && this.PointerDepth >= other.PointerDepth;
     }
     if (
@@ -148,13 +148,13 @@ export class VarType extends Token {
     if (this.TypeName === "var") return [];
     var o: string[] = [];
     if (this.PointerDepth < other.PointerDepth) {
-      o.push(`apopa`);
+      o.push(`xpopa`);
       for (var i = this.PointerDepth; i < other.PointerDepth; i++) {
         o.push(`ptra`);
       }
-      o.push(`apusha`);
+      o.push(`xpusha`);
     }
-    if (this.TypeName === "void" || other.TypeName === "void") {
+    if (this.TypeName === "void" || other.TypeName === "void" || this.TypeName.startsWith("functiongeneric$") || other.TypeName.startsWith("functiongeneric$")) {
       return o;
     }
     return o;
@@ -304,63 +304,77 @@ export class VarType extends Token {
           targetPtr++;
           break;
         }
+        let cachehit: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]|null;
+        if(cachehit=scope.CacheGet("cast",receivedStack.slice(receivedPtr).map(c=>c.toString()).join(",")+"&"+targetStack.slice(targetPtr).map(c=>c.toString()).join(","))){
+          targetPtr += cachehit[0].length;
+          receivedPtr += VarType.CanCoax(
+            cachehit[1],
+            receivedStack.slice(receivedPtr),
+            restricted,
+            true
+          )[1]!;
+          break;
+        }else{
+          // Get all metamethods
+          var metas: Set<
+            [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
+          > = new Set();
+          for (let t in scope.UserTypes) {
+            scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+          }
+          // That are casts to and from
+          let metasArr = [...metas]
+            .filter(c=>c[4]==="GLOBAL" || c[4]===scope.CurrentFile || Include.Includes[scope.CurrentFile]?.has(c[4]))
+            .filter((c) =>
+            VarType.CanCoaxSoft(
+              targetStack.slice(targetPtr, targetPtr + c[0].length),
+              c[0]
+            )
+          ).map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
+          metasArr = metasArr.filter((c) => !restricted.has(c));
+          metasArr = metasArr.filter((c) => {
+            let r = new Set(restricted);
+            r.add(c);
+            return VarType.CanCoax(
+              c[1],
+              receivedStack.slice(receivedPtr),
+              r,
+              true
+            )[0];
+          });
 
-        // Get all metamethods
-        var metas: Set<
-          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
-        > = new Set();
-        for (let t in scope.UserTypes) {
-          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
-        }
-        // That are casts to and from
-        let metasArr = [...metas]
-          .filter(c=>c[4]==="GLOBAL" || c[4]===scope.CurrentFile || Include.Includes[scope.CurrentFile]?.has(c[4]))
-          .filter((c) =>
-          VarType.CanCoaxSoft(
-            targetStack.slice(targetPtr, targetPtr + c[0].length),
-            c[0]
-          )
-        ).map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
-        metasArr = metasArr.filter((c) => !restricted.has(c));
-        metasArr = metasArr.filter((c) => {
+          // Score all metas by how good a match they are
+          var scoreArr: [
+            meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string],
+            score: number
+          ][] = metasArr.map((c) => [
+            c,
+            VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
+              VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
+          ]);
+          scoreArr.sort((a, b) => b[1] - a[1]);
+          if (scoreArr.length === 0) {
+            receivedPtr++;
+            continue;
+          }
+          let best = scoreArr[0][1];
+          scoreArr = scoreArr.filter((c) => c[1] >= best);
+          if (scoreArr.length > 1)
+            return [false, 0];
+          let m = scoreArr[0][0];
+          targetPtr += m[0].length;
           let r = new Set(restricted);
-          r.add(c);
-          return VarType.CanCoax(
-            c[1],
+          r.add(m);
+          let stickyCoax = VarType.CanCoax(
+            m[1],
             receivedStack.slice(receivedPtr),
             r,
             true
-          )[0];
-        });
-
-        // Score all metas by how good a match they are
-        var scoreArr: [
-          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string],
-          score: number
-        ][] = metasArr.map((c) => [
-          c,
-          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
-            VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
-        ]);
-        scoreArr.sort((a, b) => b[1] - a[1]);
-        if (scoreArr.length === 0) {
-          receivedPtr++;
-          continue;
+          );
+          receivedPtr += stickyCoax[1]!;
+          if(stickyCoax[0])
+            scope.TrySlowCache("cast",receivedStack.slice(receivedPtr).map(c=>c.toString()).join(",")+"&"+targetStack.slice(targetPtr).map(c=>c.toString()).join(","),[m[0],m[1],m[2]]);
         }
-        let best = scoreArr[0][1];
-        scoreArr = scoreArr.filter((c) => c[1] >= best);
-        if (scoreArr.length > 1)
-          return [false, 0];
-        let m = scoreArr[0][0];
-        targetPtr += m[0].length;
-        let r = new Set(restricted);
-        r.add(m);
-        receivedPtr += VarType.CanCoax(
-          m[1],
-          receivedStack.slice(receivedPtr),
-          r,
-          true
-        )[1]!;
         break;
       }
       sticky = false;
@@ -382,7 +396,7 @@ export class VarType extends Token {
     var asm: string[] = [];
     // Cycle everything to the B stack (So we handle it from left to right)
     for (let i = 0; i < receivedStack.length; i++) {
-      asm.push(...receivedStack[i].FlipAB());
+      asm.push(...receivedStack[i].FlipXY());
     }
     let converted: VarType[] = [];
     let targetPtr = 0;
@@ -395,7 +409,7 @@ export class VarType extends Token {
         }
         // Directly assignable
         if (targetStack[targetPtr].AssignableFrom(receivedStack[receivedPtr])) {
-          asm.push(...receivedStack[receivedPtr].FlipBA());
+          asm.push(...receivedStack[receivedPtr].FlipYX());
           asm.push(
             ...targetStack[targetPtr].ConvertFrom(receivedStack[receivedPtr])
           );
@@ -404,91 +418,118 @@ export class VarType extends Token {
           targetPtr++;
           break;
         }
+        let cachehit: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]|null;
+        if(cachehit=scope.CacheGet("cast",receivedStack.slice(receivedPtr).map(c=>c.toString()).join(",")+"&"+targetStack.slice(targetPtr).map(c=>c.toString()).join(","))){
+          let c = VarType.CanCoax(
+            cachehit[1],
+            receivedStack.slice(receivedPtr),
+            restricted,
+            true
+          )[1]!;
+          for (let i = 0; i < c; i++) {
+            asm.push(...receivedStack[receivedPtr+i].FlipYX());
+          }
+          asm.push(
+            ...VarType.Coax(
+              cachehit[1],
+              receivedStack.slice(receivedPtr, receivedPtr + c),
+              restricted,
+              false,
+              true
+            )[0]
+          );
+          asm.push(...cachehit[2]);
+          converted.push(...cachehit[0]);
+          targetPtr += cachehit[0].length;
+          receivedPtr += c;
+        }else{
+          // Get all metamethods
+          var metas: Set<
+            [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
+          > = new Set();
+          for (let t in scope.UserTypes) {
+            scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
+          }
+          let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
+          // That are casts to and from
+          metasArr = metasArr.filter((c) => !restricted.has(c));
+          metasArr = metasArr.filter((c) =>
+            VarType.CanCoaxSoft(
+              targetStack.slice(targetPtr, targetPtr + c[0].length),
+              c[0]
+            )
+          );
+          metasArr = metasArr.filter((c) => {
+            let r = new Set(restricted);
+            r.add(c);
+            return VarType.CanCoax(
+              c[1],
+              receivedStack.slice(receivedPtr),
+              r,
+              true
+            )[0];
+          });
 
-        // Get all metamethods
-        var metas: Set<
-          [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
-        > = new Set();
-        for (let t in scope.UserTypes) {
-          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
-        }
-        let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
-        // That are casts to and from
-        metasArr = metasArr.filter((c) => !restricted.has(c));
-        metasArr = metasArr.filter((c) =>
-          VarType.CanCoaxSoft(
-            targetStack.slice(targetPtr, targetPtr + c[0].length),
-            c[0]
-          )
-        );
-        metasArr = metasArr.filter((c) => {
-          let r = new Set(restricted);
-          r.add(c);
-          return VarType.CanCoax(
-            c[1],
+          // Score all metas by how good a match they are
+          var scoreArr: [
+            meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string],
+            score: number
+          ][] = metasArr.map((c) => [
+            c,
+            VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
+              VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
+          ]);
+          scoreArr.sort((a, b) => b[1] - a[1]);
+          if (scoreArr.length === 0)
+            throw new Error(`Failed to Coax (Missed check?)`);
+          let best = scoreArr[0][1];
+          scoreArr = scoreArr.filter((c) => c[1] >= best);
+          if (scoreArr.length > 1)
+            throw new Error(
+              `Ambigious casts from ${receivedStack.slice(
+                receivedPtr
+              )} to ${targetStack.slice(targetPtr)} (${scoreArr.length} choices)`
+            );
+          let m = scoreArr[0][0];
+          var r = new Set(restricted);
+          r.add(m);
+          let canCoax = VarType.CanCoax(
+            m[1],
             receivedStack.slice(receivedPtr),
             r,
             true
-          )[0];
-        });
-
-        // Score all metas by how good a match they are
-        var scoreArr: [
-          meta: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string],
-          score: number
-        ][] = metasArr.map((c) => [
-          c,
-          VarType.CountMatches(targetStack.slice(targetPtr), c[0]) * 100 +
-            VarType.CountMatches(c[1], receivedStack.slice(receivedPtr)),
-        ]);
-        scoreArr.sort((a, b) => b[1] - a[1]);
-        if (scoreArr.length === 0)
-          throw new Error(`Failed to Coax (Missed check?)`);
-        let best = scoreArr[0][1];
-        scoreArr = scoreArr.filter((c) => c[1] >= best);
-        if (scoreArr.length > 1)
-          throw new Error(
-            `Ambigious casts from ${receivedStack.slice(
-              receivedPtr
-            )} to ${targetStack.slice(targetPtr)} (${scoreArr.length} choices)`
           );
-        let m = scoreArr[0][0];
-        var r = new Set(restricted);
-        r.add(m);
-        let c = VarType.CanCoax(
-          m[1],
-          receivedStack.slice(receivedPtr),
-          r,
-          true
-        )[1]!;
-        for (let i = 0; i < c; i++) {
-          asm.push(...receivedStack[receivedPtr+i].FlipBA());
+          for (let i = 0; i < canCoax[1]!; i++) {
+            asm.push(...receivedStack[receivedPtr+i].FlipYX());
+          }
+          asm.push(
+            ...VarType.Coax(
+              m[1],
+              receivedStack.slice(receivedPtr, receivedPtr + canCoax[1]!),
+              r,
+              false,
+              true
+            )[0]
+          );
+          asm.push(...m[2]);
+          converted.push(...m[0]);
+          if(canCoax[0])
+            scope.TrySlowCache("cast",receivedStack.slice(receivedPtr).map(c=>c.toString()).join(",")+"&"+targetStack.slice(targetPtr).map(c=>c.toString()).join(","),[m[0],m[1],m[2]]);
+          targetPtr += m[0].length;
+          receivedPtr += canCoax[1]!;
+          break;
         }
-        asm.push(
-          ...VarType.Coax(
-            m[1],
-            receivedStack.slice(receivedPtr, receivedPtr + c),
-            r,
-            false,
-            true
-          )[0]
-        );
-        asm.push(...m[2]);
-        converted.push(...m[0]);
-        targetPtr += m[0].length;
-        receivedPtr += c;
-        break;
       }
       sticky = false;
     }
     if (cleanup) {
-      while (receivedPtr < receivedStack.length) asm.push(...receivedStack[receivedPtr++].BPop());
+      while (receivedPtr < receivedStack.length) asm.push(...receivedStack[receivedPtr++].YPop());
     }
     return [asm, receivedPtr, converted];
   }
 
   toString(): string {
-    if (this.TypeName.startsWith("$")) {
+    if (this.TypeName.startsWith("classgeneric$")) {
     }
     if (this.Generics.length > 0)
       return `${"@".repeat(this.PointerDepth)}${this.TypeName}<${
@@ -534,7 +575,11 @@ export class VarType extends Token {
     if (this.TypeName === "int") return true;
     if (this.TypeName === "void") return true;
     if (this.TypeName === "discard") return true;
-    if (this.TypeName.startsWith("$")) return true;
+    if (this.TypeName === "COMPILER") return true;
+    if (this.TypeName.startsWith("classgeneric$")) return true;
+    if (this.TypeName.startsWith("metamethodgeneric$")) return true;
+    if (this.TypeName.startsWith("functiongeneric$")) return true;
+    if (this.TypeName.startsWith("symbolic$")) return true;
     return !!Scope.CURRENT.UserTypes[this.TypeName];
   }
 
@@ -546,8 +591,17 @@ export class VarType extends Token {
     if (this.TypeName === "void") return TypeVoid;
     if (this.TypeName === "discard") return TypeDiscard;
     if (this.TypeName === "COMPILER") return TypeCompiler;
-    if (this.TypeName.startsWith("$")) return TypeVoid;
+    if (this.TypeName.startsWith("classgeneric$")) return TypeVoid;
+    if (this.TypeName.startsWith("metamethodgeneric$")) return TypeVoid;
+    if (this.TypeName.startsWith("functiongeneric$")) return TypeVoid;
     var userType = Scope.CURRENT.UserTypes[this.TypeName];
+    if (!userType && this.TypeName.startsWith("symbolic$")){
+      userType = new TypeDefinition();
+      userType.Name = this.TypeName;
+      userType.Wide = true;
+      userType.Size = 0;
+      Scope.CURRENT.UserTypes[this.TypeName] = userType;
+    }
     if (!userType) throw new Error(`Undefined type ${this.TypeName}`);
     if (this.Generics.length > 0) {
       userType = userType.WithGenerics(this.Generics);
@@ -556,8 +610,8 @@ export class VarType extends Token {
   }
 
   WithGenerics(genericArgs: VarType[], recurse: boolean = true): VarType {
-    if (this.TypeName.startsWith("$") && !this.TypeName.startsWith("$$")) {
-      let v = genericArgs[+this.TypeName.substr(1)].Clone();
+    if (this.TypeName.startsWith("classgeneric$")) {
+      let v = genericArgs[+this.TypeName.substr(13)].Clone();
       if(v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
       v.PointerDepth += this.PointerDepth;
       return v;
@@ -572,8 +626,8 @@ export class VarType extends Token {
     }
   }
   WithFunctionGenerics(genericArgs: VarType[]): VarType {
-    if (this.TypeName.startsWith("$$")) {
-      let v = genericArgs[+this.TypeName.substr(2)].Clone();
+    if (this.TypeName.startsWith("functiongeneric$")) {
+      let v = genericArgs[+this.TypeName.substr(16)].Clone();
       if(v.IsWide()) throw new Error("Wide-Types may not be used in generics, use a pointer instead.");
       v.PointerDepth += this.PointerDepth;
       for (let i = 0; i < v.Generics.length; i++) {
@@ -584,31 +638,31 @@ export class VarType extends Token {
     return this;
   }
 
-  APop(): string[] {
+  XPop(): string[] {
     let def = this.GetDefinition();
-    if(!def.Wide) return ['apop'];
-    return new Array(def.Size).fill('apop');
+    if(!def.Wide) return ['xpop'];
+    return new Array(def.Size).fill('xpop');
   }
-  BPop(): string[] {
+  YPop(): string[] {
     let def = this.GetDefinition();
-    if(!def.Wide) return ['bpop'];
-    return new Array(def.Size).fill('bpop');
+    if(!def.Wide) return ['ypop'];
+    return new Array(def.Size).fill('ypop');
   }
   // Flip from the A stack to the B stack
-  FlipAB(): string[] {
+  FlipXY(): string[] {
     let def = this.GetDefinition();
-    if(!def.Wide) return ['apopa', 'bpusha'];
-    return new Array(def.Size).fill(['apopa', 'bpusha']).flat();
+    if(!def.Wide) return ['xpopa', 'ypusha'];
+    return new Array(def.Size).fill(['xpopa', 'ypusha']).flat();
   }
   // Flip from the B stack to the A stack
-  FlipBA(): string[] {
+  FlipYX(): string[] {
     let def = this.GetDefinition();
-    if(!def.Wide) return ['bpopa', 'apusha'];
-    return new Array(def.Size).fill(['bpopa', 'apusha']).flat();
+    if(!def.Wide) return ['ypopa', 'xpusha'];
+    return new Array(def.Size).fill(['ypopa', 'xpusha']).flat();
   }
   // Puts the value from the top of the selected stack to the location pointed to by the selected register
   // Move the location register to the end of the value
-  Put(fromStack: "a"|"b" = "a", toLocation: "a"|"b" = "b"): string[] {
+  Put(fromStack: "x"|"y" = "x", toLocation: "a"|"b" = "b"): string[] {
     let def = this.GetDefinition();
     let other = toLocation === "a" ? "b" : "a";
     if(!def.Wide) return [`${fromStack}pop${other}`, `put${other}ptr${toLocation}`];
@@ -617,7 +671,7 @@ export class VarType extends Token {
   // Grabs the value from the location pointed to by the selected register and puts it on the selected stack
   // Move the location register to the end of the value
   // Reversed is used purely to allow flipping the stack order. It assumes the b register points to the START of the location.
-  Get(toStack: "a"|"b" = "a", fromLocation: "a"|"b" = "b", reversed: boolean = false): string[] {
+  Get(toStack: "x"|"y" = "x", fromLocation: "a"|"b" = "b", reversed: boolean = false): string[] {
     let def = this.GetDefinition();
     let other = fromLocation === "a" ? "b" : "a";
     if(!def.Wide) return [`cpy${fromLocation}${other}`, `ptr${other}`, `${toStack}push${other}`];
@@ -629,34 +683,34 @@ export class VarType extends Token {
     return o;
   }
   // Flip the top of the A stack, uses scratch as temporary storage
-  FlipA(): string[] {
+  FlipX(): string[] {
     let def = this.GetDefinition();
     if(!def.Wide) return []; // Do nothing :D
     if(def.Size === 0) return [];
-    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put(), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("a","b",true)]
+    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put(), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("x","b",true)]
   }
   // Flip the top of the B stack, uses scratch as temporary storage
-  FlipB(): string[] {
+  FlipY(): string[] {
     let def = this.GetDefinition();
     if(def.Wide) return []; // Do nothing :D
     if(def.Size === 0) return [];
-    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put("b"), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("b","a",true)]
+    return [`setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Put("y"), `setb ${Scope.CURRENT.GetScratch(def.Size)}`, ...this.Get("y","a",true)]
   }
   // Clone the top of the A stack, uses scratch as temporary storage
   CloneA(): string[] {
     let def = this.GetDefinition();
-    if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    if(!def.Wide) return [`xpopa`,`xpusha`,`xpusha`]; // Do nothing :D
     if(def.Size === 0) return [];
     let scratch = Scope.CURRENT.GetScratch(def.Size);
-    return [`setb ${scratch}`, ...this.Put(), `setb ${scratch}`, ...this.Get("a","b"), `setb ${scratch}`, ...this.Get("a","b")];
+    return [`setb ${scratch}`, ...this.Put(), `setb ${scratch}`, ...this.Get("x","b"), `setb ${scratch}`, ...this.Get("x","b")];
   }
   // Clone the top of the B stack, uses scratch as temporary storage
   CloneB(): string[] {
     let def = this.GetDefinition();
-    if(!def.Wide) return [`apopa`,`apusha`,`apusha`]; // Do nothing :D
+    if(!def.Wide) return [`xpopa`,`xpusha`,`xpusha`]; // Do nothing :D
     if(def.Size === 0) return [];
     let scratch = Scope.CURRENT.GetScratch(def.Size);
-    return [`setb ${scratch}`, ...this.Put("b"), `setb ${scratch}`, ...this.Get("b","b"), `setb ${scratch}`, ...this.Get("b","b")];
+    return [`setb ${scratch}`, ...this.Put("y"), `setb ${scratch}`, ...this.Get("y","b"), `setb ${scratch}`, ...this.Get("y","b")];
   }
 
 }
@@ -730,7 +784,7 @@ export class FuncType extends VarType {
     return true;
   }
   CastableFrom(other: VarType): boolean {
-    if (other.TypeName === "void")
+    if (other.TypeName === "void" || other.TypeName.startsWith("functiongeneric$"))
       return this.PointerDepth >= other.PointerDepth;
     if (!(other instanceof FuncType)) return false;
     if (other.PointerDepth < this.PointerDepth) return false;
@@ -744,7 +798,7 @@ export class FuncType extends VarType {
   }
 
   AssignableFrom(other: VarType): boolean {
-    if (other.TypeName === "void")
+    if (other.TypeName === "void" || other.TypeName.startsWith("functiongeneric$"))
       return this.PointerDepth >= other.PointerDepth;
     if (!(other instanceof FuncType)) return false;
     if (other.PointerDepth < this.PointerDepth) return false;

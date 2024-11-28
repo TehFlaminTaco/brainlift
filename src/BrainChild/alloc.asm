@@ -5,7 +5,7 @@ alloc:
     setb aftercode
     putbptra
     seta vAllocSize
-    apopb
+    xpopb
     putbptra
     wAllocCond:
         seta vAllocTable
@@ -52,7 +52,7 @@ alloc:
         ptrb
         subba
         suba 2
-        apusha
+        xpusha
         seta vAllocTable
         ptra
         setb vAllocSize
@@ -62,7 +62,7 @@ alloc:
         setb 0
         putbptra
         inca
-        apopb
+        xpopb
         putbptra
     fAllocSlipDone:
     seta vAllocTable
@@ -74,7 +74,7 @@ alloc:
     ptrb
     putbptra
     inca
-    apusha
+    xpusha
     ret
 
 vFreeTable: db 0
@@ -85,7 +85,7 @@ free:
     setb aftercode
     putbptra
     seta vFreeTarget
-    apopb
+    xpopb
     subb 2
     putbptra
     wFreeCond:

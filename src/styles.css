@@ -18,9 +18,13 @@ h1 {
   flex-direction: column;
 }
 
+.etab {
+  height:100%;
+}
+
 .ace_editor {
   width: 100%;
-  height: 457.44px;
+  height: 100% !important;
   font-size: 12px;
   margin: 0;
 }
@@ -84,32 +88,42 @@ button a:hover {
 
 #editors {
   flex-grow: 1;
+  display:flex;
+  flex-direction:row;
 }
 
 #editorButtons {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  width: 20ch;
+  overflow-x: hidden;
+  transition: width .1s ease-in-out;
 }
 
 #editorButtons button {
-  border-radius: 4px 4px 0px 0px;
-  border: solid 1px darkgray;
-  width: max-content;
+  width: 100%;
+  background: inherit;
+  border:none;
+  box-sizing:border-box;
   margin-bottom: -1px;
   z-index: 2;
   font-family: monospace;
+  text-align:left;
+}
+#editorButtons button::before{
+  content: "⁃"
 }
 #editorButtons button input {
   font-family: monospace;
 }
 #editorButtons button.active {
-  background-color: white;
-  border-bottom: solid 1px white;
+  background-color: lightblue;
 }
 #editorButtons button:hover:not(.active) {
   background-color: darkgray;
 }
 #editorTabs {
+  flex-grow:1;
 }
 
 #updateHeader {
@@ -242,6 +256,7 @@ span.reg {
 
 div[data-target="baMemory"]{
   flex-grow: 1;
+  max-width: 80ch;
 }
 
 .simpleIO {

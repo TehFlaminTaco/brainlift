@@ -21,7 +21,7 @@ export class VariableDecleration
   GetPointer(scope: Scope): string[] {
     // Ensure we're set up.
     this.Evaluate(scope);
-    return [`apush ${this.Label}`];
+    return [`xpush ${this.Label}`];
   }
   GetReferenceTypes(scope: Scope): VarType[] {
     return [this.Type!.WithDeltaPointerDepth(1)];
@@ -113,14 +113,14 @@ export class VariableDecleration
 
   Evaluate(scope: Scope): [VarType[], string[]] {
     if(this.Type!.TypeName === "discard")
-      return [[VarType.Discard], ['apush 0']];
+      return [[VarType.Discard], ['xpush 0']];
     if (this.IsConstant) {
       if (!this.Label) {
         scope.SetConstant(this.Identifier!.Name, this.Type!, 0, true);
         this.Label = scope.GetSafeName("constant_" + this.Identifier!.Name);
       }
       let v = scope.Get(this.Identifier!.Name);
-      return [[this.Type!], [`apush ${v[2]}`]];
+      return [[this.Type!], [`xpush ${v[2]}`]];
     }
     if (this.Type!.TypeName === "var")
       throw new Error(`Variable Decleration must explicitely define a type.`);
@@ -129,12 +129,12 @@ export class VariableDecleration
       this.LastScope = scope;
     }
     this.Label ||= scope.Set(this.Identifier!.Name, this.Type!);
-    return [[this.Type!], [`seta ${this.Label}`, ...this.Type!.Get("a","a")]];
+    return [[this.Type!], [`seta ${this.Label}`, ...this.Type!.Get("x","a")]];
   }
 
   Assign(scope: Scope, anyType: VarType): string[] {
     if (this.Type!.TypeName === "discard")
-      return ['apop'];
+      return ['xpop'];
     if (this.IsConstant) {
       throw new Error("Cannot assign non-constant value to constant variable");
     }
@@ -151,7 +151,7 @@ export class VariableDecleration
       this.Identifier!.Name,
       this.Type!.TypeName === "var" ? anyType : this.Type!
     );
-    return [`seta ${this.Label}`, ...this.Type!.Put("a","a")];
+    return [`seta ${this.Label}`, ...this.Type!.Put("x","a")];
   }
 
   GetTypes(scope: Scope): VarType[] {

@@ -33,12 +33,12 @@ export class Dereference
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(...res[0][i].APop());
+      o.push(...res[0][i].XPop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
     }
-    o.push(`apopa`, `ptra`, `apusha`);
+    o.push(`xpopa`, `ptra`, `xpusha`);
     var dereferenced = res[0][0].Clone();
     dereferenced.PointerDepth--;
     return [[dereferenced], o];
@@ -51,12 +51,12 @@ export class Dereference
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(...res[0][i].APop());
+      o.push(...res[0][i].XPop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
     }
-    o.push(`apopa`, `apopb`, `putbptra`);
+    o.push(`xpopa`, `xpopb`, `putbptra`);
     return o;
   }
   Read(scope: Scope): string[] {
@@ -67,12 +67,12 @@ export class Dereference
       throw new Error("Cannot dereference non-returning value");
     }
     for (var i = 1; i < res[0].length; i++) {
-      o.push(...res[0][i].APop());
+      o.push(...res[0][i].XPop());
     }
     if (res[0][0].PointerDepth <= 0) {
       throw new Error(`Cannot dereference non-pointer. Got ${res[0][0]}`);
     }
-    o.push(`apopa`, `ptra`, `apusha`);
+    o.push(`xpopa`, `ptra`, `xpusha`);
     var dereferenced = res[0][0].Clone();
     dereferenced.PointerDepth--;
     return o;

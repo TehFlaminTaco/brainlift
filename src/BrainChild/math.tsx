@@ -79,7 +79,7 @@ export class MathExp
     if (v !== null)
       return [
         [VarType.Int],
-        [this.GetLine(), `apush ${(v & 0xffffffff) >>> 0}`],
+        [this.GetLine(), `xpush ${(v & 0xffffffff) >>> 0}`],
       ];
     let o: string[] = [this.GetLine()];
     if (this.Operator === "and") {
@@ -96,7 +96,7 @@ export class MathExp
       // Otherwise, leave this falsey value on the stack
       let rightSideLabel = scope.GetSafeName("rightSide");
       let afterRightSideLabel = scope.GetSafeName("afterRightSide");
-      o.push(`apopa`, `jnza ${rightSideLabel}`, `apush 0`, `jmp ${afterRightSideLabel}`, `${rightSideLabel}:`);
+      o.push(`xpopa`, `jnza ${rightSideLabel}`, `xpush 0`, `jmp ${afterRightSideLabel}`, `${rightSideLabel}:`);
       o.push(...rightRes[1]);
       meta = scope.GetMetamethod("truthy", rightRes[0]);
       if (meta === null) throw new Error(`No truthy metamethod for type ${rightRes[0]}`);
@@ -121,8 +121,8 @@ export class MathExp
       // Otherwise, run the right side and leave it's truthy value on the stack
       // We have to leave the truthy value on the stack  by duplicating it, and destroying it if the left side is falsey
       let afterRightSideLabel = scope.GetSafeName("afterRightSide");
-      o.push(`apopa`, `apusha`, `jnza ${afterRightSideLabel}`);
-      o.push(`apop`);
+      o.push(`xpopa`, `xpusha`, `jnza ${afterRightSideLabel}`);
+      o.push(`xpop`);
       o.push(...rightRes[1]);
       meta = scope.GetMetamethod("truthy", rightRes[0]);
       if (meta === null) throw new Error(`No truthy metamethod for type ${rightRes[0]}`);
@@ -137,7 +137,7 @@ export class MathExp
       throw new Error(`Leftside expression does not resolve to any value.`);
     let bothArgs = [left[0][0]];
     o.push(...left[1]);
-    for (let i = 1; i < left[0].length; i++) o.push(`apop`);
+    for (let i = 1; i < left[0].length; i++) o.push(`xpop`);
     let right = this.Right!.TryEvaluate(scope);
     o.push(...right[1]);
     bothArgs.push(...right[0]);
@@ -280,7 +280,7 @@ export class UnaryMathExp
     if (v !== null)
       return [
         [VarType.Int],
-        [this.GetLine(), `apush ${(v & 0xffffffff) >>> 0}`],
+        [this.GetLine(), `xpush ${(v & 0xffffffff) >>> 0}`],
       ];
     let o: string[] = [this.GetLine()];
     let bothArgs = [];

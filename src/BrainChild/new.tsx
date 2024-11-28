@@ -66,6 +66,7 @@ export class New extends Expression {
     );
     if (!constructorMetamethod)
       throw new Error(`Cannot find constructor new ${argTypes}`);
+    o.push(...VarType.Coax(constructorMetamethod[1], argTypes)[0]);
     o.push(
       `seta ${classType.ClassLabel}`,
       `adda ${targTypeNewMethod[1]}`,

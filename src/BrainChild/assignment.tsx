@@ -72,7 +72,7 @@ export class Assignment
         if ((this.Left as any as SimpleAssignable).AssignSimple(scope, n)) {
           return [
             (this.Left as any as Assignable).GetTypes(scope),
-            [`apush ${(n & 0xffffffff) >>> 0}`],
+            [`xpush ${(n & 0xffffffff) >>> 0}`],
           ];
         }
       }

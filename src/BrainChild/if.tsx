@@ -68,7 +68,7 @@ export class If extends Expression implements Simplifyable {
     var valueRes = this.Condition!.TryEvaluate(scope);
     o.push(this.GetLine(), ...valueRes[1]);
     for (var i = 1; i < valueRes[0].length; i++) {
-      o.push(...valueRes[0][i].APop());
+      o.push(...valueRes[0][i].XPop());
     }
     var resType = valueRes[0][0];
     var meta = scope.GetMetamethod("truthy", [resType]);
@@ -82,19 +82,19 @@ export class If extends Expression implements Simplifyable {
     var afterTrue = scope.GetSafeName(`ifdone${this.Condition!.toString()}`);
     o.push(...meta[2]);
     o.push(...VarType.Coax([VarType.Int], meta[0])[0]);
-    o.push(`apopa`, `jnza ${ifTrue}`);
+    o.push(`xpopa`, `jnza ${ifTrue}`);
     if (this.Else !== null) {
       let res = this.Else.TryEvaluate(scope);
       o.push(...res[1].map((c) => `  ${c}`));
       for (let i = resTypes.length; i < res[0].length; i++) {
-        o.push(...res[0][i].APop());
+        o.push(...res[0][i].XPop());
       }
     }
     o.push(`jmp ${afterTrue}`, `${ifTrue}:`);
     let res = this.Body!.TryEvaluate(scope);
     o.push(...res[1].map((c) => `  ${c}`));
     for (let i = resTypes.length; i < res[0].length; i++) {
-      o.push(...res[0][i].APop());
+      o.push(...res[0][i].XPop());
     }
     o.push(`${afterTrue}:`);
     return [resTypes, o];

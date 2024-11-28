@@ -100,7 +100,7 @@ export class Reserve extends Expression {
       if (this.ClassMember)
         return [
           [VarType.VoidPtr],
-          [this.GetLine(), `apopb`, `apushb`, `incb`, `apushb`],
+          [this.GetLine(), `xpopb`, `xpushb`, `incb`, `xpushb`],
         ];
       // Simple reserve style
       let n = (this.Length as any as Expression).TrySimplify(scope);
@@ -110,7 +110,7 @@ export class Reserve extends Expression {
       scope.Assembly.push(this.GetLabel(scope) + ":");
       // DB n 0's
       scope.Assembly.push(`db ${Array(n).fill(0).join(",")}`);
-      return [[VarType.VoidPtr], [this.GetLine(), `apush ${this.Label}`]];
+      return [[VarType.VoidPtr], [this.GetLine(), `xpush ${this.Label}`]];
     }
 
     // Object reserve style
@@ -125,7 +125,7 @@ export class Reserve extends Expression {
       // We're going to copy the top of the A stack to the B stack, which contains a pointer to this, so we can access once all the arguments are resolved.
       // (Because the A stack contains a reference to where we are editing, that we must preserve)
       // Knowing it's a pointer means we know it isn't wide, and we can do this the ugly way.
-      asm.push(`apopb`, `apushb`, `bpushb`);
+      asm.push(`xpopb`, `xpushb`, `ypushb`);
     }
     // Push the arguments to the stack
     let argTypes: VarType[] = [];
@@ -145,7 +145,7 @@ export class Reserve extends Expression {
     if (this.ClassMember) {
       // Pop the B stack and put it back unto the A stack
       // And push it back onto the B stack so we can restore it later
-      asm.push(`bpopb`, `bpushb`); // We also incb, because we start writing 1 int after this, because this is the reference to this. Confusing I know.
+      asm.push(`ypopb`, `ypushb`); // We also incb, because we start writing 1 int after this, because this is the reference to this. Confusing I know.
     } else {
       // Push the label to the stack
       asm.push(`setb ${label}`);
@@ -169,12 +169,12 @@ export class Reserve extends Expression {
         if (possibleAssignments.length > 0) {
           if (possibleAssignments.length > 1)
             throw new Error(`Ambiguous default value for ${child[0]}`);
-          asm.push(`  apushb`);
+          asm.push(`  xpushb`);
           let res = possibleAssignments[0].Right!.TryEvaluate(scope);
           asm.push(...res[1]);
           for (let spare = 1; spare < res[0].length; spare++)
-            asm.push(...res[0][spare].APop());
-          asm.push(...res[0][0].FlipAB(), `apopb`, ...res[0][0].FlipBA(), ...res[0][0].Put("a", "b"))
+            asm.push(...res[0][spare].XPop());
+          asm.push(...res[0][0].FlipXY(), `xpopb`, ...res[0][0].FlipYX(), ...res[0][0].Put("x", "b"))
         } else {
           if(childType?.GetDefinition().Wide ?? false){
             asm.push(`seta 0`, ...Array(childType.GetDefinition().Size).fill(['putaptrb','incb']).flat());
@@ -188,15 +188,15 @@ export class Reserve extends Expression {
       if (i < childrenByOffset.length - 1) asm.push(`  incb`);
     }
     if (this.ClassMember) {
-      asm.push(`bpopb`, `apushb`, `bpushb`);
+      asm.push(`ypopb`, `xpushb`, `ypushb`);
     } else {
-      asm.push(`apush ${label}`);
+      asm.push(`xpush ${label}`);
     }
     asm.push(...constructorMetamethod[2]);
     if (this.ClassMember) {
-      asm.push(`bpopb`, `apushb`);
+      asm.push(`ypopb`, `xpushb`);
     } else {
-      asm.push(`apush ${label}`);
+      asm.push(`xpush ${label}`);
     }
     return [[this.Type!], asm];
   }

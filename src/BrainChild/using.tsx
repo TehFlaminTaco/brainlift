@@ -31,7 +31,7 @@ export class Using extends Expression implements Simplifyable {
         let o: string[] = [];
         let targetRes = this.Target!.TryEvaluate(scope);
         o.push(...targetRes[1])
-        o.push(...targetRes[0].map(c=>c.APop()).flat());
+        o.push(...targetRes[0].map(c=>c.XPop()).flat());
         let bodyRes = this.Body!.TryEvaluate(scope);
         o.push(...bodyRes[1]);
         // Run all dispose metamethods
@@ -39,10 +39,10 @@ export class Using extends Expression implements Simplifyable {
             let c = targetRes[0][i];
             let mm = scope.GetMetamethod("dispose", [c]);
             if(mm === null){
-                o.push(...targetRes[0][i].APop())
+                o.push(...targetRes[0][i].XPop())
             }else{
                 o.push(...mm[2]);
-                o.push(...mm[0].map(j=>j.APop()).flat())
+                o.push(...mm[0].map(j=>j.XPop()).flat())
             }
         }
         return [bodyRes[0], o];

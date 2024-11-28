@@ -28,7 +28,7 @@ ace.define(
 
       var functions =
         // builtinFunctions
-        "write";
+        "putchar|getchar|alloc|free";
 
       var keywordMapper = this.createKeywordMapper(
         {
@@ -72,7 +72,7 @@ ace.define(
           },
           {
             token: "string.char", // ' char
-            regex: /'\\?.'/,
+            regex: /'(?:[^\\\\]|\\\\.)+?'/,
           },
           {
             token: "constant.numeric", // integer
@@ -99,15 +99,6 @@ ace.define(
           {
             token: keywordMapper,
             regex: "[a-zA-Z_$][a-zA-Z0-9_$]*\\b",
-          },
-          {
-            token: "keyword", // pre-compiler directives
-            regex: "#\\s*(?:include|import|pragma|line|define|undef)\\b",
-            next: "directive",
-          },
-          {
-            token: "keyword", // special case pre-compiler directive
-            regex: "#\\s*(?:endif|if|ifdef|else|elif|ifndef)\\b",
           },
           {
             token: "keyword.operator",

@@ -45,7 +45,7 @@ export class Parenthetical extends Expression implements Simplifyable {
     if (v !== null)
       return [
         [VarType.Int],
-        [this.GetLine(), `apush ${(v & 0xffffffff) >>> 0}`],
+        [this.GetLine(), `xpush ${(v & 0xffffffff) >>> 0}`],
       ];
     var receivedTypes: VarType[] = [];
     var o: string[] = [];
@@ -60,7 +60,7 @@ export class Parenthetical extends Expression implements Simplifyable {
       this.Types.length > 0 ? this.Types : [receivedTypes[0]];
 
     for (let i = outTypes.length; i < receivedTypes.length; i++) {
-      o.push(...receivedTypes[i].APop());
+      o.push(...receivedTypes[i].XPop());
     }
 
     return [outTypes, o];

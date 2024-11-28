@@ -5,21 +5,22 @@ import { VarType, FuncType } from "./vartype";
 import { ASMInterpreter } from "../brainasm";
 import { Token } from "./token";
 import { Include } from "./include";
+import { Obliterate } from "../obliterate";
 
 // Metamethod stuff //
-let simpleAdd: string[] = [`apopb`, `apopa`, `addab`, `apushb`];
-let simpleSub: string[] = [`apopb`, `apopa`, `subba`, `apusha`];
-let simpleMul: string[] = [`apopb`, `apopa`, `mulab`, `apushb`];
-let simpleDiv: string[] = [`apopb`, `apopa`, `divab`, `apusha`];
-let simpleMod: string[] = [`apopb`, `apopa`, `divab`, `apushb`];
-let simpleDivMod: string[] = [`apopb`, `apopa`, `divab`, `apusha`, `apushb`];
-let simpleLt: string[] = [`apopb`, `apopa`, `cmp`, `apushb`];
-let simpleGt: string[] = [`apopb`, `apopa`, `cmp`, `apusha`];
-let simpleEq: string[] = [`apopb`, `apopa`, `cmp`, `addba`, `nota`, `apusha`];
-let simpleNe: string[] = [`apopb`, `apopa`, `cmp`, `addba`, `apusha`];
-let simpleUnm: string[] = [`apopb`, `seta 0`, `subab`, `apushb`];
+let simpleAdd: string[] = [`xpopb`, `xpopa`, `addab`, `xpushb`];
+let simpleSub: string[] = [`xpopb`, `xpopa`, `subba`, `xpusha`];
+let simpleMul: string[] = [`xpopb`, `xpopa`, `mulab`, `xpushb`];
+let simpleDiv: string[] = [`xpopb`, `xpopa`, `divab`, `xpusha`];
+let simpleMod: string[] = [`xpopb`, `xpopa`, `divab`, `xpushb`];
+let simpleDivMod: string[] = [`xpopb`, `xpopa`, `divab`, `xpusha`, `xpushb`];
+let simpleLt: string[] = [`xpopb`, `xpopa`, `cmp`, `xpushb`];
+let simpleGt: string[] = [`xpopb`, `xpopa`, `cmp`, `xpusha`];
+let simpleEq: string[] = [`xpopb`, `xpopa`, `cmp`, `addba`, `nota`, `xpusha`];
+let simpleNe: string[] = [`xpopb`, `xpopa`, `cmp`, `addba`, `xpusha`];
+let simpleUnm: string[] = [`xpopb`, `seta 0`, `subab`, `xpushb`];
 let simpleUnp: string[] = [];
-let simpleNot: string[] = [`apopa`, `nota`, `apusha`];
+let simpleNot: string[] = [`xpopa`, `nota`, `xpusha`];
 
 var simpleOps: [string, string[]][] = [
   ["add", simpleAdd],
@@ -36,21 +37,17 @@ var simpleOps: [string, string[]][] = [
 
 export class Scope {
   static CURRENT: Scope;
-  Vars: {
-    [Identifier: string]: [
+  Vars: Map<string, [
       Type: VarType,
       AssembledName: string,
       ConstantValue: null | number
-    ];
-  } = {};
-  AllVars: {
-    [Label: string]: [
+    ]> = new Map();
+  AllVars: Map<string,[
       type: VarType,
       identifier: string,
       file: string,
       func: string
-    ];
-  } = {};
+    ]> = new Map();
   Parent: Scope | null = null;
   Assembly: string[] = [];
   TakenLabels: { [label: string]: boolean } = {};
@@ -78,6 +75,9 @@ export class Scope {
       File: string
     ][];
   } = {};
+
+  FastMMCache: Map<string, Map<string, [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]>> = new Map();
+  SlowMMCache: Map<string, Map<string, [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]]>> = new Map();
 
   SetupIntMetamethods() {
     let oldFile = this.CurrentFile;
@@ -121,7 +121,7 @@ export class Scope {
         try {
           let other = this.GetMetamethod(inv[1], argTypes, {canFallback: false});
           if (other !== null && VarType.AllEquals(other[0], [VarType.Int])) {
-            let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
+            let newMethod = other[2].concat(`xpopa`, `nota`, `xpusha`);
             return [other[0], other[1], newMethod];
           }
         } catch (e) {
@@ -131,7 +131,7 @@ export class Scope {
         try {
           let other = this.GetMetamethod(inv[0], argTypes, {canFallback: false});
           if (other !== null && VarType.AllEquals(other[0], [VarType.Int])) {
-            let newMethod = other[2].concat(`apopa`, `nota`, `apusha`);
+            let newMethod = other[2].concat(`xpopa`, `nota`, `xpusha`);
             return [other[0], other[1], newMethod];
           }
         } catch (e) {
@@ -194,16 +194,17 @@ export class Scope {
         this.AddMetamethodSoft("unp", [t], [t], simpleUnp);
         this.AddMetamethodSoft("getindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int],
           t1.IsWide()
-          ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, ...t1.Get('a', 'a')]
-          : ["apopa", "apopb", "addab", "ptrb", "apushb"]);
+          ? [`xpopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `xpopb`, `addba`, ...t1.Get('x', 'a')]
+          : ["xpopa", "xpopb", "addab", "ptrb", "xpushb"]);
         this.AddMetamethodSoft("setindex", [t.WithDeltaPointerDepth(-1)], [t, VarType.Int, t.WithDeltaPointerDepth(-1)],
           t1.IsWide()
-          ? [...t1.FlipAB(), `apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addab`, ...t1.FlipBA(), ...t1.Put("a","b")]
-          : ["apopa", "bpusha", "apopa", "apopb", "addab", "bpopa", "putaptrb"]);
+          ? [...t1.FlipXY(), `xpopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `xpopb`, `addab`, ...t1.FlipYX(), ...t1.Put("x","b")]
+          : ["xpopa", "ypusha", "xpopa", "xpopb", "addab", "ypopa", "putaptrb"]);
         this.AddMetamethodSoft("ptrindex", [t], [t, VarType.Int],
           t1.IsWide()
-          ? [`apopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `apopb`, `addba`, `apusha`]
+          ? [`xpopa`, `setb ${t1.GetDefinition().Size}`, `mulba`, `xpopb`, `addba`, `xpusha`]
           : simpleAdd);
+        this.AddMetamethodSoft("dispose", [], [t], [`call free`]);
         return;
       }
     }finally{
@@ -323,7 +324,7 @@ export class Scope {
           let fakeClaim = fakeClaimer.Flag();
           let vt: VarType = new VarType(fakeClaimer, fakeClaim);
           vt.PointerDepth = 0;
-          vt.TypeName = "$"+i;
+          vt.TypeName = "metamethodgeneric$"+i;
           vt.Generics = [];
           newGenericArgs.push(trySwap(inMM.Generics[i], vt));
         }
@@ -372,6 +373,30 @@ export class Scope {
     return [returnTypes, argTypes, mm[2], [], mm[4]];
   }
 
+  TrySlowCache(fileKey: string, argKey: string, res: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]] | null){
+    if(fileKey.indexOf("&")===-1)fileKey = fileKey + "&" + this.CurrentFile;
+    if(res === null) return null;
+    this.SlowMMCache.get(fileKey)!.set(argKey, res);
+    return res;
+  }
+  CacheGet(name: string, argTypes: string|VarType[]): [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]] | null {
+    let fileKey = name + "&" + this.CurrentFile;
+    let argKey = typeof argTypes==="string" ? argTypes : argTypes.map(c=>c.toString()).join(",");
+    if(this.FastMMCache.has(fileKey) && this.FastMMCache.get(fileKey)!.has(argKey))
+      return this.FastMMCache.get(fileKey)!.get(argKey)!;
+    if(!this.SlowMMCache.has(fileKey))
+      this.SlowMMCache.set(fileKey, new Map());
+    if(this.SlowMMCache.get(fileKey)!.has(argKey))
+      return this.SlowMMCache.get(fileKey)!.get(argKey)!;
+    fileKey = name + "$GLOBAL"
+    if(this.FastMMCache.has(fileKey) && this.FastMMCache.get(fileKey)!.has(argKey))
+      return this.FastMMCache.get(fileKey)!.get(argKey)!;
+    if(!this.SlowMMCache.has(fileKey))
+      this.SlowMMCache.set(fileKey, new Map());
+    if(this.SlowMMCache.get(fileKey)!.has(argKey))
+      return this.SlowMMCache.get(fileKey)!.get(argKey)!;
+    return null;
+  }
   GetMetamethod(
     name: string,
     argTypes: VarType[],
@@ -381,6 +406,10 @@ export class Scope {
       strictTo?: number
     } = {}
   ): [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]] | null {
+    let fileKey = name + "&" + this.CurrentFile;
+    let argKey = argTypes.map(c=>c.toString()).join(",");
+    let cacheHit: [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[]] | null ;
+    if(cacheHit = this.CacheGet(name,argTypes)) return cacheHit;
     options.canFallback ??= true;
     options.exactly ??= false;
     // Check all ArgTypes for SoftInitilizedMetamethods, if they aren't there yet, add them and run SoftInit on the type
@@ -392,7 +421,7 @@ export class Scope {
       });
     var mm = this.MetaMethods[name];
     if (mm === undefined)
-      return options.canFallback ? this.TryFallbacks(name, argTypes) : null;
+      return this.TrySlowCache(fileKey, argKey, options.canFallback ? this.TryFallbacks(name, argTypes) : null);
     mm = mm.filter(c=>c[4]==="GLOBAL" || c[4]===this.CurrentFile || Include.Includes[this.CurrentFile]?.has(c[4]))
     mm = mm.map((c) => this.RemapGenericMetamethod(c, argTypes, options.exactly!));
     mm = mm.filter((c) => c[3].length === 0); // Anything with generics failed to map
@@ -404,7 +433,7 @@ export class Scope {
     if(options.strictTo)
       mm = mm.filter((c) => VarType.AllEquals(c[1].slice(0,options.strictTo), argTypes.slice(0,options.strictTo)))
     if (mm.length === 0)
-      return options.canFallback ? this.TryFallbacks(name, argTypes) : null;
+      return this.TrySlowCache(fileKey,argKey,options.canFallback ? this.TryFallbacks(name, argTypes) : null);
     mm.sort(
       (a, b) =>
         VarType.CountMatches(b[1], argTypes) -
@@ -418,7 +447,7 @@ export class Scope {
           .map((c) => "[" + c[0].join(",") + "]")
           .join("m")}`
       );
-    return [mm[0][0], mm[0][1], mm[0][2]];
+    return this.TrySlowCache(fileKey,argKey,[mm[0][0], mm[0][1], mm[0][2]]);
   }
   AddMetamethodSoft(
     name: string,
@@ -438,6 +467,15 @@ export class Scope {
         return;
       }
     }
+    // Nuke all slow caches for this name.
+    for(let key of [...this.SlowMMCache.keys()]){
+      if(key.startsWith(name + "$")){
+        this.SlowMMCache.set(key, new Map());
+      }
+    }
+    if(!this.FastMMCache.has(name+"$"+this.CurrentFile))
+      this.FastMMCache.set(name+"$"+this.CurrentFile,new Map());
+    this.FastMMCache.get(name+"$"+this.CurrentFile)!.set(argTypes.map(c=>c.toString()).join(','),[retTypes, argTypes, code])
     this.MetaMethods[name].push([retTypes, argTypes, code, [], this.CurrentFile]);
   }
 
@@ -481,12 +519,12 @@ export class Scope {
     var asm: string[] = [];
     asm.push(
       ...`putchar:
-    apopa
+    xpopa
     writea
     ret
 getchar:
     reada
-    apusha
+    xpusha
     ret
 vAllocTable: db 0
 vAllocSize: db 0
@@ -495,7 +533,7 @@ alloc:
     setb aftercode
     putbptra
     seta vAllocSize
-    apopb
+    xpopb
     putbptra
     wAllocCond:
         seta vAllocTable
@@ -542,7 +580,7 @@ alloc:
         ptrb
         subba
         suba 2
-        apusha
+        xpusha
         seta vAllocTable
         ptra
         setb vAllocSize
@@ -552,7 +590,7 @@ alloc:
         setb 0
         putbptra
         inca
-        apopb
+        xpopb
         putbptra
     fAllocSlipDone:
     seta vAllocTable
@@ -564,7 +602,7 @@ alloc:
     ptrb
     putbptra
     inca
-    apusha
+    xpusha
     ret
 
 vFreeTable: db 0
@@ -575,7 +613,7 @@ free:
     setb aftercode
     putbptra
     seta vFreeTarget
-    apopb
+    xpopb
     subb 2
     putbptra
     wFreeCond:
@@ -682,9 +720,23 @@ free:
       return [VarType.Discard, "", 0];
     if(Identifier === "COMPILER")
       return [VarType.Compiler, "", 0];
-    var o = this.Vars[Identifier] ?? this.Parent?.Get(Identifier);
+    var o = this.Vars.has(Identifier) ? this.Vars.get(Identifier) : this.Parent?.Get(Identifier);
     if (!o) {
       throw new Error(`Unknown identifier ${Identifier}`);
+    }
+    return o;
+  }
+
+  TryGet(
+    Identifier: string
+  ): [Type: VarType, AssembledName: string, ConstantValue: number | null]|null {
+    if(Identifier === "_")
+      return [VarType.Discard, "", 0];
+    if(Identifier === "COMPILER")
+      return [VarType.Compiler, "", 0];
+    var o = this.Vars.has(Identifier) ? this.Vars.get(Identifier) : this.Parent?.TryGet(Identifier);
+    if (!o) {
+      return null;
     }
     return o;
   }
@@ -692,16 +744,16 @@ free:
   Set(Identifier: string, Type: VarType, setup: boolean = true): string {
     if (Type.TypeName === "discard") setup = false;
     var name = this.GetSafeName(`var${Type}${Identifier}`);
-    this.Vars[Identifier] = [Type, name, null];
+    this.Vars.set(Identifier, [Type, name, null]);
     let typeDef: TypeDefinition = TypeVoid;
     try {typeDef = Type.GetDefinition();}catch{};
     if (setup) this.Assembly.push(`${name}: db ${typeDef.Wide ? new Array(typeDef.Size).fill('0').join(',') : 0}`);
-    this.AllVars[name] = [
+    this.AllVars.set(name, [
       Type,
       Identifier,
       this.CurrentFile,
       this.CurrentFunction,
-    ];
+    ]);
     return name;
   }
 
@@ -715,11 +767,11 @@ free:
       if (Type === null)
         throw new Error("Must provide type when setting constant");
       let name = this.GetSafeName(`var${Type}${Identifier}`);
-      this.Vars[Identifier] = [Type, name, val];
+      this.Vars.set(Identifier, [Type, name, val]);
       return true;
     }
-    if (Identifier in this.Vars) {
-      let v = this.Vars[Identifier];
+    if (this.Vars.has(Identifier)) {
+      let v = this.Vars.get(Identifier)!;
       if (v[2] === null) return false; // Cannot override non-constant
       v[2] = val;
       return true;
@@ -740,6 +792,8 @@ free:
     subScope.CurrentFunction = this.CurrentFunction;
     subScope.CurrentFile = this.CurrentFile;
     subScope.MetaMethods = this.MetaMethods;
+    subScope.FastMMCache = this.FastMMCache;
+    subScope.SlowMMCache = this.SlowMMCache;
     subScope.SoftInitilizedMetamethods = this.SoftInitilizedMetamethods;
     return subScope;
   }
@@ -757,9 +811,9 @@ free:
     if (!this.IsFunctionScope) return [];
     var o: [Ident: string, Type: VarType, AssembledName: string][] = [];
     var usedIdents: string[] = [];
-    for (var ident in this.Vars) {
+    for (var ident of this.Vars.keys()) {
       usedIdents.push(ident);
-      o.push([ident, this.Vars[ident][0], this.Vars[ident][1]]);
+      o.push([ident, this.Vars.get(ident)![0], this.Vars.get(ident)![1]]);
     }
     if (this.Parent) {
       var parentIdents = this.Parent.GetFunctionVariables();
@@ -778,7 +832,7 @@ free:
     var vars = this.GetFunctionVariables();
     vars.sort((a, b) => a[2].localeCompare(b[2]));
     for (var i = 0; i < vars.length; i++) {
-      o.push(`seta ${vars[i][2]}`, `ptra`, `bpusha`);
+      o.push(`seta ${vars[i][2]}`, `ptra`, `ypusha`);
     }
     return o;
   }
@@ -787,7 +841,7 @@ free:
     var vars = this.GetFunctionVariables();
     vars.sort((a, b) => a[2].localeCompare(b[2]));
     for (var i = vars.length - 1; i >= 0; i--) {
-      o.push(`seta ${vars[i][2]}`, `bpopb`, `putbptra`);
+      o.push(`seta ${vars[i][2]}`, `ypopb`, `putbptra`);
     }
     return o;
   }
@@ -797,27 +851,27 @@ free:
     left = left.replace(/^\s*(.*?)\s*$/, "$1");
     right = right.replace(/^\s*(.*?)\s*$/, "$1");
 
-    if (left === `apusha` && right === `apopa`) return ``;
-    if (left === `bpusha` && right === `bpopa`) return ``;
-    if (left === `apushb` && right === `apopb`) return ``;
-    if (left === `bpushb` && right === `bpopb`) return ``;
+    if (left === `xpusha` && right === `xpopa`) return ``;
+    if (left === `ypusha` && right === `ypopa`) return ``;
+    if (left === `xpushb` && right === `xpopb`) return ``;
+    if (left === `ypushb` && right === `ypopb`) return ``;
     var m: RegExpMatchArray | null;
     m = left.match(/^seta\s+(.*)/);
-    if (m && right === "apusha") return `${padding}apush ${m[1]}`;
-    if (m && right === "bpusha") return `${padding}bpush ${m[1]}`;
+    if (m && right === "xpusha") return `${padding}xpush ${m[1]}`;
+    if (m && right === "ypusha") return `${padding}ypush ${m[1]}`;
     m = left.match(/^setb\s+(.*)/);
-    if (m && right === "apushb") return `${padding}apush ${m[1]}`;
-    if (m && right === "bpushb") return `${padding}bpush ${m[1]}`;
-    m = left.match(/^apush\s+(.*)/);
-    if (m && right === `apopa`) return `${padding}seta ${m[1]}`;
-    if (m && right === `apopb`) return `${padding}setb ${m[1]}`;
-    m = left.match(/^bpush\s+(.*)/);
-    if (m && right === `bpopa`) return `${padding}seta ${m[1]}`;
-    if (m && right === `bpopb`) return `${padding}setb ${m[1]}`;
-    if (left.match(/^apush\s+/) && right === "apop") return "";
-    if (left.match(/^bpush\s+/) && right === "bpop") return "";
-    if ((left === "apusha" || left === "apushb") && right === "apop") return "";
-    if ((left === "bpusha" || left === "bpushb") && right === "bpop") return "";
+    if (m && right === "xpushb") return `${padding}xpush ${m[1]}`;
+    if (m && right === "ypushb") return `${padding}ypush ${m[1]}`;
+    m = left.match(/^xpush\s+(.*)/);
+    if (m && right === `xpopa`) return `${padding}seta ${m[1]}`;
+    if (m && right === `xpopb`) return `${padding}setb ${m[1]}`;
+    m = left.match(/^ypush\s+(.*)/);
+    if (m && right === `ypopa`) return `${padding}seta ${m[1]}`;
+    if (m && right === `ypopb`) return `${padding}setb ${m[1]}`;
+    if (left.match(/^xpush\s+/) && right === "xpop") return "";
+    if (left.match(/^ypush\s+/) && right === "ypop") return "";
+    if ((left === "xpusha" || left === "xpushb") && right === "xpop") return "";
+    if ((left === "ypusha" || left === "ypushb") && right === "ypop") return "";
 
     return null;
   }
@@ -833,6 +887,7 @@ free:
     assembly: string[],
     startFrom: number = 0
   ): string[] {
+    //Obliterate(assembly);
     if (startFrom < 0) startFrom = 0;
     for (var i = startFrom; i < assembly.length - 1; i++) {
       var shorter = this.CompressRedundancy(assembly[i], assembly[i + 1]);
@@ -858,7 +913,7 @@ free:
     vars: [label: string, type: VarType, ident: string][]
   ): string {
     let body = "";
-    let f = this.AllVars[func];
+    let f = this.AllVars.get(func);
     let name = `<b>function</b> ${func}`;
     if (f && f[0] instanceof FuncType) {
       let funcType = f[0] as FuncType;
@@ -903,8 +958,8 @@ free:
     let classesByFile: {
       [file: string]: { [label: string]: [type: VarType, ident: string] };
     } = {};
-    for (let label in this.AllVars) {
-      let v = this.AllVars[label];
+    for (let label of this.AllVars.keys()) {
+      let v = this.AllVars.get(label);
       if (!v) continue;
       if (!v[0]) continue;
       varsByFileAndFunction[v[2]] ??= {};

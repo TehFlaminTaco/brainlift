@@ -3,8 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
-    "lib": ["es6", "dom"],
-    "target": "es6",
+    "lib": ["es2021", "dom"],
+    "target": "es2021",
     "jsx": "react-jsx",
     "allowJs": true,
     "skipLibCheck": true,

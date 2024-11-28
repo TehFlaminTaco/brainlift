@@ -18,6 +18,7 @@ export class FunctionDefinition extends Expression {
   Body: Expression | null = null;
   IsMeta: boolean = false;
   Label: string = "";
+  IsClassMember: boolean = false;
 
   static Claim(claimer: Claimer): FunctionDefinition | null {
     var fnc = claimer.Claim(/function\b/);
@@ -38,6 +39,23 @@ export class FunctionDefinition extends Expression {
     VarType.CurrentGenericArgs = {};
     for (let o in oldGenericTypes) {
       VarType.CurrentGenericArgs[o] = oldGenericTypes[o];
+    }
+
+    let generics: string[] = [];
+    let genArgNum = 0;
+    if (claimer.Claim(/</).Success) {
+      let arg = Identifier.Claim(claimer);
+      while (arg !== null) {
+        generics.push("functiongeneric$" + genArgNum);
+        VarType.CurrentGenericArgs[arg.Name] = "functiongeneric$" + genArgNum++;
+        if (!claimer.Claim(/,/).Success) break;
+        arg = Identifier.Claim(claimer);
+      }
+      if (!claimer.Claim(/>/).Success) {
+        VarType.CurrentGenericArgs = oldGenericTypes;
+        fnc.Fail();
+        return null;
+      }
     }
 
     if (!claimer.Claim(/\(/).Success) {
@@ -127,9 +145,10 @@ export class FunctionDefinition extends Expression {
     }
     var funct = new FunctionDefinition(claimer, fnc);
     funct.Args = args;
-    funct.RetTypes = retTypes??[];
+    funct.RetTypes = retTypes;
     funct.Target = target;
     funct.Body = body;
+    funct.GenericArgs = generics;
     return funct;
   }
 
@@ -209,13 +228,13 @@ export class FunctionDefinition extends Expression {
     if (claimer.Claim(/</).Success) {
       let arg = Identifier.Claim(claimer);
       while (arg !== null) {
-        generics.push("$$" + genArgNum);
-        VarType.CurrentGenericArgs[arg.Name] = "$$" + genArgNum++;
+        generics.push("metamethodgeneric$" + genArgNum);
+        VarType.CurrentGenericArgs[arg.Name] = "metamethodgeneric$" + genArgNum++;
         if (!claimer.Claim(/,/).Success) break;
         arg = Identifier.Claim(claimer);
       }
       if (!claimer.Claim(/>/).Success) {
-        VarType.CurrentGenericArgs = {};
+        VarType.CurrentGenericArgs = oldGenericTypes;
         fnc.Fail();
         return null;
       }
@@ -268,7 +287,7 @@ export class FunctionDefinition extends Expression {
     }
     var funct = new FunctionDefinition(claimer, fnc);
     funct.Args = args;
-    funct.RetTypes = retTypes??[];
+    funct.RetTypes = retTypes;
     funct.Target = target;
     funct.Body = body;
     funct.IsMeta = true;
@@ -289,13 +308,13 @@ export class FunctionDefinition extends Expression {
     if (claimer.Claim(/</).Success) {
       let arg = Identifier.Claim(claimer);
       while (arg !== null) {
-        generics.push("$$" + genArgNum);
-        VarType.CurrentGenericArgs[arg.Name] = "$$" + genArgNum++;
+        generics.push("metamethodgeneric$" + genArgNum);
+        VarType.CurrentGenericArgs[arg.Name] = "metamethodgeneric$" + genArgNum++;
         if (!claimer.Claim(/,/).Success) break;
         arg = Identifier.Claim(claimer);
       }
       if (!claimer.Claim(/>/).Success) {
-        VarType.CurrentGenericArgs = {};
+        VarType.CurrentGenericArgs = oldGenericTypes;
         fnc.Fail();
         return null;
       }
@@ -378,8 +397,28 @@ export class FunctionDefinition extends Expression {
               "_" +
               funcType.ArgTypes.join("_")
           );
-    if (this.Target instanceof Identifier && !this.IsMeta) {
-      scope.Set(this.Target.Name, funcType);
+    if (!this.IsClassMember && this.Target instanceof Identifier && !this.IsMeta) {
+      // Function overloading hacky way
+      let old = scope.TryGet(this.Target.Name);
+      if(old !== null && !
+        old[0].Equals(funcType)){
+        let symbolicName = `symbolic\$${this.Target.Name}`;
+        let fakeClaimer = new Claimer("");
+        let fakeClaim = fakeClaimer.Flag();
+        let symbolicType = new VarType(fakeClaimer, fakeClaim);
+        symbolicType.TypeName = symbolicName;
+        if (!(old[0] instanceof FuncType || old[0].TypeName === symbolicName)){
+          throw new Error("Cannot overload non-function");
+        }
+        if(old[0] instanceof FuncType){
+          // Add the old function to the call metamethod of this overloaded function
+          scope.AddMetamethodSoft("call", old[0].RetTypes, [symbolicType, ...old[0].ArgTypes], [`seta ${old[1]}`, `ptra`, `calla`])
+          scope.Set(this.Target.Name, symbolicType);
+        }
+        scope.AddMetamethodSoft("call", funcType.RetTypes, [symbolicType, ...funcType.ArgTypes], [`call ${label}`]);
+      }else{
+        scope.Set(this.Target.Name, funcType);
+      }
     }
     var paddingScope = scope.Sub();
     paddingScope.IsFunctionScope = false;
@@ -392,7 +431,7 @@ export class FunctionDefinition extends Expression {
       this.Args[i].TryEvaluate(bodyScope);
     }
     for (let i = this.Args.length - 1; i >= 0; i--) {
-      o.push(`  seta ${this.Args[i].Label}`, ...this.Args[i].Type!.Put("a", "a"));
+      o.push(`  seta ${this.Args[i].Label}`, ...this.Args[i].Type!.Put("x", "a"));
     }
     var res = this.Body!.TryEvaluate(bodyScope);
     if (
@@ -413,12 +452,12 @@ export class FunctionDefinition extends Expression {
     scope.Assembly.push(...o);
     let name = this.Target + "";
     if (this.Target instanceof Identifier) name = this.Target.Name;
-    scope.AllVars[this.Label] = [
+    scope.AllVars.set(this.Label, [
       funcType,
       name,
       scope.CurrentFile,
       scope.CurrentFunction,
-    ];
+    ]);
     if (this.IsMeta) {
       scope.MetaMethods[name] = scope.MetaMethods[name] ?? [];
       // Check if any metamethod already exists with this signature
@@ -434,6 +473,15 @@ export class FunctionDefinition extends Expression {
           );
         }
       }
+      // Nuke all slow caches for this name.
+      for(let key of [...scope.SlowMMCache.keys()]){
+        if(key.startsWith(name + "$")){
+          scope.SlowMMCache.set(key, new Map());
+        }
+      }
+      if(!scope.FastMMCache.has(name+"$"+scope.CurrentFile))
+        scope.FastMMCache.set(name+"$"+scope.CurrentFile,new Map());
+      scope.FastMMCache.get(name+"$"+scope.CurrentFile)!.set(this.Args.map(c=>c.Type!.toString()).join(','),[this.RetTypes!, this.Args.map(c=>c.Type!), [`call ${label}`]])
       scope.MetaMethods[name].push([
         this.RetTypes!,
         this.Args.map((c) => c.Type!),
@@ -443,14 +491,14 @@ export class FunctionDefinition extends Expression {
       ]);
       return [[], []];
     }
-    if (this.Target === null)
-      return [[funcType], [this.GetLine(), `apush ${label}`]];
+    if (this.IsClassMember || this.Target === null)
+      return [[funcType], [this.GetLine(), `xpush ${label}`]];
     return [
       [funcType],
       [
         this.GetLine(),
-        `apush ${label}`,
-        `apush ${label}`,
+        `xpush ${label}`,
+        `xpush ${label}`,
         ...this.Target!.Assign(scope, funcType),
       ],
     ];
@@ -482,8 +530,27 @@ export class FunctionDefinition extends Expression {
                 "_" +
                 funcType.ArgTypes.join("_")
             );
-      if (this.Target instanceof Identifier && !this.IsMeta) {
-        scope.Set(this.Target.Name, funcType);
+      if (!this.IsClassMember && this.Target instanceof Identifier && !this.IsMeta) {
+        // Function overloading hacky way
+        let old = scope.TryGet(this.Target.Name);
+        if(old !== null){
+          let symbolicName = `symbolic\$${this.Target.Name}`;
+          let fakeClaimer = new Claimer("");
+          let fakeClaim = fakeClaimer.Flag();
+          let symbolicType = new VarType(fakeClaimer, fakeClaim);
+          symbolicType.TypeName = symbolicName;
+          if (!(old[0] instanceof FuncType || old[0].TypeName === symbolicName)){
+            throw new Error("Cannot overload non-function");
+          }
+          if(old[0] instanceof FuncType){
+            // Add the old function to the call metamethod of this overloaded function
+            scope.AddMetamethodSoft("call", old[0].RetTypes, [symbolicType, ...old[0].ArgTypes], [`seta ${old[1]}`, `ptra`, `calla`])
+            scope.Set(this.Target.Name, symbolicType);
+          }
+          scope.AddMetamethodSoft("call", funcType.RetTypes, [symbolicType, ...funcType.ArgTypes], [`call ${label}`]);
+        }else{
+          scope.Set(this.Target.Name, funcType);
+        }
       }
       var paddingScope = scope.Sub();
       paddingScope.IsFunctionScope = false;
@@ -495,7 +562,10 @@ export class FunctionDefinition extends Expression {
         this.Args[i].GetTypes(bodyScope);
       }
       try {
-        this.RetTypes = this.Body.PotentiallyReturns(scope) || [];
+        if(this.Body instanceof Block)
+          this.RetTypes = this.Body.PotentiallyReturns(bodyScope) || [];
+        else
+          this.RetTypes = this.Body.GetTypes(bodyScope);
       }catch{
         this.RetTypes = [];
       }

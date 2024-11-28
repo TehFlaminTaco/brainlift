@@ -17,7 +17,7 @@ export class ExpressionStatement extends Statement {
     var res = this.Body!.TryEvaluate(scope);
     o.push(...res[1]);
     for (var i = 0; i < res[0].length; i++) {
-      o.push(...res[0][i].APop());
+      o.push(...res[0][i].XPop());
     }
     return o;
   }

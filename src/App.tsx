@@ -37,9 +37,11 @@ import "./BrainChild/sizeof";
 import "./BrainChild/reserve";
 import "./BrainChild/using";
 import "./BrainChild/defer";
+import "./BrainChild/cast";
 import { TokenError } from "./BrainChild/token";
 import { GenerateReadOnlys } from "./ReadOnlys";
 import { Terminal, Event } from "./Terminal";
+import { Obliterate } from "./obliterate";
 const pako = require("pako");
 
 export const AllReadOnlys: {[name: string]: string} = {};
@@ -48,7 +50,7 @@ export const AllReadOnlys: {[name: string]: string} = {};
 // MAJOR versions implement large changes that are likely to break most older programs
 // MINOR will likely work with older programs with minimal retooling, and include notable changes.
 // HOTFIX will work with most previous versions, or may be updating a previous MINOR revision to work with older MINOR revisions.
-export const VERSION = "0.8.0";
+export const VERSION = "1.0.0";
 
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;
@@ -149,7 +151,7 @@ async function parseEditor(): Promise<Scope> {
     editors[id].getSession().setAnnotations([]);
     annotations[id] = [];
   };
-  (document.getElementById("asmRun") as HTMLButtonElement).innerHTML = "⏵";
+  (document.getElementById("asmRun") as HTMLButtonElement).innerHTML = "<i class=\"fa-solid fa-play\"></i>";
   term = new Terminal();
   if(!SimpleIO){
     let rendered = term.Render();
@@ -234,6 +236,7 @@ function handleChange() {
     waitTimeout = undefined;
     try {
       UpdateURL();
+      (document.querySelector("h1") as HTMLElement).textContent = "BrainChild";
       console.log("compiling...");
       var t = Date.now();
       try {
@@ -241,11 +244,12 @@ function handleChange() {
         var parsed = scope.Assembly;
         console.log(`parsed in ${Date.now() - t}ms`);
         t = Date.now();
-        parsed = Scope.ObliterateRedundancies(parsed);
+        parsed = Obliterate(parsed);//Scope.ObliterateRedundancies(parsed);
         console.log(`optimized in ${Date.now() - t}ms`);
         t = Date.now();
         bsInterp = new ASMInterpreter(parsed);
         if(ASMOnly){
+          (document.querySelector("h1") as HTMLElement).textContent = "BrainChild ASM";
           ASMOnlyBytes = new Uint8Array(bsInterp.Heap.length);
           for(let i=0; i < bsInterp.Heap.length; i++)
             ASMOnlyBytes[i] = bsInterp.Heap[i];
@@ -295,10 +299,10 @@ function setSimpleIO(val: boolean){
   SimpleIO = val;
   if(SimpleIO){
     setupSimpleIO();
-    (document.getElementById("simpleIOButton") as HTMLButtonElement).innerHTML = "📝";
+    (document.getElementById("simpleIOButton") as HTMLButtonElement).innerHTML = "<i class=\"fa-solid fa-keyboard\"></i>";
   }else{
     (document.getElementById("output") as HTMLDivElement).innerHTML = term?.Render()??"";
-    (document.getElementById("simpleIOButton") as HTMLButtonElement).innerHTML = "💻";
+    (document.getElementById("simpleIOButton") as HTMLButtonElement).innerHTML = "<i class=\"fa-solid fa-terminal\"></i>";
   }
 }
 
@@ -328,7 +332,7 @@ function setupSimpleIO(){
   simpleIOWrapper.append(outp);
   outputArea.append(simpleIOWrapper);
 }
-
+let gutterLock = false;
 function addGutter(file: string) {
   return function (e: Ace.Editor) {
     GenerateReadOnlys();
@@ -336,19 +340,25 @@ function addGutter(file: string) {
     if (search.has("code")) {
       let inp = search.has("simpleio") ? search.get("simpleio")! : false;
       var decompressed = new TextDecoder().decode(decompress(search.get("code")!));
-      console.log(decompressed);
       var unrolled = JSON.parse(decompressed);
       e.setValue(unrolled["main.bc"]);
-      for (let file in unrolled) {
-        if (file === "main.bc") continue;
-        new CustomTab(file, unrolled[file]);
-      }
-      if(file==="main.bc"&& inp !== false){
+      if(!gutterLock){
+        gutterLock=true;
+        for (let file in unrolled) {
+          if (file === "main.bc") continue;
+          new CustomTab(file, unrolled[file]);
+        }
         setTimeout(()=>{
-        setSimpleIO(true);
-        (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value = inp as string;
-        UpdateURL();
-        },0);
+          (document.querySelector("button[data-target='main.bc']") as HTMLButtonElement).click()
+          gutterLock=false;
+        },60)
+        if(file==="main.bc"&& inp !== false){
+          setTimeout(()=>{
+          setSimpleIO(true);
+          (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value = inp as string;
+          UpdateURL();
+          },0);
+        }
       }
     } else {
       e.setValue(`include term.bc;
@@ -566,6 +576,8 @@ class CustomTab {
     var etab = document.createElement("div") as HTMLDivElement;
     etab.className = "etab";
     var textarea = document.createElement("textarea") as HTMLTextAreaElement;
+    if (code !== null)
+      textarea.value = code;
     etab.append(textarea);
     document.getElementById("editorTabs")!.appendChild(etab);
     var a = edit(textarea);
@@ -610,13 +622,11 @@ class CustomTab {
     };
     inp.focus();
     this.EditorDiv = etab;
+    setTimeout(()=>{
     if(name !== null){
       inp.value = name;
       this.InputDone();
-    }
-    if (code !== null){
-      this.Editor.setValue(code);
-    }
+    }},30);
   }
 
   Destroy() {
@@ -644,10 +654,10 @@ class CustomTab {
     this.Input.remove();
     this.Button.innerText = this.File;
     var editButton = document.createElement("a");
-    editButton.innerText = "✎";
+    editButton.innerHTML = "<i class=\"fa-solid fa-pencil\"></i>";
     editButton.onclick = () => this.Edit();
     var deleteButton = document.createElement("a");
-    deleteButton.innerText = "X";
+    deleteButton.innerHTML = "<i class=\"fa-solid fa-delete-left\"></i>";
     deleteButton.onclick = () => {
       if (
         window.confirm(
@@ -831,15 +841,12 @@ export default function App() {
       }
     }
     if (asmRunning) {
-      event.target.innerHTML = "⏸";
+      document.getElementById("asmRun")!.innerHTML = "<i class=\"fa-solid fa-stop\"></i>";
       document.getElementById("bf")!.classList.add("running");
       if(bsInterp && SimpleIO)bsInterp.Input = (document.getElementById("simpleIOInput") as HTMLTextAreaElement).value;
       asmRunTimer = setInterval(() => {
-        if(!(bsInterp?.running ?? false)){
-          event.target.click();
-          event.target.innerHTML = "↺";
+        if(!(bsInterp?.running ?? false))
           return;
-        }
         if(!SimpleIO)
           PushEvent(Event.Frame);
         if (bsInterp !== undefined) {
@@ -859,7 +866,7 @@ export default function App() {
           while (Date.now() < t + 1000 / 60) {
             bsInterp.Step();
             if (breakIPs.has(bsInterp.IP)) {
-              event.target.innerHTML = "⏯";
+              document.getElementById("asmRun")!.innerHTML = "<i class=\"fa-regular fa-circle-play\"></i>";
               document.getElementById("bf")!.classList.remove("running");
               Scope.CURRENT!.RenderBSMemory(bsInterp);
               if (!SimpleIO && bsInterp.Output.length > 0) {
@@ -929,7 +936,7 @@ export default function App() {
         }
       }, 0);
     } else {
-      event.target.innerHTML = "⏵";
+      document.getElementById("asmRun")!.innerHTML = "<i class=\"fa-solid fa-play\"></i>";
       document.getElementById("bf")!.classList.remove("running");
       clearInterval(asmRunTimer);
       if (!bsInterp) return;
@@ -953,7 +960,7 @@ export default function App() {
     let parsed = scope.Assembly;
     console.log(`parsed in ${Date.now() - t}ms`);
     t = Date.now();
-    parsed = Scope.ObliterateRedundancies(parsed);
+    parsed = Obliterate(parsed);//Scope.ObliterateRedundancies(parsed);
     console.log(`optimized in ${Date.now() - t}ms`);
     t = Date.now();
     bsInterp = new ASMInterpreter(parsed);
@@ -1109,7 +1116,7 @@ export default function App() {
     if(ASMOnly){
       let hex = ASMInterpreter.RenderHeapPlain(ASMOnlyBytes).replace(/^/mg,"\t");
       let byteCount = ASMOnlyBytes.length;
-      let textToCopy = `# [BrainChild](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}\n\n${mainCode.replace(/^/mg, "\t")}\n\n## Hex-dump of bytecode\n\n${hex}\n[Try It Online!](${url})`;
+      let textToCopy = `# [BrainChild ASM](https://github.com/tehflamintaco/brainlift), ${byteCount} byte${byteCount === 1 ? '' : 's'}\n\n${mainCode.replace(/^/mg, "\t")}\n\n## Hex-dump of bytecode\n\n${hex}\n[Try It Online!](${url})`;
       navigator.clipboard.writeText(textToCopy);
       return;
     }
@@ -1134,18 +1141,6 @@ export default function App() {
       <div id="updateHeader"></div>
       <div id="top">
         <div id="editors">
-          <div id="editorButtons">
-            <button
-              onClick={selectETab}
-              data-target="main.bc"
-              className="active"
-            >
-              main.bc
-            </button>
-            <button onClick={newFile} style={{ order: 2 }}>
-              +
-            </button>
-          </div>
           <div id="editorTabs">
             <div data-target="main.bc" className="etab active">
               <AceEditor
@@ -1162,29 +1157,29 @@ export default function App() {
         <div id="outputSide">
           <div id="actions">
             <button title="Start/Stop Execution" onClick={ASMRun} id="asmRun">
-              ⏵
+              <i className="fa-solid fa-play"></i>
             </button>
             <button title="Step Assembly" onClick={ASMStep}>
-              →
+              <i className="fa-solid fa-forward-step"></i>
             </button>
             <button title="Step BrainChild" onClick={ASMStepLine}>
-              ⏭
+              <i className="fa-solid fa-forward-fast"></i>
             </button>
             <button title="Restart Interpreter" onClick={ASMReload}>
-              ↺
+              <i className="fa-solid fa-clock-rotate-left"></i>
             </button>
             <span className='buttonPadding'></span>
             <button title="Terminal/Simple IO" onClick={toggleSimpleIO} id="simpleIOButton">
-              💻
+              <i className="fa-solid fa-terminal"></i>
             </button>
             <button title="Copy Codegolf Answer" onClick={CopyCodegolf}>
-              🥇
+              <i className="fa-solid fa-golf-ball-tee"></i>
             </button>
             <button title="Copy CMC Answer" onClick={CopyCMC}>
-              🏌️
+              <i className="fa-solid fa-clipboard"></i>
             </button>
             <button title="Download Bytecode" onClick={DownloadBytecode}>
-              ↓
+              <i className="fa-solid fa-download"></i>
             </button>
           </div>
           <pre
@@ -1197,6 +1192,18 @@ export default function App() {
         </div>
       </div>
       <div id="bf">
+        <div id="editorButtons">
+          <button
+            onClick={selectETab}
+            data-target="main.bc"
+            className="active"
+          >
+            main.bc
+          </button>
+          <button onClick={newFile} style={{ order: 2 }}>
+            <i className="fa-solid fa-plus"></i>
+          </button>
+        </div>
         <div id="memory">
           <div id="tabBodies">
             <div data-target="baMemory" className="tab"></div>

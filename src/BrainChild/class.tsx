@@ -95,7 +95,7 @@ export class Class extends Statement {
       let arg = Identifier.Claim(claimer);
       while (arg !== null) {
         generics.push(arg.Name);
-        VarType.CurrentGenericArgs[arg.Name] = "$" + genArgNum++;
+        VarType.CurrentGenericArgs[arg.Name] = "classgeneric$" + genArgNum++;
         if (!claimer.Claim(/,/).Success) break;
         arg = Identifier.Claim(claimer);
       }
@@ -243,16 +243,16 @@ export class Class extends Statement {
           let res = possibleAssignments[0].Right!.TryEvaluate(scope);
           asm.push(...res[1]);
           for (let spare = 1; spare < res[0].length; spare++)
-            asm.push(...res[0][spare].APop());
+            asm.push(...res[0][spare].XPop());
         } else {
           if((childType?.IsDefined()??false) && (childType?.GetDefinition().Wide ?? false)){
-            asm.push(...Array(childType.GetDefinition().Size).fill(`apush 0`));
+            asm.push(...Array(childType.GetDefinition().Size).fill(`xpush 0`));
           }else{
-            asm.push(`apush ${child[1][2]}`);
+            asm.push(`xpush ${child[1][2]}`);
           }
         }
       }else{
-        asm.push(`apush 0`);
+        asm.push(`xpush 0`);
       }
     }
     asm.push(`  ret`);
@@ -269,10 +269,10 @@ export class Class extends Statement {
     var asm: string[] = [];
     asm.push(
       `${label}:`,
-      `  apush ${typeDef.Size}`,
+      `  xpush ${typeDef.Size}`,
       `  call alloc`,
-      `  apopb`,
-      `  apushb`
+      `  xpopb`,
+      `  xpushb`
     );
     var childrenByOffset = [];
     for (let id in typeDef.Children) {
@@ -290,13 +290,13 @@ export class Class extends Statement {
         if (possibleAssignments.length > 0) {
           if (possibleAssignments.length > 1)
             throw new Error(`Ambiguous default value for ${child[0]}`);
-          asm.push(`  apushb`);
+          asm.push(`  xpushb`);
           let res = possibleAssignments[0].Right!.TryEvaluate(scope);
           asm.push(...res[1]);
           for (let spare = 1; spare < res[0].length; spare++)
-            asm.push(...res[0][spare].APop());
-          ///asm.push(`    apopa`, `    apopb`, `    putaptrb`);
-          asm.push(...res[0][0].FlipAB(), `apopb`, ...res[0][0].FlipBA(), ...res[0][0].Put("a","b"));
+            asm.push(...res[0][spare].XPop());
+          ///asm.push(`    xpopa`, `    xpopb`, `    putaptrb`);
+          asm.push(...res[0][0].FlipXY(), `xpopb`, ...res[0][0].FlipYX(), ...res[0][0].Put("x","b"));
         } else {
           if((childType?.IsDefined()??false) && (childType?.GetDefinition().Wide ?? false)){
             asm.push(`seta 0`, ...Array(childType.GetDefinition().Size).fill(['putaptrb','incb']).flat());
@@ -315,181 +315,224 @@ export class Class extends Statement {
   }
 
   TrySetup(scope: Scope): boolean {
-    var objectType = new TypeDefinition();
-    var classType = new TypeDefinition();
-    objectType.ClassLabel = scope.GetSafeName(`class${this.Name!.Name}`);
-    classType.ClassLabel = objectType.ClassLabel; //scope.GetSafeName(`classtype${this.Name!.Name}`);
-    objectType.Name = this.Name!.Name;
-    classType.Name = `type${this.Name!.Name}`;
-    objectType.TypeType = classType;
-    objectType.Wide = this.Wide;
-    if (this.Wide){
-      objectType.Size = 0;
-    }else{
-      objectType.Size = 1;
-    }
-    classType.Size = 1;
-    //objectType.Children["class"] = [VarType.Type, 0, classType.ClassLabel];
-    classType.Children["new"] = [VarType.Void, 0, "0"];
-    for (let i = 0; i < this.StaticMembers.length; i++) {
-      let member = this.StaticMembers[i];
-      if (member instanceof FunctionDefinition) {
-        let funcType = member.GetTypes(scope)[0] as FuncType;
-        member.Label = scope.GetSafeName(
-          "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
-        );
+    let oldFile = scope.CurrentFile;
+    try {
+      scope.CurrentFile = this.FromFile;
+      var objectType = new TypeDefinition();
+      var classType = new TypeDefinition();
+      objectType.ClassLabel = scope.GetSafeName(`class${this.Name!.Name}`);
+      classType.ClassLabel = objectType.ClassLabel; //scope.GetSafeName(`classtype${this.Name!.Name}`);
+      objectType.Name = this.Name!.Name;
+      classType.Name = `type${this.Name!.Name}`;
+      objectType.TypeType = classType;
+      objectType.Wide = this.Wide;
+      if (this.Wide){
+        objectType.Size = 0;
+      }else{
+        objectType.Size = 1;
       }
-      let name: Identifier =
-        member instanceof FunctionDefinition
-          ? (member.Target as Identifier)
-          : (member as VariableDecleration).Identifier!;
-      let type: VarType;
-      if (member instanceof FunctionDefinition) {
-        type = member.GetTypes(scope)[0];
-      } else {
-        type = member.Type!;
-      }
-      classType.Children[name.Name] = [
-        type,
-        classType.Size,
-        member instanceof FunctionDefinition ? member.Label : "0",
-      ];
-      classType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
-      // Check for a Assignment baring this name, that assigns to a Reserve
-      if (member instanceof VariableDecleration) {
-        this.StaticAssignments.filter(
-          (c) => (c.Left as VariableDecleration) === member
-        )
-          .filter((c) => c.Right instanceof Reserve)
-          .forEach((c) => {
-            let reserve = c.Right as Reserve;
-            // Try to get the size of the reserve
-            let size = reserve.GetSize(scope);
-            if (size === null)
-              throw new Error("Cannot determine size of reserve");
-            // Increase the size of the object to fit it
-            classType.Size += size;
-            reserve.ClassMember = true;
-          });
-      }
-    }
-    // Save virtual members statically too
-    for (let i = 0; i < this.VirtualMembers.length; i++) {
-      let member = this.VirtualMembers[i];
-      if (member instanceof FunctionDefinition) {
-        let funcType = member.GetTypes(scope)[0] as FuncType;
-        member.Label = scope.GetSafeName(
-          "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
-        );
-      }
-      let name: Identifier =
-        member instanceof FunctionDefinition
-          ? (member.Target as Identifier)
-          : (member as VariableDecleration).Identifier!;
-      let type: VarType;
-      if (member instanceof FunctionDefinition) {
-        type = member.GetTypes(scope)[0];
-      } else {
-        type = member.Type!;
-      }
-      classType.Children[name.Name] = [
-        type,
-        classType.Size,
-        member instanceof FunctionDefinition ? member.Label : "0",
-      ];
-      objectType.VirtualChildren[name.Name] = [
-        type,
-        classType,
-        classType.Size,
-        member instanceof FunctionDefinition ? member.Label : "0",
-      ];
-      classType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
-    }
-    for (let i = 0; i < this.Members.length; i++) {
-      let member = this.Members[i];
-      if (member instanceof FunctionDefinition) {
-        let funcType = member.GetTypes(scope)[0] as FuncType;
-        member.Label = scope.GetSafeName(
-          "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
-        );
-      }
-      let name: Identifier =
-        member instanceof FunctionDefinition
-          ? (member.Target as Identifier)
-          : (member as VariableDecleration).Identifier!;
-      let type: VarType;
-      if (member instanceof FunctionDefinition) {
-        type = member.GetTypes(scope)[0];
-      } else {
-        type = member.Type!;
-      }
-      if (objectType.Children[name.Name]) {
-        objectType.Children[name.Name] = [
-          type,
-          objectType.Children[name.Name][1],
-          member instanceof FunctionDefinition ? member.Label : "0",
-        ];
-      } else {
-        objectType.Children[name.Name] = [
-          type,
-          objectType.Size,
-          member instanceof FunctionDefinition ? member.Label : "0",
-        ];
-        objectType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
-      }
-      // Check for a Assignment baring this name, that assigns to a Reserve
-      if (member instanceof VariableDecleration) {
-        this.Assignments.filter(
-          (c) => (c.Left as VariableDecleration) === member
-        )
-          .filter((c) => c.Right instanceof Reserve)
-          .forEach((c) => {
-            let reserve = c.Right as Reserve;
-            // Try to get the size of the reserve
-            let size = reserve.GetSize(scope);
-            if (size === null)
-              throw new Error("Cannot determine size of reserve");
-            // Increase the size of the object to fit it
-            objectType.Size += size;
-            reserve.ClassMember = true;
-          });
-      }
-      if (member instanceof FunctionDefinition) {
-        if (classType.Children[name.Name]) {
-          classType.Children[name.Name] = [
-            type,
-            classType.Children[name.Name][1],
-            member.Label,
-          ];
+      classType.Size = 1;
+      //objectType.Children["class"] = [VarType.Type, 0, classType.ClassLabel];
+      classType.Children["new"] = [VarType.Void, 0, "0"];
+      for (let i = 0; i < this.StaticMembers.length; i++) {
+        let member = this.StaticMembers[i];
+        let name: Identifier =
+          member instanceof FunctionDefinition
+            ? (member.Target as Identifier)
+            : (member as VariableDecleration).Identifier!;
+        if (member instanceof FunctionDefinition) {
+          (member as FunctionDefinition).IsClassMember = true;
+          let funcType = member.GetTypes(scope)[0] as FuncType;
+          member.Label ||= scope.GetSafeName(
+            "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
+          );
+          if(classType.Children.hasOwnProperty(name.Name)){
+            let old = classType.Children[name.Name];
+            let symbolicName = `symbolic\$${objectType.Name}\$${name.Name}`;
+            let fakeClaimer = new Claimer("");
+            let fakeClaim = fakeClaimer.Flag();
+            let symbolicType = new VarType(fakeClaimer, fakeClaim);
+            symbolicType.TypeName = symbolicName;
+            if (!(old[0] instanceof FuncType || old[0].TypeName === symbolicName)){
+              throw new Error("Cannot overload non-function");
+            }
+            if(old[0] instanceof FuncType){
+              scope.AddMetamethodSoft("call", old[0].RetTypes, [symbolicType, ...old[0].ArgTypes], [`call ${old[2]}`]);
+              classType.Children[name.Name] = [symbolicType, old[1], '0'];
+            }
+            scope.AddMetamethodSoft("call", funcType.RetTypes, [symbolicType, ...funcType.ArgTypes], [`call ${member.Label}`]);
+            continue;
+          }
+        }
+        let type: VarType;
+        if (member instanceof FunctionDefinition) {
+          type = member.GetTypes(scope)[0];
         } else {
-          classType.Children[name.Name] = [
-            type,
-            classType.Size++,
-            member.Label,
-          ];
+          type = member.Type!;
+        }
+        classType.Children[name.Name] = [
+          type,
+          classType.Size,
+          member instanceof FunctionDefinition ? member.Label : "0",
+        ];
+        classType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
+        // Check for a Assignment baring this name, that assigns to a Reserve
+        if (member instanceof VariableDecleration) {
+          this.StaticAssignments.filter(
+            (c) => (c.Left as VariableDecleration) === member
+          )
+            .filter((c) => c.Right instanceof Reserve)
+            .forEach((c) => {
+              let reserve = c.Right as Reserve;
+              // Try to get the size of the reserve
+              let size = reserve.GetSize(scope);
+              if (size === null)
+                throw new Error("Cannot determine size of reserve");
+              // Increase the size of the object to fit it
+              classType.Size += size;
+              reserve.ClassMember = true;
+            });
         }
       }
-    }
+      // Save virtual members statically too
+      for (let i = 0; i < this.VirtualMembers.length; i++) {
+        let member = this.VirtualMembers[i];
+        let name: Identifier =
+        member instanceof FunctionDefinition
+          ? (member.Target as Identifier)
+          : (member as VariableDecleration).Identifier!;
+        if (member instanceof FunctionDefinition) {
+          (member as FunctionDefinition).IsClassMember = true;
+          let funcType = member.GetTypes(scope)[0] as FuncType;
+          member.Label ||= scope.GetSafeName(
+            "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
+          );
+          if(objectType.VirtualChildren.hasOwnProperty(name.Name)){
+            let old = objectType.VirtualChildren[name.Name];
+            let symbolicName = `symbolic\$${objectType.Name}\$${name.Name}`;
+            let fakeClaimer = new Claimer("");
+            let fakeClaim = fakeClaimer.Flag();
+            let symbolicType = new VarType(fakeClaimer, fakeClaim);
+            symbolicType.TypeName = symbolicName;
+            if (!(old[0] instanceof FuncType || old[0].TypeName === symbolicName)){
+              throw new Error("Cannot overload non-function");
+            }
+            if(old[0] instanceof FuncType){
+              scope.AddMetamethodSoft("call", old[0].RetTypes, [symbolicType, ...old[0].ArgTypes], [`call ${old[3]}`]);
+              objectType.VirtualChildren[name.Name] = [symbolicType, classType, old[2], '0'];
+            }
+            scope.AddMetamethodSoft("call", funcType.RetTypes, [symbolicType, ...funcType.ArgTypes], [`call ${member.Label}`]);
+            continue;
+          }
+        }
+        let type: VarType;
+        if (member instanceof FunctionDefinition) {
+          type = member.GetTypes(scope)[0];
+        } else {
+          type = member.Type!;
+        }
+        classType.Children[name.Name] = [
+          type,
+          classType.Size,
+          member instanceof FunctionDefinition ? member.Label : "0",
+        ];
+        objectType.VirtualChildren[name.Name] = [
+          type,
+          classType,
+          classType.Size,
+          member instanceof FunctionDefinition ? member.Label : "0",
+        ];
+        classType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
+      }
+      for (let i = 0; i < this.Members.length; i++) {
+        let member = this.Members[i];
+        if (member instanceof FunctionDefinition) {
+          (member as FunctionDefinition).IsClassMember = true;
+          let funcType = member.GetTypes(scope)[0] as FuncType;
+          member.Label = scope.GetSafeName(
+            "function_" + funcType.RetTypes + "_" + funcType.ArgTypes
+          );
+        }
+        let name: Identifier =
+          member instanceof FunctionDefinition
+            ? (member.Target as Identifier)
+            : (member as VariableDecleration).Identifier!;
+        let type: VarType;
+        if (member instanceof FunctionDefinition) {
+          type = member.GetTypes(scope)[0];
+        } else {
+          type = member.Type!;
+        }
+        if (objectType.Children[name.Name]) {
+          objectType.Children[name.Name] = [
+            type,
+            objectType.Children[name.Name][1],
+            member instanceof FunctionDefinition ? member.Label : "0",
+          ];
+        } else {
+          objectType.Children[name.Name] = [
+            type,
+            objectType.Size,
+            member instanceof FunctionDefinition ? member.Label : "0",
+          ];
+          objectType.Size+=((type?.IsDefined()??false) && type.GetDefinition()?.Wide) ? type.GetDefinition().Size : 1;
+        }
+        // Check for a Assignment baring this name, that assigns to a Reserve
+        if (member instanceof VariableDecleration) {
+          this.Assignments.filter(
+            (c) => (c.Left as VariableDecleration) === member
+          )
+            .filter((c) => c.Right instanceof Reserve)
+            .forEach((c) => {
+              let reserve = c.Right as Reserve;
+              // Try to get the size of the reserve
+              let size = reserve.GetSize(scope);
+              if (size === null)
+                throw new Error("Cannot determine size of reserve");
+              // Increase the size of the object to fit it
+              objectType.Size += size;
+              reserve.ClassMember = true;
+            });
+        }
+        if (member instanceof FunctionDefinition) {
+          if (classType.Children[name.Name]) {
+            classType.Children[name.Name] = [
+              type,
+              classType.Children[name.Name][1],
+              member.Label,
+            ];
+          } else {
+            classType.Children[name.Name] = [
+              type,
+              classType.Size++,
+              member.Label,
+            ];
+          }
+        }
+      }
 
-    // Find all const values and set them up.
-    for (let i = 0; i < this.Constants.length; i++) {
-      let c = this.Constants[i];
-      objectType.ConstantChildren[c.Identifier!.Name] = [
-        c.GetTypes(scope)[0],
-        0,
-      ];
+      // Find all const values and set them up.
+      for (let i = 0; i < this.Constants.length; i++) {
+        let c = this.Constants[i];
+        objectType.ConstantChildren[c.Identifier!.Name] = [
+          c.GetTypes(scope)[0],
+          0,
+        ];
+      }
+      for (let i = 0; i < this.StaticConstants.length; i++) {
+        let c = this.StaticConstants[i];
+        classType.ConstantChildren[c.Identifier!.Name] = [
+          c.GetTypes(scope)[0],
+          0,
+        ];
+      }
+      objectType.Assignments = this.Assignments;
+      scope.UserTypes[this.Name!.Name] = objectType;
+      scope.UserTypes["type" + this.Name!.Name] = classType;
+      return true;
+    }finally{
+      scope.CurrentFile = oldFile;
     }
-    for (let i = 0; i < this.StaticConstants.length; i++) {
-      let c = this.StaticConstants[i];
-      classType.ConstantChildren[c.Identifier!.Name] = [
-        c.GetTypes(scope)[0],
-        0,
-      ];
-    }
-    objectType.Assignments = this.Assignments;
-    scope.UserTypes[this.Name!.Name] = objectType;
-    scope.UserTypes["type" + this.Name!.Name] = classType;
-    return true;
   }
 
   Evaluate(scope: Scope): string[] {
@@ -506,13 +549,13 @@ export class Class extends Statement {
     var t = new VarType(falseClaimer, falseFlag);
     t.TypeName = "type" + this.Name!.Name;
     var typeVarLabel = scope.GetSafeName(`vartype${this.Name!.Name}`);
-    scope.Vars[this.Name!.Name] = [t, typeVarLabel, null];
-    scope.AllVars[typeVarLabel] = [
+    scope.Vars.set(this.Name!.Name, [t, typeVarLabel, null]);
+    scope.AllVars.set(typeVarLabel, [
       t,
       this.Name!.Name,
       scope.CurrentFile,
       scope.CurrentFunction,
-    ];
+    ]);
     scope.Assembly.push(`${typeVarLabel}: db ${classDef.ClassLabel}`);
     asm.push(`${classDef.ClassLabel}:`);
     for (var i = 0; i < this.StaticMembers.length; i++) {
@@ -550,7 +593,7 @@ export class Class extends Statement {
     }
     let varsOrZeros = [];
     for(let i=0; i<classDef.Size; i++){
-      varsOrZeros.push(vars[i] ?? "0");
+      varsOrZeros.push((vars[i]??"").trim().length ? vars[i] : "0");
     }
     asm.push(`db ${varsOrZeros.join(",")}`);
     scope.Assembly.push(...asm);
@@ -575,11 +618,11 @@ export class Class extends Statement {
       // Find which static-child this belongs to.
       let child = classDef.Children[declr.Identifier!.Name];
       let res = assignment.Right!.TryEvaluate(scope);
-      asm.push(`setb ${classDef.ClassLabel}`, `addb ${child[1]}`, `apushb`);
+      asm.push(`setb ${classDef.ClassLabel}`, `addb ${child[1]}`, `xpushb`);
       asm.push(...res[1]);
       asm.push(...(VarType.Coax([child[0]], res[0])[0]))
-      //for (let spare = 1; spare < res[0].length; spare++) asm.push(...res[0][spare].APop());
-      asm.push(`apopa`, `apopb`, `putaptrb`);
+      //for (let spare = 1; spare < res[0].length; spare++) asm.push(...res[0][spare].XPop());
+      asm.push(`xpopa`, `xpopb`, `putaptrb`);
     }
     // Also perform non-static constant assignments
     for (let i = 0; i < this.Assignments.length; i++) {

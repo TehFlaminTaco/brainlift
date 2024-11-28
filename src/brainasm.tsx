@@ -74,16 +74,16 @@ JANZB:
 If Register B is not zero, jump to the address stored in Register A
 
 CALL:
-Jump to the argument whilst pushing the current instruction pointer onto the B stack
+Jump to the argument whilst pushing the current instruction pointer onto the Y stack
 
 CALLA:
-Jump to the address stored in Register A whilst pushing the current instruction pointer onto the B stack
+Jump to the address stored in Register A whilst pushing the current instruction pointer onto the Y stack
 
 CALLB:
-Jump to the address stored in Register B whilst pushing the current instruction pointer onto the B stack
+Jump to the address stored in Register B whilst pushing the current instruction pointer onto the Y stack
 
 RET:
-Pop the top of the B stack and jump to it
+Pop the top of the Y stack and jump to it
 
 INCA:
 Increment Register A by 1
@@ -155,41 +155,41 @@ Decrement both Registers untill either is Zero.
   A<B: Set Register A to 0, Register B to non-zero
   A=B: Set both Registers to 0
 
-APUSH:
-Push the argument onto the A stack
+XPUSH:
+Push the argument onto the X stack
 
-BPUSH:
-Push the argument onto the B stack
+YPUSH:
+Push the argument onto the Y stack
 
-APUSHA:
-Push the value of Register A onto the A stack
+XPUSHA:
+Push the value of Register A onto the X stack
 
-APUSHB:
-Push the value of Register B onto the A stack
+XPUSHB:
+Push the value of Register B onto the X stack
 
-BPUSHA:
-Push the value of Register A onto the B stack
+YPUSHA:
+Push the value of Register A onto the Y stack
 
-BPUSHB:
-Push the value of Register B onto the B stack
+YPUSHB:
+Push the value of Register B onto the Y stack
 
-APOP:
-Pop the top of the A stack
+XPOP:
+Pop the top of the X stack
 
-BPOP:
-Pop the top of the B stack
+YPOP:
+Pop the top of the Y stack
 
-APOPA:
-Pop the top of the A stack and store it in Register A
+XPOPA:
+Pop the top of the X stack and store it in Register A
 
-APOPB:
-Pop the top of the A stack and store it in Register B
+XPOPB:
+Pop the top of the X stack and store it in Register B
 
-BPOPA:
-Pop the top of the B stack and store it in Register A
+YPOPA:
+Pop the top of the Y stack and store it in Register A
 
-BPOPB:
-Pop the top of the B stack and store it in Register B
+YPOPB:
+Pop the top of the Y stack and store it in Register B
 
 
 */
@@ -205,8 +205,8 @@ var acceptsArgument = {
   ADDB: true,
   SUBA: true,
   SUBB: true,
-  APUSH: true,
-  BPUSH: true
+  XPUSH: true,
+  YPUSH: true
 };
 
 export let INSTRUCTIONS: [string, string, Function][] = [
@@ -339,9 +339,9 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     "CALL",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackB.push(interp.IP);
-      interp.StackB.push(interp.RegB);
-      interp.StackB.push(interp.RegA);
+      interp.StackY.push(interp.IP);
+      interp.StackY.push(interp.RegB);
+      interp.StackY.push(interp.RegA);
       interp.IP = arg * 4;
     },
   ],
@@ -349,9 +349,9 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     "CALLA",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackB.push(interp.IP);
-      interp.StackB.push(interp.RegB);
-      interp.StackB.push(interp.RegA);
+      interp.StackY.push(interp.IP);
+      interp.StackY.push(interp.RegB);
+      interp.StackY.push(interp.RegA);
       interp.IP = interp.RegA * 4;
     },
   ],
@@ -359,9 +359,9 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     "CALLB",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackB.push(interp.IP);
-      interp.StackB.push(interp.RegB);
-      interp.StackB.push(interp.RegA);
+      interp.StackY.push(interp.IP);
+      interp.StackY.push(interp.RegB);
+      interp.StackY.push(interp.RegA);
       interp.IP = interp.RegB * 4;
     },
   ],
@@ -369,9 +369,9 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     "RET",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegA = interp.StackB.pop() ?? 0;
-      interp.RegB = interp.StackB.pop() ?? 0;
-      interp.IP = interp.StackB.pop() ?? 0;
+      interp.RegA = interp.StackY.pop() ?? 0;
+      interp.RegB = interp.StackY.pop() ?? 0;
+      interp.IP = interp.StackY.pop() ?? 0;
     },
   ],
   [
@@ -593,87 +593,87 @@ export let INSTRUCTIONS: [string, string, Function][] = [
     },
   ],
   [
-    "APUSH",
+    "XPUSH",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackA.push(arg);
+      interp.StackX.push(arg);
     },
   ],
   [
-    "BPUSH",
+    "YPUSH",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackB.push(arg);
+      interp.StackY.push(arg);
     },
   ],
   [
-    "APUSHA",
+    "XPUSHA",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackA.push(interp.RegA);
+      interp.StackX.push(interp.RegA);
     },
   ],
   [
-    "APUSHB",
+    "XPUSHB",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackA.push(interp.RegB);
+      interp.StackX.push(interp.RegB);
     },
   ],
   [
-    "BPUSHA",
+    "YPUSHA",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackB.push(interp.RegA);
+      interp.StackY.push(interp.RegA);
     },
   ],
   [
-    "BPUSHB",
+    "YPUSHB",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackB.push(interp.RegB);
+      interp.StackY.push(interp.RegB);
     },
   ],
   [
-    "APOP",
+    "XPOP",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackA.pop();
+      interp.StackX.pop();
     },
   ],
   [
-    "BPOP",
+    "YPOP",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.StackB.pop();
+      interp.StackY.pop();
     },
   ],
   [
-    "APOPA",
+    "XPOPA",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegA = interp.StackA.pop() ?? 0;
+      interp.RegA = interp.StackX.pop() ?? 0;
     },
   ],
   [
-    "APOPB",
+    "XPOPB",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegB = interp.StackA.pop() ?? 0;
+      interp.RegB = interp.StackX.pop() ?? 0;
     },
   ],
   [
-    "BPOPA",
+    "YPOPA",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegA = interp.StackB.pop() ?? 0;
+      interp.RegA = interp.StackY.pop() ?? 0;
     },
   ],
   [
-    "BPOPB",
+    "YPOPB",
     '',
     (interp: ASMInterpreter, arg: number) => {
-      interp.RegB = interp.StackB.pop() ?? 0;
+      interp.RegB = interp.StackY.pop() ?? 0;
     },
   ],
 ];
@@ -688,8 +688,8 @@ export class ASMInterpreter {
   IP: number = 0;
   RegA: number = 0;
   RegB: number = 0;
-  StackA: number[] = [];
-  StackB: number[] = [];
+  StackX: number[] = [];
+  StackY: number[] = [];
   running: boolean = true;
   Input: string = "";
   InputPointer: number = 0;
@@ -716,7 +716,7 @@ export class ASMInterpreter {
       if (code[i].match(/^\s*LINE/i)) continue;
       if (code[i].match(/^\s*FILE/i)) continue;
       let codel: RegExpMatchArray|null = code[i].match(
-        /^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(REM|NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|APUSH|APUSHA|APUSHB|BPUSH|BPUSHA|BPUSHB|APOP|BPOP|APOPA|APOPB|BPOPA|BPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?\s*$/im
+        /^\s*?(?:\n|$)|^\s*(?:([a-z_]\w*):)?\s*(?:(?:db\s*((?:(?:\d+|[a-z_]\w*),?\s*)*))|(?:(REM|NOP|HALT|SETA|SETB|CPYAB|CPYBA|PTRA|PTRB|PUTBPTRA|PUTAPTRB|JMP|JMPA|JMPB|JNZA|JNZB|JBNZA|JANZB|CALL|CALLA|CALLB|RET|INCA|INCB|DECA|DECB|ADDA|ADDB|ADDAB|ADDBA|SUBA|SUBB|SUBAB|SUBBA|MULAB|MULBA|DIVAB|DIVBA|NOTA|NOTB|READA|READB|WRITEA|WRITEB|CMP|XPUSH|XPUSHA|XPUSHB|YPUSH|YPUSHA|YPUSHB|XPOP|YPOP|XPOPA|XPOPB|YPOPA|YPOPB)(?:\s+(?:(\d+)|([a-z_]\w*)))?))?\s*$/im
       );
       if (!codel) {
         console.log(`No match: ${code[i]}`);
@@ -829,10 +829,10 @@ export class ASMInterpreter {
   Step() {
     if (!this.running) return;
     let command = this.Heap[this.IP] ?? 0x01;
-    let arg = (this.Heap[this.IP + 1] << 24)
+    let arg = ((this.Heap[this.IP + 1] << 24)
             + (this.Heap[this.IP + 2] << 16)
             + (this.Heap[this.IP + 3] <<  8)
-            + (this.Heap[this.IP + 4] <<  0);
+            + (this.Heap[this.IP + 4] <<  0))>>>0;
     this.IP++;
     var instructionFunction = INSTRUCTIONS[command];
     if (instructionFunction){
@@ -911,10 +911,10 @@ export class ASMInterpreter {
 
     let stack1 = "";
     let stack2 = "";
-    for (let i = 0; i < this.StackA.length; i++)
-      stack1 += hexPad(this.StackA[i], 8) + " ";
-    for (let i = 0; i < this.StackB.length; i++)
-      stack2 += hexPad(this.StackB[i], 8) + " ";
+    for (let i = 0; i < this.StackX.length; i++)
+      stack1 += hexPad(this.StackX[i], 8) + " ";
+    for (let i = 0; i < this.StackY.length; i++)
+      stack2 += hexPad(this.StackY[i], 8) + " ";
 
     let body = `File: <span class='reg'>${this.GetFile()}</span><br>
 Line: <span class='reg'>${this.GetLine() + 1}</span><br>

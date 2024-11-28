@@ -24,7 +24,7 @@ export class NumberConstant extends Expression implements Simplifyable {
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
-    return [[VarType.Int], [this.GetLine(), `apush ${this.Value}`]];
+    return [[VarType.Int], [this.GetLine(), `xpush ${this.Value}`]];
   }
 
   GetTypes(scope: Scope): VarType[] {

@@ -65,7 +65,7 @@ export class Cumulate extends Expression implements Donor {
       if (meta === null) {
         // Try the math operator instead
         meta = scope.GetMetamethod(this.Operator, [t, VarType.Int]);
-        o.push(`apush 1`);
+        o.push(`xpush 1`);
       }
       if (meta === null) {
         throw new Error(`Cannot ${metaName} type ${t}. No metamethod`);

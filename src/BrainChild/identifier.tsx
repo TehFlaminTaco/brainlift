@@ -54,7 +54,7 @@ export class Identifier
     var res = scope.Get(this.Name);
     let t = res[0].GetDefinition();
     if (res[0].TypeName === "discard")
-      return ["apop"];
+      return ["xpop"];
     if (res[2] !== null)
       throw new Error(
         "Cannot override constant value with non-constant value!"
@@ -62,24 +62,24 @@ export class Identifier
     if (t.Name.startsWith("type")) {
       throw new Error("Cannot assign over class");
     }
-    return [`setb ${res[1]}`, ...res[0].Put("a","b")];//[`apopb`, `seta ${res[1]}`, `putbptra`];
+    return [`setb ${res[1]}`, ...res[0].Put("x","b")];//[`xpopb`, `seta ${res[1]}`, `putbptra`];
   }
 
   Read(scope: Scope): string[] {
     var res = scope.Get(this.Name);
     if(res[0].TypeName === "discard")
-      return ["apush 0"];
-    if (res[2] !== null) return [`apush ${(res[2] & 0xffffffff) >>> 0}`];
-    return [`seta ${res[1]}`, ...res[0].Get("a", "a")];
+      return ["xpush 0"];
+    if (res[2] !== null) return [`xpush ${(res[2] & 0xffffffff) >>> 0}`];
+    return [`seta ${res[1]}`, ...res[0].Get("x", "a")];
   }
 
   Evaluate(scope: Scope): [stack: VarType[], body: string[]] {
     var res = scope.Get(this.Name);
     if(res[0].TypeName === "discard")
-      return [[VarType.Discard], ["apush 0"]];
+      return [[VarType.Discard], ["xpush 0"]];
     if (res[2] !== null)
-      return [[res[0]], [`apush ${(res[2] & 0xffffffff) >>> 0}`]];
-    return [[res[0]], [this.GetLine(), `seta ${res[1]}`, ...res[0].Get("a", "a")]];
+      return [[res[0]], [`xpush ${(res[2] & 0xffffffff) >>> 0}`]];
+    return [[res[0]], [this.GetLine(), `seta ${res[1]}`, ...res[0].Get("x", "a")]];
   }
 
   GetPointer(scope: Scope): string[] {
@@ -88,7 +88,7 @@ export class Identifier
       throw new Error("Cannot get pointer to discard value");
     if (res[2] !== null)
       throw new Error("Cannot get pointer to constant value");
-    return [`apush ${res[1]}`];
+    return [`xpush ${res[1]}`];
   }
   GetReferenceTypes(scope: Scope): VarType[] {
     var res = scope.Get(this.Name);
