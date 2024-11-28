@@ -319,9 +319,7 @@ export class VarType extends Token {
           var metas: Set<
             [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
           > = new Set();
-          for (let t in scope.UserTypes) {
-            scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
-          }
+          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
           // That are casts to and from
           let metasArr = [...metas]
             .filter(c=>c[4]==="GLOBAL" || c[4]===scope.CurrentFile || Include.Includes[scope.CurrentFile]?.has(c[4]))
@@ -447,9 +445,7 @@ export class VarType extends Token {
           var metas: Set<
             [ReturnTypes: VarType[], ArgTypes: VarType[], Code: string[], GenericArgs: string[], File: string]
           > = new Set();
-          for (let t in scope.UserTypes) {
-            scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
-          }
+          scope.MetaMethods["cast"]?.forEach((c) => metas.add(c));
           let metasArr = [...metas].map(m=>scope.RemapGenericMetamethod(m, receivedStack, false));
           // That are casts to and from
           metasArr = metasArr.filter((c) => !restricted.has(c));
