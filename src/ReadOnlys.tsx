@@ -167,7 +167,7 @@ struct arrayutils {
 }
 metamethod get_iterate(array this) arrayutils.iterate;
 metamethod get_map(array this) arrayutils.map;
-metamethod get_modify(array this) arrayutils.map;
+metamethod get_modify(array this) arrayutils.modify;
 metamethod get_filter(array this) arrayutils.filter;
 metamethod get_fold(array this) arrayutils.fold;
 metamethod get_reduce(array this) arrayutils.reduce;`)

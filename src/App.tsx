@@ -50,7 +50,7 @@ export const AllReadOnlys: {[name: string]: string} = {};
 // MAJOR versions implement large changes that are likely to break most older programs
 // MINOR will likely work with older programs with minimal retooling, and include notable changes.
 // HOTFIX will work with most previous versions, or may be updating a previous MINOR revision to work with older MINOR revisions.
-export const VERSION = "1.0.0";
+export const VERSION = "1.0.1";
 
 var bsInterp: ASMInterpreter | undefined = undefined;
 var scope: Scope | null = null;
