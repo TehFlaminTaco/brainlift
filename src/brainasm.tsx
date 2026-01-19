@@ -137,6 +137,12 @@ Divide the value of Register A by Register B. Sets the remainder to Register B a
 DIVBA:
 Divide the value of Register B by Register A. Sets the remainder to Register A and the quotient to Register B
 
+NOTA:
+If the value of Register A is 0, set it to 1, otherwise, set it to 0
+
+NOTB:
+If the value of Register B is 0, set it to 1, otherwise, set it to 0
+
 READA:
 Read a value from the input stream and store it in Register A
 

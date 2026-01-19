@@ -1033,6 +1033,208 @@ function seed(int a, int b){
     seedA = a;
     seedB = b;
 }`);
+  GenerateReadOnly("sint.bc", `// sint.bc
+// Signed-int helper layer for Brainchild's 32-bit int world.
+// Representation: sint is a thin wrapper over a 32-bit int "raw" (two's complement).
+// NOTE: This library provides *signed interpretations* for comparisons/div/mod/abs/printing.
+//       Plain int arithmetic already wraps; sint arithmetic here is defined in terms of that wrapping.
+//
+// Depends on: stringify.bc (for printing via stringified), io.bc optional.
+include stringify.bc;
+
+// ----- Type & basic casts -----
+
+// A signed int is just bits; interpretation is provided by metamethods below.
+struct sint {
+    int raw;
+    new(int raw){
+        this.raw = raw;
+    }
+}
+
+// Bit-level cast helpers (these are reinterpret casts; safe because wrapper is one int)
+metamethod cast(sint s) -> int  (s.raw);
+metamethod cast(int n) -> sint  new sint(n);
+
+// Convenience: allow "123.sint" style if desired.
+abstract class typesint {}
+metamethod get_sint(typeint _) -> typesint { return (0 -> typesint); } // marker, not used directly
+metamethod get_sint(int n) -> sint { return (n -> sint); }
+
+// ----- Predicates & utilities -----
+
+// True if negative in signed interpretation.
+metamethod get_negative(sint s) -> int {
+    // sign bit set: raw > 0x7fffffff
+    return (s.raw > 0x7fffffff);
+}
+
+// -x (two's complement negate)
+metamethod unm(sint s) -> sint {
+    // 0 - raw wraps correctly
+    return new sint(0 - s.raw);
+}
+
+// Absolute value in signed interpretation.
+// WARNING: abs(INT_MIN) (0x80000000) cannot be represented; returns itself.
+metamethod get_abs(sint s) -> sint {
+    if(s.negative){
+        // abs(minint) remains minint
+        if(s.raw == 0x80000000) return s;
+        return -s;
+    }
+    return s;
+}
+
+// Signed clamp helpers
+function _sint_is_zero(sint s) -> int { return (s.raw == 0); }
+
+// ----- Comparisons (signed) -----
+
+metamethod eq(sint a, sint b) -> int { return (a.raw == b.raw); }
+metamethod ne(sint a, sint b) -> int { return (a.raw != b.raw); }
+
+metamethod lt(sint a, sint b) -> int {
+    int an = a.negative;
+    int bn = b.negative;
+    if(an != bn){
+        // negative < non-negative
+        return an;
+    }
+    // same sign:
+    // if both non-negative, normal int compare
+    if(!an){
+        return (a.raw < b.raw);
+    }
+    // both negative: reverse unsigned compare
+    // (e.g. 0xFFFFFFFF(-1) > 0x80000000(-2147483648) in unsigned terms)
+    return (a.raw > b.raw);
+}
+
+metamethod le(sint a, sint b) -> int { return (a < b) || (a == b); }
+metamethod gt(sint a, sint b) -> int { return (b < a); }
+metamethod ge(sint a, sint b) -> int { return (b <= a); }
+
+// ----- Arithmetic (signed interpretation) -----
+
+// Addition/subtraction are identical bitwise in two's complement.
+metamethod add(sint a, sint b) -> sint { return new sint(a.raw + b.raw); }
+metamethod sub(sint a, sint b) -> sint { return new sint(a.raw - b.raw); }
+
+// Signed multiply: sign = xor(signs), magnitude = abs(a)*abs(b)
+metamethod mul(sint a, sint b) -> sint {
+    int neg = a.negative != b.negative;
+    sint aa = a.abs;
+    sint bb = b.abs;
+    int prod = aa.raw * bb.raw; // wraps like VM int multiply
+    sint out = new sint(prod);
+    if(neg) return -out;
+    return out;
+}
+
+// Signed division/mod:
+// - Use unsigned division on magnitudes, then apply sign rules.
+// - div by zero: returns 0x7fffffff for quotient, remainder 0 (choice mirrors "saturate-ish" style).
+//
+// NOTE: Brainchild provides / and % and also /% (quotient,remainder) op.
+// We'll use /% to compute quotient+remainder in one pass.
+function _sdivrem(sint a, sint b) -> sint, sint {
+    if(_sint_is_zero(b)){
+        return (new sint(0x7fffffff), new sint(0));
+    }
+
+    int negQ = a.negative != b.negative;
+    int negR = a.negative; // remainder follows dividend sign in common convention
+
+    sint aa = a.abs;
+    sint bb = b.abs;
+
+    int q, int r = aa.raw /% bb.raw;
+
+    sint Q = new sint(q);
+    sint R = new sint(r);
+
+    if(negQ) Q = -Q;
+    if(negR) R = -R;
+
+    return (Q, R);
+}
+
+metamethod div(sint a, sint b) -> sint {
+    sint q, sint r = _sdivrem(a, b);
+    return q;
+}
+
+metamethod mod(sint a, sint b) -> sint {
+    sint q, sint r = _sdivrem(a, b);
+    return r;
+}
+
+// ----- Stringification (printing) -----
+
+// Emits signed decimal.
+// Special-cases INT_MIN to avoid abs overflow.
+function _sintToString(sint this, func(int) iter){
+    int n = this.raw;
+
+    if(n == 0){
+        iter('0');
+        return;
+    }
+
+    // INT_MIN: -2147483648
+    if(n == 0x80000000){
+        iter('-');
+        iter('2'); iter('1'); iter('4'); iter('7');
+        iter('4'); iter('8'); iter('3'); iter('6');
+        iter('4'); iter('8');
+        return;
+    }
+
+    if(this.negative){
+        iter('-');
+        n = 0 - n; // make positive
+    }
+
+    // Reuse int formatting logic by calling intToString directly.
+    intToString(n, iter);
+}
+
+metamethod cast(sint s) -> stringified {
+    return new stringified(s, _sintToString);
+}
+
+// ----- Convenience constructors/constants -----
+
+abstract class Sint {
+    static const sint zero = (0 -> sint);
+    static const sint one  = (1 -> sint);
+    static const sint min  = (0x80000000 -> sint);
+    static const sint max  = (0x7fffffff -> sint);
+
+    static function make(int raw) -> sint { return (raw -> sint); }
+}
+
+// Optional: if you like property access: x.sintAbs, x.sintNeg, etc.
+metamethod get_sabs(sint s) -> sint { return s.abs; }
+metamethod get_sneg(sint s) -> int { return s.negative; }
+
+// ----- Examples (commented) -----
+//
+// include sint.bc;
+// include io.bc;
+//
+// function demo(){
+//     sint a = (-5 -> sint);   // two's complement raw (wraps) if you created it elsewhere
+//     sint b = (2 -> sint);
+//     printf("a=$0 b=$1 a+b=$2 a*b=$3 a/b=$4 a% b=$5\n",
+//            a, b, a+b, a*b, a/b, a%b);
+// }
+//
+// NOTE: To construct negative literals portably without relying on parser literal negatives,
+//       you can do: sint a = (0 - 5 -> sint);
+//
+`);
   GenerateReadOnly("stack.bc", "metamethod getindex<T>(Stack<T> this, int i) -> T{\n    return *(this.Data+i%this.Length);\n}\nmetamethod setindex<T>(Stack<T> this, int i, T v){\n    *(this.Data+i%this.Length) = v;\n}\nmetamethod ptrindex<T>(Stack<T> this, int i) -> @T{\n    return this.Data+i%this.Length;\n}\n\nclass Stack<T> {\n    int Capacity;\n    int Length;\n    @T Data;\n    \n    new(){\n        this.Capacity = 8;\n        this.Data = alloc(8);\n    }\n    \n    new(int cap){\n        this.Capacity = cap;\n        this.Data = alloc(cap);\n    }\n     \n    virtual function Push(T v){\n        if(this.Length == this.Capacity){\n            @T newBuff = alloc(this.Capacity * 2);\n            int i = 0;\n            while(i < this.Length){\n                *(newBuff + i) = *(this.Data + i);\n                i++;\n            }\n            this.Capacity = this.Capacity * 2;\n            @T oldData = this.Data;\n            this.Data = newBuff;\n            free(oldData);\n        };\n        *(this.Data + this.Length) = v;\n        this.Length++;\n    }\n    virtual function Pop() -> T {\n        if(this.Length){\n            this.Length--;\n            return *(this.Data + this.Length);\n        }\n        return (0 -> T);\n    }\n    virtual function Peek() -> T {\n        if(this.Length) return *(this.Data + this.Length - 1);\n        return (0 -> T);\n    }\n    virtual function Has() -> int {\n        if this.Length return 1;\n        return 0;\n    }\n}");
   GenerateReadOnly("string.bc", `abstract class string {}
 metamethod get_length(string this) -> int *(this -> @int);
