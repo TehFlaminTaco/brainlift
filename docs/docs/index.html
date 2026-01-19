@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainChild Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1 id="overview">Overview</h1>
+    <p>Brainchild is a low-level, VM-targeted programming language designed
+    around explicit control, predictable costs, and user-defined
+    abstractions. The language intentionally avoids hidden runtime behavior
+    such as garbage collection, implicit ownership, or enforced type
+    hierarchies.</p>
+    <p>Brainchild code is compiled to a compact assembly language executed
+    by a minimal virtual machine. The VM provides only integer registers,
+    stacks, and a word-addressed heap. All higher-level constructs are
+    expressed through libraries, macros, and disciplined usage patterns.</p>
+    <p>Key design principles:</p>
+    <ul>
+    <li><p>No garbage collection; all memory management is explicit or
+    scoped.</p></li>
+    <li><p>No runtime type enforcement beyond what the user and compiler
+    provide.</p></li>
+    <li><p>Predictable execution and allocation costs.</p></li>
+    <li><p>Abstractions are library-defined, not built into the
+    runtime.</p></li>
+    <li><p>Explicit mutation and ownership are preferred over implicit
+    copying.</p></li>
+    </ul>
+    <p>Brainchild is intended for systems programming, tooling, terminal
+    applications, and experimentation with language and VM design.</p>
+    <h2 id="non-goals">Non-Goals</h2>
+    <p>The following are explicitly not goals of the language:</p>
+    <ul>
+    <li><p>Automatic memory management.</p></li>
+    <li><p>Implicit reference counting or garbage collection.</p></li>
+    <li><p>Strong runtime type safety.</p></li>
+    <li><p>High-level object lifetimes enforced by the compiler.</p></li>
+    </ul>
+    <p>Where safety exists, it exists by convention, explicit structure, and
+    careful API design.</p>
+    <h1 id="comments">Comments</h1>
+    <p>Brainchild supports both line comments and block comments.</p>
+    <h2 id="line-comments">Line Comments</h2>
+    <p>Line comments begin with <code>//</code> and extend to the end of the
+    line.</p>
+    <pre><code>// This is a line comment
+    int x = 5; // This comment follows code</code></pre>
+    <h2 id="block-comments">Block Comments</h2>
+    <p>Block comments begin with <code>/*</code> and end with
+    <code>*/</code>. They may span multiple lines and may also appear
+    inline.</p>
+    <pre><code>/*
+    This is a block comment.
+    It may span multiple lines.
+    */
+
+    function example(){
+        int x = 10; /* Inline block comment */
+        x = x + 1;
+    }</code></pre>
+    <p>Block comments are ignored by the compiler. Nesting of block comments
+    is not guaranteed to be supported and should not be relied upon.</p>
+    <h2 id="comment-usage-guidelines">Comment Usage Guidelines</h2>
+    <ul>
+    <li><p>Use line comments for short, local explanations.</p></li>
+    <li><p>Use block comments for file headers, large explanations, or
+    temporarily disabling regions of code.</p></li>
+    <li><p>Avoid relying on comment nesting.</p></li>
+    </ul>
+    <div class="note">
+    <p>Comments have no semantic effect and do not influence compilation,
+    allocation, or runtime behavior.</p>
+    </div>
+    <h1 id="virtual-machine">Virtual Machine</h1>
+    <p>This chapter describes the Brainchild Virtual Machine (VM) and its
+    instruction set. This chapter is <strong>specification-level</strong>;
+    the VM described here is authoritative.</p>
+    <h2 id="machine-model">Machine Model</h2>
+    <p>The Brainchild VM is a simple stack-and-register machine operating on
+    32-bit integers.</p>
+    <p>The VM provides:</p>
+    <ul>
+    <li><p>Two general-purpose registers: <code>A</code> and
+    <code>B</code></p></li>
+    <li><p>Two stacks: <code>X</code> and <code>Y</code>, each storing
+    32-bit integers</p></li>
+    <li><p>A word-addressed heap storing 32-bit integers</p></li>
+    <li><p>A byte-addressed instruction pointer (IP)</p></li>
+    </ul>
+    <p>The distinction between word-addressed heap memory and byte-addressed
+    instructions has no impact on observable program semantics.</p>
+    <h2 id="stacks-and-calling-convention">Stacks and Calling
+    Convention</h2>
+    <p>The two stacks have distinct roles by convention:</p>
+    <ul>
+    <li><p><code>X</code> stack:</p>
+    <ul>
+    <li><p>Function arguments</p></li>
+    <li><p>Return values</p></li>
+    <li><p>Temporary evaluation values</p></li>
+    </ul></li>
+    <li><p><code>Y</code> stack:</p>
+    <ul>
+    <li><p>Return addresses for function calls</p></li>
+    <li><p>Call-frame metadata</p></li>
+    <li><p>Recursion-related state</p></li>
+    </ul></li>
+    </ul>
+    <p>Function calls push the return address onto the <code>Y</code> stack.
+    Arguments are expected to be pushed onto the <code>X</code> stack by the
+    caller. Return values are left on the <code>X</code> stack by the
+    callee.</p>
+    <h2 id="registers">Registers</h2>
+    <p>Registers <code>A</code> and <code>B</code> hold signed or unsigned
+    32-bit values, depending on how the program interprets them. The VM
+    itself does not distinguish signedness.</p>
+    <p>Many instructions destructively update registers. While this matters
+    at the assembly level, Brainchild language semantics generally abstract
+    this away.</p>
+    <h1 id="assembly-instruction-set">Assembly Instruction Set</h1>
+    <p>This section documents all VM instructions.</p>
+    <h2 id="execution-control">Execution Control</h2>
+    <div class="description">
+    <p>Do nothing.</p>
+    <p>Stop execution.</p>
+    </div>
+    <h2 id="register-load-and-copy">Register Load and Copy</h2>
+    <div class="description">
+    <p>Set register <code>A</code> to the immediate value.</p>
+    <p>Set register <code>B</code> to the immediate value.</p>
+    <p>Copy <code>A</code> into <code>B</code>.</p>
+    <p>Copy <code>B</code> into <code>A</code>.</p>
+    </div>
+    <h2 id="pointer-and-memory-access">Pointer and Memory Access</h2>
+    <p>Registers may be interpreted as heap addresses.</p>
+    <div class="description">
+    <p>Dereference the address in <code>A</code> and load the value.</p>
+    <p>Dereference the address in <code>B</code> and load the value.</p>
+    <p>Store <code>B</code> at the heap address in <code>A</code>.</p>
+    <p>Store <code>A</code> at the heap address in <code>B</code>.</p>
+    </div>
+    <h2 id="control-flow">Control Flow</h2>
+    <div class="description">
+    <p>Jump to immediate address.</p>
+    <p>Jump to address in <code>A</code>.</p>
+    <p>Jump to address in <code>B</code>.</p>
+    <p>Jump if <code>A</code> is non-zero.</p>
+    <p>Jump if <code>B</code> is non-zero.</p>
+    <p>Jump to <code>B</code> if <code>A</code> is non-zero.</p>
+    <p>Jump to <code>A</code> if <code>B</code> is non-zero.</p>
+    </div>
+    <h2 id="function-calls">Function Calls</h2>
+    <div class="description">
+    <p>Call function at address, pushing return IP onto <code>Y</code>.</p>
+    <p>Call function at address in <code>A</code>.</p>
+    <p>Call function at address in <code>B</code>.</p>
+    <p>Pop return address from <code>Y</code> and jump.</p>
+    </div>
+    <h2 id="arithmetic">Arithmetic</h2>
+    <p>All arithmetic operates on 32-bit integers.</p>
+    <div class="description">
+    <p>Increment register.</p>
+    <p>Decrement register.</p>
+    <p>Add immediate.</p>
+    <p><code>B = A + B</code>, then <code>A = 0</code>.</p>
+    <p><code>A = A + B</code>, then <code>B = 0</code>.</p>
+    <p>Subtract immediate.</p>
+    <p><code>B = B - A</code>, then <code>A = 0</code>.</p>
+    <p><code>A = A - B</code>, then <code>B = 0</code>.</p>
+    <p><code>B = A * B</code>, then <code>A = 0</code>.</p>
+    <p><code>A = A * B</code>, then <code>B = 0</code>.</p>
+    <p>Divide <code>A</code> by <code>B</code>; quotient in <code>A</code>,
+    remainder in <code>B</code>.</p>
+    <p>Divide <code>B</code> by <code>A</code>; quotient in <code>B</code>,
+    remainder in <code>A</code>.</p>
+    </div>
+    <h2 id="logic-and-comparison">Logic and Comparison</h2>
+    <div class="description">
+    <p>Logical not: zero becomes one, non-zero becomes zero.</p>
+    <p>Decrement both registers until one reaches zero:</p>
+    <ul>
+    <li><p><code>A &gt; B</code>: <code>A</code> non-zero,
+    <code>B = 0</code></p></li>
+    <li><p><code>A &lt; B</code>: <code>A = 0</code>, <code>B</code>
+    non-zero</p></li>
+    <li><p><code>A = B</code>: both zero</p></li>
+    </ul>
+    </div>
+    <h2 id="io">I/O</h2>
+    <div class="description">
+    <p>Read from input into register.</p>
+    <p>Write register to output.</p>
+    </div>
+    <h2 id="stack-operations">Stack Operations</h2>
+    <div class="description">
+    <p>Push immediate value.</p>
+    <p>Push register onto <code>X</code>.</p>
+    <p>Push register onto <code>Y</code>.</p>
+    <p>Pop and discard.</p>
+    <p>Pop into register.</p>
+    <p>Pop into register.</p>
+    </div>
+    <h2 id="instructions-with-immediate-arguments">Instructions with
+    Immediate Arguments</h2>
+    <p>The following instructions require one immediate argument:</p>
+    <ul>
+    <li><p><code>SETA</code>, <code>SETB</code></p></li>
+    <li><p><code>JMP</code>, <code>JNZA</code>, <code>JNZB</code></p></li>
+    <li><p><code>CALL</code></p></li>
+    <li><p><code>ADDA</code>, <code>ADDB</code></p></li>
+    <li><p><code>SUBA</code>, <code>SUBB</code></p></li>
+    <li><p><code>XPUSH</code>, <code>YPUSH</code></p></li>
+    </ul>
+    <h1 id="heap-allocation-primitives">Heap Allocation Primitives</h1>
+    <p>The VM provides built-in <code>alloc</code> and <code>free</code>
+    routines implemented entirely in assembly. These manage the heap as a
+    word-addressed allocation table.</p>
+    <p>The allocator and deallocator are deterministic and explicit; no
+    garbage collection or background memory management exists.</p>
+    <div class="note">
+    <p>While the allocator implementation is complex, its observable
+    behavior is: allocate contiguous words, return a pointer, and require
+    explicit freeing.</p>
+    </div>
+    <h1 id="syntax-and-core-language">Syntax and Core Language</h1>
+    <p>This chapter describes the surface syntax of Brainchild and the core
+    language constructs. This chapter is
+    <strong>specification-level</strong> unless otherwise stated.</p>
+    <h2 id="compilation-units-and-inclusion">Compilation Units and
+    Inclusion</h2>
+    <p>Brainchild source files are plain text. There is no module system
+    beyond textual inclusion.</p>
+    <p><strong><code>include file.bc;</code></strong><br />
+    <em>Compile-time inclusion</em><br />
+    Includes the contents of <code>file.bc</code> at compile time. Inclusion
+    is purely textual; name resolution and ordering are the responsibility
+    of the user.</p>
+    <p>Multiple inclusion of the same file is permitted and not
+    automatically guarded against.</p>
+    <h2 id="statements-and-expressions">Statements and Expressions</h2>
+    <p>Brainchild is expression-oriented but distinguishes between
+    statements and expressions syntactically.</p>
+    <p>Statements include:</p>
+    <ul>
+    <li><p>Variable declarations</p></li>
+    <li><p>Assignments</p></li>
+    <li><p>Control flow constructs</p></li>
+    <li><p>Function and class definitions</p></li>
+    </ul>
+    <p>Expressions include:</p>
+    <ul>
+    <li><p>Literals</p></li>
+    <li><p>Variable references</p></li>
+    <li><p>Arithmetic and logical operations</p></li>
+    <li><p>Function calls</p></li>
+    <li><p>Cast expressions</p></li>
+    </ul>
+    <p>Semicolons terminate statements. Blocks are delimited by braces.</p>
+    <h2 id="variables-and-declarations">Variables and Declarations</h2>
+    <p>Variables are declared using a type name followed by an
+    identifier.</p>
+    <pre><code>int x = 5;
+    string s;</code></pre>
+    <p>The keyword <code>var</code> may be used to allow type inference
+    where the compiler can determine the type unambiguously.</p>
+    <pre><code>var x = 10;</code></pre>
+    <h2 id="assignment">Assignment</h2>
+    <p>Assignment uses the <code>=</code> operator.</p>
+    <pre><code>x = x + 1;</code></pre>
+    <p>Compound assignment operators are provided via macros (see Chapter <a
+    href="#chap:macros" data-reference-type="ref"
+    data-reference="chap:macros">[chap:macros]</a>) and expand into the
+    corresponding binary operation followed by assignment.</p>
+    <h2 id="control-flow-1">Control Flow</h2>
+    <h3 id="if-and-else"><code>if</code> and <code>else</code></h3>
+    <p>Conditional execution uses <code>if</code> and <code>else if</code>
+    chains.</p>
+    <pre><code>if(x &gt; 10)
+        y = 1;
+    else if(x &gt; 5)
+        y = 2;
+    else
+        y = 3;</code></pre>
+    <p>The form <code>; else</code> is forbidden. The <code>else</code>
+    keyword must attach directly to the preceding <code>if</code> or
+    <code>else if</code> block.</p>
+    <h3 id="while"><code>while</code></h3>
+    <p>Loops are formed using <code>while</code>.</p>
+    <pre><code>while(x){
+        x = x - 1;
+    }</code></pre>
+    <p>There is no <code>break</code> statement. Loop termination must be
+    expressed through the loop condition or auxiliary flags.</p>
+    <h2 id="functions">Functions</h2>
+    <p>Functions are declared using the <code>function</code> keyword.</p>
+    <pre><code>function add(int a, int b) -&gt; int {
+        return a + b;
+    }</code></pre>
+    <p>Functions may omit an explicit return type when returning no
+    value.</p>
+    <p>Arguments are passed by value at the language level. Underlying
+    calling conventions are handled by the compiler and VM.</p>
+    <h2 id="classes-and-structs">Classes and Structs</h2>
+    <h3 id="structs">Structs</h3>
+    <p>Structs are simple aggregate types with named fields.</p>
+    <pre><code>struct pair&lt;A,B&gt; {
+        A a;
+        B b;
+    }</code></pre>
+    <p>Structs do not imply ownership or lifetime management.</p>
+    <h3 id="classes">Classes</h3>
+    <p>Classes support methods, constructors, and virtual dispatch.</p>
+    <pre><code>class Point {
+        int x;
+        int y;
+
+        new(int x, int y){
+            this.x = x;
+            this.y = y;
+        }
+    }</code></pre>
+    <p>Classes do not imply automatic allocation. Allocation behavior
+    depends on how instances are created.</p>
+    <h2 id="methods-and-this">Methods and <code>this</code></h2>
+    <p>Methods receive an implicit <code>this</code> parameter referring to
+    the instance.</p>
+    <pre><code>class Counter {
+        int value;
+
+        function inc(){
+            this.value = this.value + 1;
+        }
+    }</code></pre>
+    <h2 id="abstract-classes">Abstract Classes</h2>
+    <p>Abstract classes may not be instantiated directly and are commonly
+    used as interfaces or method extension points.</p>
+    <pre><code>abstract class Shape {
+        virtual function area() -&gt; int;
+    }</code></pre>
+    <h2 id="metamethods">Metamethods</h2>
+    <p>Metamethods define operator behavior, implicit casts, indexing, and
+    other language extensions.</p>
+    <pre><code>metamethod add(int a, int b) -&gt; int {
+        return a + b;
+    }</code></pre>
+    <p>Metamethod resolution occurs at compile time. Ambiguous implicit
+    casts are compile-time errors.</p>
+    <h2 id="casting">Casting</h2>
+    <h3 id="implicit-casts">Implicit Casts</h3>
+    <p>Implicit casts are defined via <code>metamethod cast</code>. If more
+    than one valid cast exists, the program is ill-formed.</p>
+    <h3 id="explicit-casts">Explicit Casts</h3>
+    <p>Explicit casts use the <code>-&gt;</code> operator.</p>
+    <pre><code>int x = (someValue -&gt; int);</code></pre>
+    <p>The <code>-&gt;</code> operator performs a strict reinterpret cast.
+    Multiple target types may be specified.</p>
+    <pre><code>(a, b -&gt; int, @int)</code></pre>
+    <h2 id="indexing-and-pointer-access">Indexing and Pointer Access</h2>
+    <p>Indexing is implemented through metamethods.</p>
+    <ul>
+    <li><p><code>getindex</code> for reads</p></li>
+    <li><p><code>setindex</code> for writes</p></li>
+    <li><p><code>ptrindex</code> for address access</p></li>
+    </ul>
+    <p>The <code>ptrindex</code> form corresponds to address-of
+    semantics.</p>
+    <div class="note">
+    <p>Pointer dereference and address manipulation are explicit and visible
+    at the language level.</p>
+    </div>
+    <h1 id="memory-and-lifetime">Memory and Lifetime</h1>
+    <p>This chapter defines Brainchild’s memory model, ownership
+    conventions, and lifetime control mechanisms. This chapter is
+    <strong>specification-level</strong> unless explicitly stated
+    otherwise.</p>
+    <h2 id="heap-allocation">Heap Allocation</h2>
+    <p>Brainchild provides explicit heap allocation via the standard library
+    functions <code>alloc</code> and <code>free</code>. The heap is
+    word-addressed and stores 32-bit integers.</p>
+    <p><strong><code>alloc(int count)</code></strong><br />
+    <em>Heap allocation</em><br />
+    Allocates <code>count</code> contiguous 32-bit words on the heap and
+    returns a pointer to the first word. The returned pointer must
+    eventually be freed with <code>free</code>.</p>
+    <p><strong><code>free(@int ptr)</code></strong><br />
+    <em>Heap deallocation</em><br />
+    Releases a heap allocation previously returned by <code>alloc</code>.
+    The pointer must not be used after being freed.</p>
+    <p>There is no garbage collection. All heap allocations are the
+    programmer’s responsibility.</p>
+    <h2 id="stack-allocation-and-reserve">Stack Allocation and
+    <code>reserve</code></h2>
+    <p><strong><code>reserve N</code></strong><br />
+    <em>Stack allocation</em><br />
+    Reserves <code>N</code> 32-bit integers on the stack. The value of
+    <code>N</code> must be known at compile time.</p>
+    <p>Stack allocations created by <code>reserve</code> are automatically
+    invalidated when the enclosing scope exits.</p>
+    <h2 id="ownership-and-dispose">Ownership and <code>dispose</code></h2>
+    <p>Some types define a <code>dispose</code> metamethod. When called,
+    this method releases resources owned by the value.</p>
+    <p>Calling <code>dispose</code> explicitly is permitted but discouraged
+    except when implementing ownership abstractions.</p>
+    <h2 id="temp"><code>temp</code></h2>
+    <p>The <code>temp</code> keyword expresses scoped ownership.</p>
+    <p><strong><code>temp expr</code></strong><br />
+    <em>Scoped disposal</em><br />
+    Evaluates <code>expr</code> and marks the resulting value as owned by
+    the current scope. If the value defines a <code>dispose</code>
+    metamethod, it will be called exactly once when the scope exits, to the
+    extent the compiler can guarantee.</p>
+    <pre><code>temp var s = stringutils.sub(1, 3, original);
+    /* s will be disposed at scope exit */</code></pre>
+    <p><code>temp</code> may appear either before a declaration or directly
+    before an expression.</p>
+    <pre><code>var s = temp stringutils.trim(input);
+    temp var t = compute();</code></pre>
+    <h2 id="defer"><code>defer</code></h2>
+    <p>The <code>defer</code> keyword schedules an expression to be
+    evaluated at the end of the current scope.</p>
+    <p><strong><code>defer expr</code></strong><br />
+    <em>Deferred execution</em><br />
+    Ensures that <code>expr</code> is executed when the current scope exits,
+    regardless of how the scope is exited.</p>
+    <pre><code>@int p = alloc(10);
+    defer free(p);
+    /* p is guaranteed to be freed when scope exits */</code></pre>
+    <p>Multiple <code>defer</code> expressions execute in reverse order of
+    appearance.</p>
+    <h2 id="returning-values-safely">Returning Values Safely</h2>
+    <p>Values marked with <code>temp</code> must not be returned from a
+    function.</p>
+    <pre><code>function bad() -&gt; string {
+        temp var s = stringutils.sub(0, 2, input);
+        return s; /* INVALID */
+    }</code></pre>
+    <p>To return a value safely, the returned value must own its
+    storage.</p>
+    <pre><code>function good() -&gt; string {
+        temp var s = stringutils.sub(0, 2, input);
+        return stringutils.clone(s);
+    }</code></pre>
+    <h2 id="const"><code>const</code></h2>
+    <p>The <code>const</code> keyword forces compile-time evaluation.</p>
+    <p><strong><code>const expr</code></strong><br />
+    <em>Compile-time evaluation</em><br />
+    Evaluates <code>expr</code> at compile time. The result must be
+    representable as a literal in emitted code.</p>
+    <h2 id="const-int"><code>const int</code></h2>
+    <p>Compile-time integers exist only during compilation and are resolved
+    to literal values in emitted code.</p>
+    <pre><code>const int letter = &#39;A&#39;;
+    letter += 2;
+    putchar(letter); /* emits putchar(&#39;C&#39;) */</code></pre>
+    <p><code>const int</code> values may be used with <code>reserve</code>,
+    macros, and other compile-time constructs.</p>
+    <h2 id="mutation-vs-allocation">Mutation vs Allocation</h2>
+    <p>Many library functions mutate their arguments rather than allocating
+    new values. This is intentional and should be relied upon for
+    performance.</p>
+    <p>Examples:</p>
+    <ul>
+    <li><p><code>string.lower()</code> mutates the string in place.</p></li>
+    <li><p><code>array.modify()</code> mutates array elements.</p></li>
+    <li><p><code>string.sub()</code> allocates a new string.</p></li>
+    </ul>
+    <p>Each library function documents its allocation and mutation
+    behavior.</p>
+    <div class="note">
+    <p>While the VM’s arithmetic instructions may be destructive,
+    Brainchild-level arithmetic expressions are safe and do not invalidate
+    operands.</p>
+    </div>
+    <h1 id="macros-and-compile-time-facilities">Macros and Compile-Time
+    Facilities</h1>
+    <p>This chapter describes Brainchild’s macro system and compile-time
+    evaluation facilities. This chapter is
+    <strong>specification-level</strong> unless otherwise noted.</p>
+    <h2 id="macro-system-overview">Macro System Overview</h2>
+    <p>Macros in Brainchild operate as syntactic rewrite rules. They are
+    expanded before type checking and semantic analysis.</p>
+    <p>Macros do not operate on typed ASTs; instead, they match token
+    patterns and produce token sequences.</p>
+    <h2 id="defining-macros">Defining Macros</h2>
+    <p>Macros are defined using the <code>macro</code> keyword.</p>
+    <pre><code>macro ( &#39;for&#39; &quot;(&quot; (expression?) &quot;;&quot; (expression?) &quot;;&quot; (expression?) &quot;)&quot; (expression) ) {
+        {
+            $1;
+            while($2){
+                $4;
+                $3;
+            }
+        }
+    }</code></pre>
+    <p>Macro patterns consist of literal tokens and pattern variables. The
+    body of the macro emits replacement tokens.</p>
+    <h2 id="macro-expansion-semantics">Macro Expansion Semantics</h2>
+    <p>Macro expansion occurs:</p>
+    <ul>
+    <li><p>Before type checking</p></li>
+    <li><p>Before metamethod resolution</p></li>
+    <li><p>Before code generation</p></li>
+    </ul>
+    <p>Macros may expand into arbitrary Brainchild syntax, including blocks,
+    statements, and expressions.</p>
+    <h2 id="hygiene-and-scope">Hygiene and Scope</h2>
+    <p>Macros are not hygienic. Identifiers introduced by macros may collide
+    with names in the surrounding scope.</p>
+    <p>Macro authors must avoid name collisions manually, typically by
+    choosing unlikely identifier names or using block scoping.</p>
+    <h2 id="common-macro-uses">Common Macro Uses</h2>
+    <p>Macros are commonly used to implement:</p>
+    <ul>
+    <li><p>Compound assignment operators</p></li>
+    <li><p>Loop constructs</p></li>
+    <li><p>Syntactic sugar</p></li>
+    <li><p>Compile-time code generation</p></li>
+    </ul>
+    <h2 id="const-and-macros"><code>const</code> and Macros</h2>
+    <p>The <code>const</code> keyword is frequently used within macros to
+    ensure that expressions are evaluated at compile time.</p>
+    <pre><code>macro ( &#39;square&#39; (expression) ) {
+        const {
+            $1 * $1
+        }
+    }</code></pre>
+    <h2 id="compile-time-arithmetic">Compile-Time Arithmetic</h2>
+    <p><code>const int</code> expressions may perform arithmetic during
+    compilation.</p>
+    <pre><code>const int size = 4 * 8;
+    @int buffer = reserve size;</code></pre>
+    <p>These values do not exist at runtime.</p>
+    <h2 id="limitations">Limitations</h2>
+    <ul>
+    <li><p>Macros cannot inspect types.</p></li>
+    <li><p>Macros cannot introduce new scoping rules.</p></li>
+    <li><p>Macro expansion errors may be difficult to diagnose.</p></li>
+    </ul>
+    <div class="note">
+    <p>Macros are powerful but dangerous. Prefer functions and libraries
+    when runtime behavior is sufficient.</p>
+    </div>
+    <h1 id="standard-library">Standard Library</h1>
+    <p>This chapter provides a <strong>complete, in-depth
+    description</strong> of the Brainchild standard library. It is intended
+    as a reference manual, not a tutorial, and documents:</p>
+    <ul>
+    <li><p>Every standard library module</p></li>
+    <li><p>Every public type and function</p></li>
+    <li><p>Allocation, mutation, and ownership behavior</p></li>
+    <li><p>Semantics and intended use cases</p></li>
+    <li><p>Known sharp edges and constraints</p></li>
+    </ul>
+    <p>Unless otherwise stated:</p>
+    <ul>
+    <li><p>There is <strong>no garbage collection</strong></p></li>
+    <li><p>All memory ownership is explicit</p></li>
+    <li><p>Mutation is permitted and often intentional</p></li>
+    <li><p>Performance characteristics matter</p></li>
+    </ul>
+    <h2 id="array.bc">array.bc</h2>
+    <h3 id="purpose">Purpose</h3>
+    <p><code>array.bc</code> defines the fundamental array abstraction used
+    throughout the standard library. It is intentionally minimal and exposes
+    memory ownership explicitly.</p>
+    <h3 id="type-arrayt">Type: <code>array&lt;T&gt;</code></h3>
+    <p>An <code>array&lt;T&gt;</code> is a <strong>pair of metadata and
+    pointer</strong>:</p>
+    <ul>
+    <li><p><code>count</code>: number of elements</p></li>
+    <li><p><code>data</code>: pointer to contiguous storage</p></li>
+    </ul>
+    <p><strong>Ownership model:</strong></p>
+    <ul>
+    <li><p>The array <em>may or may not</em> own its backing
+    storage</p></li>
+    <li><p>Disposing an array frees <code>data</code></p></li>
+    <li><p>Multiple arrays may alias the same data</p></li>
+    </ul>
+    <p><strong>Allocation behavior:</strong></p>
+    <ul>
+    <li><p>Construction does not allocate</p></li>
+    <li><p>Disposal frees backing memory</p></li>
+    </ul>
+    <p><strong>Mutation behavior:</strong></p>
+    <ul>
+    <li><p>Indexing mutates underlying memory</p></li>
+    </ul>
+    <p><strong>Use cases:</strong></p>
+    <ul>
+    <li><p>Passing contiguous memory with explicit length</p></li>
+    <li><p>Lightweight views over buffers</p></li>
+    <li><p>Interop between libraries</p></li>
+    </ul>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Disposing one alias invalidates all aliases</p></li>
+    <li><p>No bounds checking</p></li>
+    </ul>
+    <h2 id="arrayutils.bc">arrayutils.bc</h2>
+    <h3 id="purpose-1">Purpose</h3>
+    <p>Provides functional-style operations on
+    <code>array&lt;T&gt;</code>.</p>
+    <h3 id="functions-1">Functions</h3>
+    <h4 id="iterate"><code>iterate</code></h4>
+    <p><strong>Semantics:</strong> Applies a function to each element.
+    <strong>Allocation:</strong> None. <strong>Mutation:</strong> None
+    (unless callback mutates). <strong>Use case:</strong> Traversal,
+    side-effect processing.</p>
+    <h4 id="map"><code>map</code></h4>
+    <p><strong>Semantics:</strong> Produces a new array by transforming each
+    element. <strong>Allocation:</strong> Allocates new backing storage.
+    <strong>Mutation:</strong> None to input array. <strong>Use
+    case:</strong> Structural transformation.</p>
+    <h4 id="modify"><code>modify</code></h4>
+    <p><strong>Semantics:</strong> Replaces each element with the result of
+    a function. <strong>Allocation:</strong> None.
+    <strong>Mutation:</strong> Mutates input array in place. <strong>Use
+    case:</strong> Efficient bulk mutation.</p>
+    <h4 id="filter"><code>filter</code></h4>
+    <p><strong>Semantics:</strong> Selects elements based on predicate.
+    <strong>Allocation:</strong> Allocates new array.
+    <strong>Mutation:</strong> None. <strong>Use case:</strong> Selection
+    pipelines. <strong>Note:</strong> Known bugs in current
+    implementation.</p>
+    <h4 id="fold"><code>fold</code></h4>
+    <p><strong>Semantics:</strong> Prefix reduction producing intermediate
+    results. <strong>Allocation:</strong> Allocates array of results.
+    <strong>Mutation:</strong> None.</p>
+    <h4 id="reduce"><code>reduce</code></h4>
+    <p><strong>Semantics:</strong> Collapses array into single value.
+    <strong>Allocation:</strong> None. <strong>Mutation:</strong> None.</p>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Allocation-heavy if misused</p></li>
+    <li><p>Filter correctness depends on version</p></li>
+    </ul>
+    <h2 id="arraylist.bc">arraylist.bc</h2>
+    <h3 id="purpose-2">Purpose</h3>
+    <p>Provides a growable, heap-backed array abstraction.</p>
+    <h3 id="type-arraylistt">Type: <code>ArrayList&lt;T&gt;</code></h3>
+    <p><strong>Ownership:</strong></p>
+    <ul>
+    <li><p>Owns backing buffer</p></li>
+    </ul>
+    <p><strong>Allocation behavior:</strong></p>
+    <ul>
+    <li><p>Allocates on construction</p></li>
+    <li><p>Reallocates on growth</p></li>
+    </ul>
+    <p><strong>Key functions:</strong></p>
+    <h4 id="add"><code>Add</code></h4>
+    <p>Appends an element, reallocating if necessary.
+    <strong>Mutation:</strong> Yes. <strong>Allocation:</strong>
+    Possibly.</p>
+    <h4 id="iterate-1"><code>Iterate</code></h4>
+    <p>Calls function for each element. <strong>Allocation:</strong>
+    None.</p>
+    <h4 id="shrink"><code>Shrink</code></h4>
+    <p>Returns an <code>array&lt;T&gt;</code> containing exactly
+    <code>Size</code> elements. <strong>Allocation:</strong> Allocates new
+    array buffer.</p>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Pointers invalidated on growth</p></li>
+    <li><p>Disposal not consistently implemented</p></li>
+    </ul>
+    <h2 id="stack.bc">stack.bc</h2>
+    <h3 id="purpose-3">Purpose</h3>
+    <p>Provides a last-in-first-out container.</p>
+    <h3 id="type-stackt">Type: <code>Stack&lt;T&gt;</code></h3>
+    <p><strong>Ownership:</strong></p>
+    <ul>
+    <li><p>Owns backing buffer</p></li>
+    </ul>
+    <p><strong>Key functions:</strong></p>
+    <h4 id="push"><code>Push</code></h4>
+    <p>Adds element to top. <strong>Allocation:</strong> Possibly
+    (realloc).</p>
+    <h4 id="pop"><code>Pop</code></h4>
+    <p>Removes and returns top element. <strong>Allocation:</strong>
+    None.</p>
+    <h4 id="peek"><code>Peek</code></h4>
+    <p>Returns top element without removing. <strong>Allocation:</strong>
+    None.</p>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Disposal not implemented</p></li>
+    </ul>
+    <h2 id="string.bc">string.bc</h2>
+    <h3 id="purpose-4">Purpose</h3>
+    <p>Defines the core string representation.</p>
+    <h3 id="type-string">Type: <code>string</code></h3>
+    <p><strong>Representation:</strong></p>
+    <ul>
+    <li><p>First word: length</p></li>
+    <li><p>Following words: characters</p></li>
+    </ul>
+    <p><strong>Ownership:</strong></p>
+    <ul>
+    <li><p>Strings may be owning or borrowed</p></li>
+    <li><p>Disposal frees backing buffer</p></li>
+    </ul>
+    <p><strong>Mutation:</strong></p>
+    <ul>
+    <li><p>Indexing mutates underlying buffer</p></li>
+    </ul>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Aliasing can cause surprising mutations</p></li>
+    </ul>
+    <h2 id="stringutils.bc">stringutils.bc</h2>
+    <h3 id="purpose-5">Purpose</h3>
+    <p>Provides string manipulation helpers.</p>
+    <h3 id="functions-2">Functions</h3>
+    <h4 id="lower-upper-reverse"><code>lower</code>, <code>upper</code>,
+    <code>reverse</code></h4>
+    <p><strong>Mutation:</strong> In-place. <strong>Allocation:</strong>
+    None. <strong>Use case:</strong> Efficient normalization.</p>
+    <h4 id="sub"><code>sub</code></h4>
+    <p>Creates substring. <strong>Allocation:</strong> Yes. <strong>Use
+    case:</strong> Slicing.</p>
+    <h4 id="concat"><code>concat</code></h4>
+    <p>Creates new string. <strong>Allocation:</strong> Yes.</p>
+    <h4 id="find-has"><code>find</code>, <code>has</code></h4>
+    <p>Search utilities. <strong>Allocation:</strong> None.</p>
+    <h4 id="replace"><code>replace</code></h4>
+    <p>Creates new string with substitutions. <strong>Allocation:</strong>
+    Yes.</p>
+    <h4 id="split"><code>split</code></h4>
+    <p>Splits string into array of strings. <strong>Allocation:</strong> Yes
+    (multiple).</p>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>High allocation cost</p></li>
+    <li><p>Mixed mutation/allocation semantics</p></li>
+    </ul>
+    <h2 id="stringify.bc">stringify.bc</h2>
+    <h3 id="purpose-6">Purpose</h3>
+    <p>Deferred, iterator-driven formatting.</p>
+    <h3 id="type-stringified">Type: <code>stringified</code></h3>
+    <p><strong>Semantics:</strong></p>
+    <ul>
+    <li><p>Represents a procedure that emits characters</p></li>
+    <li><p>Output length is unbounded</p></li>
+    </ul>
+    <p><strong>Key functions:</strong></p>
+    <h4 id="call"><code>call</code></h4>
+    <p>Emits characters to iterator. <strong>Allocation:</strong> None.</p>
+    <h4 id="tostring"><code>toString</code></h4>
+    <p>Materializes string. <strong>Allocation:</strong> Yes.</p>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Iterators may never terminate</p></li>
+    </ul>
+    <h2 id="extformats.bc">extformats.bc</h2>
+    <h3 id="purpose-7">Purpose</h3>
+    <p>Formatting helpers for numeric types.</p>
+    <p><strong>Supports:</strong></p>
+    <ul>
+    <li><p>Decimal</p></li>
+    <li><p>Hexadecimal</p></li>
+    <li><p>Binary</p></li>
+    </ul>
+    <p><strong>Allocation:</strong></p>
+    <ul>
+    <li><p>None unless materialized</p></li>
+    </ul>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>No NaN or infinity</p></li>
+    </ul>
+    <h2 id="io.bc">io.bc</h2>
+    <h3 id="purpose-8">Purpose</h3>
+    <p>Input and output utilities.</p>
+    <p><strong>Semantics:</strong></p>
+    <ul>
+    <li><p>Character-based IO</p></li>
+    <li><p>Blocking reads</p></li>
+    </ul>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Infinite iterators possible</p></li>
+    </ul>
+    <h2 id="int.bc">int.bc</h2>
+    <h3 id="purpose-9">Purpose</h3>
+    <p>Extends integer arithmetic.</p>
+    <p><strong>Functions:</strong></p>
+    <ul>
+    <li><p>Power</p></li>
+    <li><p>Emulated bitwise operations</p></li>
+    </ul>
+    <p><strong>Semantics:</strong></p>
+    <ul>
+    <li><p>Unsigned by default</p></li>
+    <li><p>Wrapping behavior</p></li>
+    </ul>
+    <h2 id="float.bc">float.bc</h2>
+    <h3 id="purpose-10">Purpose</h3>
+    <p>Software floating-point arithmetic.</p>
+    <p><strong>Semantics:</strong></p>
+    <ul>
+    <li><p>Deterministic</p></li>
+    <li><p>No NaN or infinity</p></li>
+    </ul>
+    <p><strong>Allocation:</strong></p>
+    <ul>
+    <li><p>None</p></li>
+    </ul>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Precision loss</p></li>
+    </ul>
+    <h2 id="sint.bc">sint.bc</h2>
+    <h3 id="purpose-11">Purpose</h3>
+    <p>Explicit signed integer semantics.</p>
+    <p><strong>Semantics:</strong></p>
+    <ul>
+    <li><p>Signed comparisons</p></li>
+    <li><p>Two’s-complement arithmetic</p></li>
+    </ul>
+    <p><strong>Functions:</strong></p>
+    <ul>
+    <li><p>Construction and casting</p></li>
+    <li><p>Comparisons</p></li>
+    <li><p>Arithmetic</p></li>
+    <li><p>Utilities (abs, clamp)</p></li>
+    </ul>
+    <p><strong>Allocation:</strong></p>
+    <ul>
+    <li><p>None</p></li>
+    </ul>
+    <p><strong>Sharp edges:</strong></p>
+    <ul>
+    <li><p>Overflow wraps</p></li>
+    <li><p><code>sint.min</code> negation</p></li>
+    </ul>
+    <h2 id="rand.bc">rand.bc</h2>
+    <h3 id="purpose-12">Purpose</h3>
+    <p>Pseudo-random number generation.</p>
+    <p><strong>Semantics:</strong></p>
+    <ul>
+    <li><p>Determinism not guaranteed</p></li>
+    </ul>
+    <h1 id="style-guide">Style Guide</h1>
+    <p>This chapter defines the <strong>normative</strong> Brainchild style
+    guide. Code adhering to this guide is considered idiomatic
+    Brainchild.</p>
+    <p>This guide exists to ensure clarity, predictability, and correct
+    ownership handling in the absence of enforced runtime safety.</p>
+    <h2 id="general-principles">General Principles</h2>
+    <ul>
+    <li><p>Prefer explicitness over convenience.</p></li>
+    <li><p>Prefer mutation over allocation.</p></li>
+    <li><p>Make ownership visible at the call site.</p></li>
+    <li><p>Avoid hidden control flow.</p></li>
+    <li><p>Write code that reflects VM cost model awareness.</p></li>
+    </ul>
+    <h2 id="memory-and-ownership">Memory and Ownership</h2>
+    <ul>
+    <li><p>Use <code>temp</code> to express scoped ownership.</p></li>
+    <li><p>Never return <code>temp</code>-owned values.</p></li>
+    <li><p>Prefer in-place mutation APIs when available.</p></li>
+    <li><p>Do not dispose borrowed wrappers.</p></li>
+    <li><p>Clearly document whether functions allocate or mutate.</p></li>
+    </ul>
+    <h2 id="allocation-discipline">Allocation Discipline</h2>
+    <ul>
+    <li><p>Avoid heap allocation in per-frame or tight loops.</p></li>
+    <li><p>Hoist allocations out of loops where possible.</p></li>
+    <li><p>Prefer <code>reserve</code> for small, fixed-size
+    buffers.</p></li>
+    <li><p>Use <code>defer</code> for cleanup when ownership is
+    non-trivial.</p></li>
+    </ul>
+    <h2 id="control-flow-style">Control Flow Style</h2>
+    <ul>
+    <li><p>Avoid deeply nested conditionals.</p></li>
+    <li><p>Express loop termination via conditions, not flags when
+    possible.</p></li>
+    <li><p>Avoid simulating <code>break</code>; restructure loops
+    instead.</p></li>
+    <li><p>Keep loops small and explicit.</p></li>
+    </ul>
+    <h2 id="functions-and-apis">Functions and APIs</h2>
+    <ul>
+    <li><p>Keep functions small and single-purpose.</p></li>
+    <li><p>Clearly document ownership of arguments and return
+    values.</p></li>
+    <li><p>Avoid APIs that ambiguously allocate or mutate.</p></li>
+    </ul>
+    <h2 id="macros">Macros</h2>
+    <ul>
+    <li><p>Prefer macros only when syntax cannot be expressed as
+    functions.</p></li>
+    <li><p>Avoid introducing identifiers into user scopes.</p></li>
+    <li><p>Document macro expansion behavior clearly.</p></li>
+    </ul>
+    <h2 id="comments-and-documentation">Comments and Documentation</h2>
+    <ul>
+    <li><p>Use comments to explain <em>why</em>, not <em>what</em>.</p></li>
+    <li><p>Prefer line comments for local context.</p></li>
+    <li><p>Use block comments for structural documentation.</p></li>
+    </ul>
+    <h2 id="formatting">Formatting</h2>
+    <ul>
+    <li><p>Use consistent indentation.</p></li>
+    <li><p>Place braces on the same line as declarations.</p></li>
+    <li><p>Keep lines reasonably short.</p></li>
+    </ul>
+    <div class="note">
+    <p>This style guide is normative. Deviations should be justified by
+    measurable performance or clarity benefits.</p>
+    </div>
+    <h1 id="sharp-edges">Sharp Edges</h1>
+    <p>This chapter documents known hazards, surprising behaviors, and
+    intentionally sharp edges of the Brainchild language and standard
+    library. This chapter is <strong>informational</strong> but essential
+    for correct usage.</p>
+    <p>Brainchild deliberately exposes low-level behavior. Many errors that
+    would be runtime-checked or prevented in other languages are possible
+    and expected here.</p>
+    <h2 id="ownership-and-disposal-hazards">Ownership and Disposal
+    Hazards</h2>
+    <ul>
+    <li><p>Disposing a wrapper type (such as <code>array</code> or
+    <code>string</code>) disposes the underlying storage.</p></li>
+    <li><p>Multiple wrappers may reference the same storage.</p></li>
+    <li><p>Disposing any one of them invalidates all others.</p></li>
+    </ul>
+    <pre><code>/* Dangerous: disposing a borrowed wrapper */
+    array&lt;int&gt; a = getArray();
+    array&lt;int&gt; b = a;   // b borrows a&#39;s data
+    dispose(a);         // b now dangles</code></pre>
+    <h2 id="temporary-values">Temporary Values</h2>
+    <ul>
+    <li><p>Values marked with <code>temp</code> are disposed at scope
+    exit.</p></li>
+    <li><p>Returning a <code>temp</code>-owned value is invalid.</p></li>
+    <li><p>Passing a <code>temp</code> value to a function that stores it
+    beyond the call is invalid.</p></li>
+    </ul>
+    <h2 id="iterator-non-termination">Iterator Non-Termination</h2>
+    <p>Many APIs accept iterators that emit values until termination.</p>
+    <ul>
+    <li><p>Iterators have no intrinsic output size.</p></li>
+    <li><p>Iterators may run indefinitely.</p></li>
+    </ul>
+    <p>This commonly occurs with IO-based iterators.</p>
+    <h2 id="unsigned-integers-and-negative-values">Unsigned Integers and
+    Negative Values</h2>
+    <ul>
+    <li><p>All integers are unsigned by default.</p></li>
+    <li><p>Negative values rely on two’s complement wrapping.</p></li>
+    <li><p>Signed arithmetic is not directly supported.</p></li>
+    </ul>
+    <p>A signed integer library (<code>sint</code>) is planned but not yet
+    standard.</p>
+    <h2 id="arithmetic-vs-vm-semantics">Arithmetic vs VM Semantics</h2>
+    <p>At the VM level, arithmetic instructions may clear registers as part
+    of their operation. At the Brainchild language level, arithmetic
+    expressions are safe and do not invalidate operands.</p>
+    <p>Relying on VM-level destruction from Brainchild code is invalid.</p>
+    <h2 id="control-flow-limitations">Control Flow Limitations</h2>
+    <ul>
+    <li><p>There is no <code>break</code> or <code>continue</code>.</p></li>
+    <li><p>Loop control must be expressed structurally.</p></li>
+    </ul>
+    <h2 id="terminal-rendering">Terminal Rendering</h2>
+    <ul>
+    <li><p>Full-screen clears may cause flickering.</p></li>
+    <li><p>Prefer delta drawing where possible.</p></li>
+    </ul>
+    <h2 id="allocation-in-hot-paths">Allocation in Hot Paths</h2>
+    <ul>
+    <li><p>Frequent heap allocation can severely degrade
+    performance.</p></li>
+    <li><p>Many library functions allocate implicitly.</p></li>
+    <li><p>Allocation behavior must be understood and documented.</p></li>
+    </ul>
+    <h2 id="macro-hazards">Macro Hazards</h2>
+    <ul>
+    <li><p>Macros are not hygienic.</p></li>
+    <li><p>Macros may duplicate expressions with side effects.</p></li>
+    <li><p>Errors may appear far from their source.</p></li>
+    </ul>
+    <div class="note">
+    <p>Sharp edges are not bugs; they are design tradeoffs. Brainchild
+    assumes competent and careful users.</p>
+    </div>
+    <h1 id="annotated-examples">Annotated Examples</h1>
+    <p>This chapter provides complete, idiomatic Brainchild examples with
+    annotations explaining ownership, allocation, mutation, and control-flow
+    choices. These examples are <strong>informational</strong> but reflect
+    best practice under the normative style guide.</p>
+    <h2 id="example-scoped-allocation-and-mutation">Example: Scoped
+    Allocation and Mutation</h2>
+    <pre><code>include stringutils.bc;
+    include io.bc;
+
+    function normalize_and_print(string input){
+        /* Allocate a trimmed copy; ownership is scoped */
+        temp var trimmed = stringutils.trim(input);
+
+        /* Mutates in place; no allocation */
+        trimmed.lower();
+
+        /* Printing does not take ownership */
+        print(trimmed);
+        /* trimmed is disposed here */
+    }</code></pre>
+    <p><strong>Notes:</strong></p>
+    <ul>
+    <li><p><code>stringutils.trim</code> allocates a new string.</p></li>
+    <li><p><code>lower()</code> mutates in place.</p></li>
+    <li><p><code>temp</code> ensures disposal at scope exit.</p></li>
+    </ul>
+    <h2 id="example-safe-return-of-allocated-data">Example: Safe Return of
+    Allocated Data</h2>
+    <pre><code>include stringutils.bc;
+
+    function first_word(string s) -&gt; string {
+        /* Allocate substring */
+        temp var word = stringutils.sub(0, s.find(&#39; &#39;), s);
+
+        /* Clone to return owned data */
+        return stringutils.clone(word);
+    }</code></pre>
+    <p><strong>Notes:</strong></p>
+    <ul>
+    <li><p>Returning a <code>temp</code>-owned value is invalid.</p></li>
+    <li><p>Cloning transfers ownership to the caller.</p></li>
+    </ul>
+    <h2 id="example-iterator-based-formatting">Example: Iterator-Based
+    Formatting</h2>
+    <pre><code>include stringify.bc;
+    include io.bc;
+
+    function print_pair(int a, int b){
+        printf(&quot;($0, $1)&quot;, a, b);
+    }</code></pre>
+    <p><strong>Notes:</strong></p>
+    <ul>
+    <li><p>Formatting uses iterators rather than building strings.</p></li>
+    <li><p>Output size is not precomputed.</p></li>
+    </ul>
+    <h2 id="example-delta-drawing-in-terminal">Example: Delta Drawing in
+    Terminal</h2>
+    <pre><code>include term.bc;
+
+    function draw_point(int x, int y, int c){
+        Term.Cursor.X = x;
+        Term.Cursor.Y = y;
+        putchar(c);
+    }</code></pre>
+    <p><strong>Notes:</strong></p>
+    <ul>
+    <li><p>Avoids clearing the screen.</p></li>
+    <li><p>Prevents flicker on terminals without VSync.</p></li>
+    </ul>
+    <h2 id="example-loop-without-break">Example: Loop Without Break</h2>
+    <pre><code>function find_zero(array&lt;int&gt; a) -&gt; int {
+        int i = 0;
+        int found = 0;
+        int result = -1;
+
+        while(i &lt; a.count &amp;&amp; !found){
+            if(a[i] == 0){
+                found = 1;
+                result = i;
+            }
+            i = i + 1;
+        }
+        return result;
+    }</code></pre>
+    <p><strong>Notes:</strong></p>
+    <ul>
+    <li><p>No <code>break</code>; loop termination is structural.</p></li>
+    </ul>
+    <h2 id="example-deferred-cleanup">Example: Deferred Cleanup</h2>
+    <pre><code>include mem.bc;
+
+    function use_buffer(){
+        @int buf = alloc(16);
+        defer free(buf);
+
+        /* use buf safely */
+
+    } /* buf freed here */</code></pre>
+    <p><strong>Notes:</strong></p>
+    <ul>
+    <li><p><code>defer</code> ensures cleanup regardless of exit
+    path.</p></li>
+    </ul>
+    <h1 id="module-index">Module Index</h1>
+    <p>This chapter lists all standard Brainchild modules and summarizes
+    their intended role. Detailed behavior is described in earlier
+    chapters.</p>
+    <h2 id="core-containers-and-utilities">Core Containers and
+    Utilities</h2>
+    <ul>
+    <li><p><code>array.bc</code> Thin wrapper around contiguous memory.
+    Holds a count and a pointer. Disposing the wrapper disposes the
+    underlying data.</p></li>
+    <li><p><code>arrayutils.bc</code> Functional-style utilities for arrays,
+    including iteration, mapping, mutation, folding, and reduction.</p></li>
+    <li><p><code>arraylist.bc</code> Growable dynamic array with heap-backed
+    storage and amortized reallocation.</p></li>
+    <li><p><code>stack.bc</code> LIFO stack container with dynamic growth
+    semantics.</p></li>
+    </ul>
+    <h2 id="strings-and-formatting">Strings and Formatting</h2>
+    <ul>
+    <li><p><code>string.bc</code> Length-prefixed string representation with
+    indexing support.</p></li>
+    <li><p><code>stringutils.bc</code> String manipulation utilities,
+    including mutation-heavy APIs and allocating transformations.</p></li>
+    <li><p><code>stringify.bc</code> Lazy formatting via iterator-driven
+    emission.</p></li>
+    <li><p><code>extformats.bc</code> Extended formatting for floats,
+    hexadecimal, and binary output.</p></li>
+    </ul>
+    <h2 id="numeric-libraries">Numeric Libraries</h2>
+    <ul>
+    <li><p><code>int.bc</code> Integer extensions including exponentiation
+    and emulated bitwise operations.</p></li>
+    <li><p><code>float.bc</code> Software-emulated floating point arithmetic
+    with deterministic behavior.</p></li>
+    </ul>
+    <h2 id="input-output-and-terminal">Input, Output, and Terminal</h2>
+    <ul>
+    <li><p><code>io.bc</code> Character-based input and output
+    utilities.</p></li>
+    <li><p><code>term.bc</code> Terminal control, cursor movement, styling,
+    and event handling.</p></li>
+    </ul>
+    <h2 id="miscellaneous">Miscellaneous</h2>
+    <ul>
+    <li><p><code>mem.bc</code> Memory utility functions such as
+    <code>memcpy</code> and swapping.</p></li>
+    <li><p><code>pair.bc</code> Simple two-value aggregate
+    structure.</p></li>
+    <li><p><code>rand.bc</code> Pseudorandom number generation
+    utilities.</p></li>
+    <li><p><code>extmacros.bc</code> Common macro definitions, including
+    loop constructs and compound assignments.</p></li>
+    </ul>
+    <h1 id="known-issues-and-notes">Known Issues and Notes</h1>
+    <h2 id="library-bugs-and-limitations">Library Bugs and Limitations</h2>
+    <p>The following issues are known and should be accounted for by
+    users:</p>
+    <ul>
+    <li><p><code>arrayutils.filter</code> contains a known logic bug in some
+    versions and should be used with caution.</p></li>
+    <li><p><code>ArrayList</code> and <code>Stack</code> do not consistently
+    implement disposal across all versions.</p></li>
+    <li><p>Some string utilities allocate more aggressively than strictly
+    necessary.</p></li>
+    </ul>
+    <h2 id="planned-additions">Planned Additions</h2>
+    <ul>
+    <li><p>A signed integer library (<code>sint</code>) to provide explicit
+    signed arithmetic semantics.</p></li>
+    <li><p>Improved container disposal coverage.</p></li>
+    </ul>
+    <h2 id="design-philosophy-reminder">Design Philosophy Reminder</h2>
+    <p>Brainchild intentionally exposes low-level behavior and relies on
+    discipline rather than enforcement. Correctness, performance, and safety
+    are the responsibility of the programmer.</p>
+    <div class="note">
+    <p>This document is complete. Subsequent revisions should add chapters
+    rather than rewrite existing ones.</p>
+    </div>
+</body>
+</html>
